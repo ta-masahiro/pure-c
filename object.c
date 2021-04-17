@@ -195,7 +195,16 @@ long obj2int(object*o) {
 }
 
 object * objIADD(long x, long y) {
+    long z;
     object * o = (object * )malloc(sizeof(object));
+    if (y > 0 ? x > LONG_MAX - y : x < LONG_MIN - y) { //オーバーフロー
+        mpz_ptr Lx=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set_si(Lx,x);   
+        mpz_ptr Ly=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set_si(Ly,y);
+        mpz_add(Lx,Lx,Ly);
+        o->data.ptr=(void*)Lx;o->type=OBJ_LINT;
+        return o;   
+    }
+    z=x+y;
     o -> data.intg = x + y;
     o -> type = OBJ_INT;
     return o;
@@ -203,6 +212,12 @@ object * objIADD(long x, long y) {
 
 object * objISUB(long x, long y) {
     object * o = (object * )malloc(sizeof(object));
+    //if (y<0 ? x>LONG_MAX+y :x<LONG_MIN+y) {
+    //    mpz_ptr Lx=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set_si(Lx,x);   
+    //    mpz_ptr Ly=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set_si(Ly,y);
+    //    mpz_sub(Lx,Lx,Ly);
+    //    o->data.ptr=(void*)Lx;o->type=OBJ_LINT;
+    //}
     o -> data.intg = x  -  y;
     o -> type = OBJ_INT;
     return o;
@@ -210,6 +225,12 @@ object * objISUB(long x, long y) {
 
 object * objIMUL(long x, long y) {
     object * o = (object * )malloc(sizeof(object));
+    //if (labs(x)>labs(LONG_MAX/y)) {
+    //    mpz_ptr Lx=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set_si(Lx,x);   
+    //    mpz_ptr Ly=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set_si(Ly,y);
+    //    mpz_mul(Lx,Lx,Ly);
+    //    o->data.ptr=(void*)Lx;o->type=OBJ_LINT;
+    //}
     o -> data.intg = x * y;
     o -> type = OBJ_INT;
     return o;
@@ -1063,6 +1084,7 @@ char * objtype2str(obj_type type, void* value) {
     int i,n;
     //if (type != OBJ_NONE && value==NULL) return "NULL";
     switch(type){
+        case OBJ_NONE:
         case OBJ_INT:   sprintf(buf, "%ld", (long)value); return buf;
         case OBJ_LINT:  return mpz_get_str(NULL, 10, (mpz_ptr)value);
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);

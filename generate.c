@@ -12,14 +12,14 @@ enum CODE op2_2[15][15] = {{IADD, ISUB, IMUL, IDIV, IMOD, IPOW, IBOR,IBAND,IGT, 
                 {FADD, FSUB, FMUL, FDIV, FMOD, FPOW, 0,   0,    FGT, FLT, FEQ, FNEQ, FGEQ, FLEQ, 0},   // OBJ_FLT
                 {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_LFLT
                 {OADD, OSUB, OMUL, ODIV, OMOD, OPOW, OBOR,OBAND,OGT, OLT, OEQ, ONEQ, OGEQ, OLEQ, 0},   // OBJ_GEN
-                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},         // OBJ_PFUNC
-                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},         // OBJ_UFUNC
-                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},         // OBJ_CNT
-                {VAPP, 0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},         // OBJ_VECT
-                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},         // OBJ_DICT
-                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},         // OBJ_PAIR
-                {SAPP, 0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},         // OBJ_SYM
-                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},         // OBJ_IO
+                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_PFUNC
+                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_UFUNC
+                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_CNT
+                {VAPP, 0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_VECT
+                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_DICT
+                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_PAIR
+                {SAPP, 0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_SYM
+                {0,    0,    0,    0,    0,    0,    0,   0,    0,   0,   0,   0,    0,    0,    0},   // OBJ_IO
                 };
 obj_type op2_3[]={0,0,0,0,0,0,0,0,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT};
 
@@ -67,26 +67,13 @@ enum CODE get_convert_op(obj_type from, obj_type to) {
 
 Hash* G;
 Hash* GLOBAL_VAR;
-/*
-typedef struct {
-    obj_type type;
-    obj_type functon_ret_type;
-    Vector  *arg_type;
-} global_var_type;
-*/
 typedef struct {
     obj_type type;
     obj_type functon_ret_type;
     Vector  *arg_type;
     int dotted;
 } code_type;
-/*
-global_var_type * new_gvt(obj_type type) {
-    global_var_type *gvt=(global_var_type*)malloc(sizeof(global_var_type));
-    gvt->type=type;gvt->arg_type=NULL;gvt->functon_ret_type=0;
-    return gvt;
-}
-*/
+
 code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot ) {
     code_type* ct=(code_type*)malloc(sizeof(code_type));
     ct->type=type;ct->functon_ret_type=frt;ct->arg_type=at,ct->dotted=dot;
@@ -101,14 +88,13 @@ void* code_type_print(code_type*ct) {
     } 
     printf("\n");
 }
-//void put_gv(Symbol*var_name, global_var_type* gvt) {// printf("%s\n",var_name->_table);
+
 void put_gv(Symbol*var_name, code_type* ct) {// printf("%s\n",var_name->_table);
     //global_var_type *gvt=(global_var_type*)malloc(sizeof(global_var_type));
     //gvt->type=var_type;
     Hash_put(GLOBAL_VAR,var_name,(void*)ct);
 }
 
-//global_var_type* get_gv(Symbol*var_name) {// printf("%s\n",var_name->_table);
 code_type* get_gv(Symbol*var_name) {// printf("%s\n",var_name->_table);
     void ** t ;
     if ((t= Hash_get(GLOBAL_VAR,var_name))==NULL) {
@@ -136,7 +122,6 @@ void* env_print(Vector*env) {
 Vector * var_location(Symbol * varname, Vector * env) { // env: [[(sym00:type00),  (sym01:type01),...], [(sym10:type10),(sym11),...]]
     int i,j,dotted,max_j;
     Vector * v, * nv, * rv;//printf("varname:%s\n",varname->_table);
-    //code_type*ct;
     //env_print(env);//PR(999);//obj_type type; 
     if (is_stac_empty(env)) return NULL; 
     for(i = 0; i< env->_sp; i ++ ) {
@@ -153,15 +138,6 @@ Vector * var_location(Symbol * varname, Vector * env) { // env: [[(sym00:type00)
             }//PR(77777777);
         }
     }
-    //rv=vector_init(2);push(rv,(void*)0);
-    //if (Hash_get(GLOBAL_VAR,varname)) {
-    //    Hash_put(GLOBAL_VAR,varname, (void*)OBJ_GEN);
-    //    push(rv,(void*)OBJ_GEN);
-    //    return rv;
-    //} else { 
-    //    push(rv,*Hash_get(G,varname));
-    //    return NULL;
-    //}
     return NULL;
 }
 
@@ -193,6 +169,7 @@ void* create_zero(obj_type type) {
         case OBJ_LINT:mpz_init(z); return (void*)z;
         case OBJ_RAT:mpq_init(q);return (void*)q;
         case OBJ_FLT:d=(double*)malloc(sizeof(double));*d=0;return (void*)d;
+        case OBJ_GEN:return newINT(0);
         case OBJ_SYM:return (void*)new_symbol("",0);
         case OBJ_VECT:return (void*)vector_init(0);
         case OBJ_UFUNC:
@@ -361,13 +338,23 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                         _pos=var_location(s,env);
                         if (_pos) {
                             pos=(Vector*)vector_ref(_pos,0);
-                            ct1=(code_type*)(long)vector_ref(_pos,1);
-                            if (ct1->type != ct2->type) push(code,(void*)conv_op[ct2->type][ct1->type]);
+                            ct1=(code_type*)(long)vector_ref(_pos,1);   //ct1は変数名のコードタイプ
+                            if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
+                                ct1=ct2;
+                                //envに保存してある戻り型情報がない関数型変数のコードタイプをct2で置き換える
+                                i=(env->_sp)-(long)vector_ref(pos,0)-1;j=(long)vector_ref(pos,1);   //env内のポジションを計算して
+                                d=(Data*)malloc(sizeof(Data));d->key=s;d->val=ct1;                  //入れるべきデータを作って
+                                vector_set((Vector*)vector_ref(env,i),j,(void*)d);printf("||changed||\n");env_print(env);                  //セットする
+                            } else if (ct1->type != ct2->type) {
+                                if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!\n");return NULL;}
+                                push(code,(void*)conv_op[ct2->type][ct1->type]);
+                            }
+
                             push(code,(void*)SET);push(code,(void*)pos);
                         } else {
-                            if ((ct1=get_gv(s))==NULL) {
+                            if ((ct1=get_gv(s))==NULL) {            //変数テーブルに名前がないなら
                                 //printf("SyntaxError:variable not defined!");return NULL;
-                                put_gv(s,ct2);ct1=ct2;
+                                put_gv(s,ct2);ct1=ct2;              //新たにct2=右辺値のコードタイプで変数を作り左辺値のコードタイプは右辺値と同一
                             } else if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
                                 ct1=ct2;put_gv(s,ct1);
                                 //if (ct2->type==OBJ_UFUNC) {gvt->type=OBJ_UFUNC;gvt->arg_type=v;gvt->functon_ret_type=r_type;put_gv(s,gvt);}
@@ -419,7 +406,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
             for(j=0;j<((ast*)vector_ref(a1->table,0))->table->_sp;j++) {
                 a2 = (ast*)vector_ref(((ast*)vector_ref(a1->table,0))->table,j);//ast_print(a2,0);
                 if (a2->type==AST_VAR) {
-                    if (get_gv(s=(Symbol*)vector_ref(a2->table,0))!=NULL) {printf("syntaxError:DupricateDifinition!\n");return NULL;}
+                    if (get_gv(s=(Symbol*)vector_ref(a2->table,0))!=NULL) {printf("Warning!:DupricateDifinition!\n");}  //警告を出して続行
                     // printf("!!!!\n");
                     ct=new_ct(a1->o_type,OBJ_NONE,(void*)0,FALSE);
                     put_gv(s,ct);
@@ -428,7 +415,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                             ((ast*)vector_ref(a2->table,1))->type==AST_VAR) {   //                        <1>                 <2>
                     //変数名を取り出してSymbol*sに取っておき、定義済(GVにある)ならエラー
                     s = (Symbol*)vector_ref(((ast*)vector_ref(a2->table,1))->table,0);
-                    if (get_gv(s) !=0) {printf("syntaxError:DupricateDifinition!\n");return NULL;}
+                    if (get_gv(s) !=0) printf("Warning!:DupricateDifinition!\n");//警告を出して続行
                     // 右辺式のコードを生成
                     code_s = codegen((ast*)vector_ref(a2->table,2),env,FALSE);
                     code=vector_append(code, (void*)code_s->code);ct=code_s->ct;
@@ -487,7 +474,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                     code_s = codegen((ast*)vector_ref(a1->table,i),env,FALSE);
                     code1 = code_s->code;ct1=code_s->ct;type1=ct1->type;                            // ct1/type1:actual parameter type
                     if (dot && i >= m-1) type2=OBJ_GEN ; else type2 = (int)(long)vector_ref(v,i);  // ct2/type2:dummy parameter type
-                    if (type1 != type2 ) push(code1,(void*)conv_op[type1][type2]);
+                    if ((type1 != type2 ) && (type1 != OBJ_NONE)) push(code1,(void*)conv_op[type1][type2]);
                     code=vector_append(code,code1);
                 }
                 code = vector_append(code, code2);    // append Function name % expr_list

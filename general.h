@@ -3,6 +3,7 @@
 #include <string.h>
 #include <float.h>
 #include <math.h>
+#include <limits.h>
 #include <gc.h>
 #include <gmp.h>
 
