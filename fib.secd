@@ -1,0 +1,46 @@
+[   ldf [
+    ldc 0
+    ldf
+    [
+    LDF
+    [
+        LD  [0 0]
+        LDC 0
+        EQ
+        TSEL
+        [
+            LD  [0 2]
+            RTN
+        ]
+        [
+            LD [0 0]
+            DEC
+            LD  [0 1]
+            LD  [0 2]
+            LADD
+            LD  [0 1]
+            ; LPR
+            LD  [1 0]
+            TCALL 3
+            RTN
+        ]
+        RTN
+    ]
+    set [0 0]
+    drop 
+    ld [1 0]
+    ldc 1
+    itol
+    ldc 0
+    itol
+    ld [0 0]
+    tcall 3
+    rtn
+    ]
+    tcall 1
+    rtn
+    ]
+    gset fib
+    STOP
+]
+ [LDC 1000000 LDG fib CALL 1 LPR STOP]

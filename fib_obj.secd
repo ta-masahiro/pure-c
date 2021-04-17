@@ -1,0 +1,29 @@
+[
+    LDF
+    [
+        LD  [0 0]
+        LDC 0
+        EQ
+        TSEL
+        [
+            LD  [0 2]
+            RTN
+        ]
+        [
+            LD [0 0]
+            DEC
+            LD  [0 1]
+            LD  [0 2]
+            OADD
+            LD  [0 1]
+            ; LPR
+            LDG fib
+            TCALL 3
+            RTN
+        ]
+        RTN
+    ]
+    GSET fib
+    STOP
+]
+ [LDC 100000 LDC 1 ITOL LTOO LDC 0 ITOL LTOO LDG fib CALL 3 OPR STOP]

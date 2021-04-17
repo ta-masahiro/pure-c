@@ -1,0 +1,28 @@
+[
+    LDP
+    [
+        LDL 0
+        LDC 0
+        EQ
+        TSEL
+        [
+            LDL 2
+            RTNS
+        ]
+        [
+            LDL 1
+            LDL 1
+            LDL 2
+            LADD
+            LDL 0
+            DEC
+            LDG fib
+            TCALLS 3
+            RTNS
+        ]
+        RTNS
+    ]
+    GSET fib
+    STOP
+]
+[LDC 0 ITOL LDC 1 ITOL LDC 100000 LDG fib CALLS 3 LPR STOP]

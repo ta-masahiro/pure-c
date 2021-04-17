@@ -1,0 +1,55 @@
+[LDC 0 GSET count stop]
+
+[
+    LDF
+    [
+        LDG count
+        INC
+        GSET count
+        ; POP
+        DROP
+        LD [0 0]
+        LD [0 1]
+        OLEQ
+        TSEL
+        [
+            LD [0 2]
+            RTN
+        ]
+        [
+            LD [0 0]
+            ; LDC 1
+            ; SUB
+            ODEC
+            LD [0 1]
+            LD [0 2]
+            LDG T
+            CALL 3
+            LD [0 1]
+            ; LDC 1
+            ; SUB
+            ODEC
+            LD [0 2]
+            LD [0 0]
+            LDG T
+            CALL 3
+            LD  [0 2]
+            ; LDC 1
+            ; SUB
+            ODEC
+            LD [0 0]
+            LD [0 1]
+            LDG T
+            CALL 3
+            LDG T
+            TCALL 3
+            RTN
+        ]
+        STOP
+    ]
+    GSET T
+    STOP
+]
+
+[LDC 19 ITOO LDC 8 ITOO LDC 0 ITOO LDG T CALL 3 OPR STOP]
+[LDG count STOP]
