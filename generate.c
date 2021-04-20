@@ -120,21 +120,28 @@ void* env_print(Vector*env) {
 }
 
 Vector * var_location(Symbol * varname, Vector * env) { // env: [[(sym00:type00),  (sym01:type01),...], [(sym10:type10),(sym11),...]]
-    int i,j,dotted,max_j;
+    int i,j,dotted,max_j,ttt;
     Vector * v, * nv, * rv;//printf("varname:%s\n",varname->_table);
     //env_print(env);//PR(999);//obj_type type; 
     if (is_stac_empty(env)) return NULL; 
     for(i = 0; i< env->_sp; i ++ ) {
         v = vector_ref(env,env->_sp-i-1);//vector_print(v);
-        if (symbol_eq((Symbol*)vector_ref(v,v->_sp-1),new_symbol("..",3))) {max_j=v->_sp-1;dotted=TRUE;} else {max_j=v->_sp;dotted=FALSE;}
+        if ((ttt=symbol_eq((Symbol*)((Data*)vector_ref(v,v->_sp-1))->key,new_symbol("..",2)))) {max_j=v->_sp-1;dotted=TRUE;} else {max_j=v->_sp;dotted=FALSE;}
         for (j = 0; j<max_j; j ++ ) {//printf("env%d:%s\n",j,((Symbol*)vector_ref(v,j))->_table);printf("%d\n",symbol_eq(varname,vector_ref(v,j)));
             if (symbol_eq(varname, ((Data*)vector_ref(v, j))->key)) {
                 nv = vector_init(2); 
                 //if ((j==v->_sp-1) && (strcmp(((Symbol*)vector_ref(v,j+1))->_table,"..")==0))  j=-(j+1);
-                push(nv, (void * )(long)i); if (dotted) {push(nv,(void*)(long)(-j+1));} else {push(nv, (void * )(long)j);}
-                rv=vector_init(2);
-                push(rv,(void*)nv);push(rv,((Data*)vector_ref(v,j))->val);//PR(8888888); 
-                return rv; // return [[pos_i,pos_j],<code_type>]
+                push(nv,(void*)(long)i);
+                if (dotted && j==max_j-1) {
+                    push(nv,(void*)(long)(-j-1));
+                    rv=vector_init(2);
+                    push(rv,(void*)nv);push(rv,(void*)new_ct(OBJ_VECT,OBJ_NONE,(void*)0,FALSE));//PR(8888888); 
+                    return rv; // return [[pos_i,pos_j],<code_type>]
+                } else {push(nv, (void * )(long)j);
+                    rv=vector_init(2);
+                    push(rv,(void*)nv);push(rv,((Data*)vector_ref(v,j))->val);//PR(8888888); 
+                    return rv; // return [[pos_i,pos_j],<code_type>]
+                }
             }//PR(77777777);
         }
     }
@@ -183,7 +190,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
     Vector * code = vector_init(10), *code1, *code2,*v,*v1,*v2,*v3,*a_arg_v,*d_arg_v,*pos,*_pos,*args,*v_expr_body;
     code_ret* code_s,*code_s1;
     //code_s->code=code;code_s->type=OBJ_NONE;
-    ast *a0,* a1,*a2,*ast_list;
+    ast *a0,* a1,*a2,*a3,*ast_list;
     int i,j,n,*tp,dcl_flg,m,dot,dot1,dot2; 
     long int_num;
     double fl_num,*fl_num_p;
@@ -220,8 +227,19 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                             a0=(ast*)vector_ref(a2->table,1);
                             a0->o_type=a1->o_type;
                             push(d_arg_v,(void*)a0);               // d_arg_v:dummy arg list
+                        } else if (a2->type==AST_SET &&                                 // a2: AST_SET [set_type, AST_FCALL [FUNC_NAME,ARG_LIST], expr_ast]
+                                    ((ast*)vector_ref(a2->table,1))->type==AST_FCALL) { //                        <1>        <1,0>,    <1,1>,       <2>
+                            // ...;function Fname;Fname(...)=...に変換する
+                            v=vector_init(2);push(v,(void*)TOKEN_NONE);push(v,(void*)NULL);
+                            push(a_arg_v,new_ast(AST_LIT,OBJ_UFUNC,v));
+                            //
+                            a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,0);  //関数名のASTを取り出して
+                            a3->o_type=OBJ_UFUNC;                                           //typeを関数に変更して             
+                            push(d_arg_v,a3);                                                //仮引数リストに登録
+                            push(v_expr_body,(void*)a2);    //body部にa2:Fname(...)=...のASTを挿入
+                            //コードを書く！
                         } else {
-                            printf("Syntax error :decliation in ml_expr\n");
+                            printf("Syntax error :decliation in ml_expr%d\n",a2->type);
                             return NULL;
                         }
                     }
@@ -321,13 +339,17 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                         }
                     case AST_FCALL: // AST_SET [set_type,AST_FCALL [expr_name , expr_list],right_expr]
                                     //          <0,0>              <1,0>        <1,1>      <2>
-                        a1=(ast*)vector_ref(((ast*)vector_ref(a->table,1))->table,0);
+                        a1=(ast*)vector_ref(((ast*)vector_ref(a->table,1))->table,0);                       //a1:expr name
+                        if (a1->type != AST_VAR) {printf("SyntaxError:Must be Function Name!\n");return NULL;}                            
+                        s=(Symbol * )vector_ref(a1->table,0);                                               //dcl宣言式を作成する
+                        
                         v1=vector_init(2);
-                        push(v1,(void*)(ast*)vector_ref(((ast*)vector_ref(a->table,1))->table,1));//push expr_list
-                        push(v1,(void*)vector_ref(a->table,2));
+                        a0=(ast*)vector_ref(((ast*)vector_ref(a->table,1))->table,1);                        //a:expr_list
+                        push(v1,(void*)a0);                      //push expr_list
+                        push(v1,(void*)vector_ref(a->table,2)); //push righ expr
                         a2=new_ast(AST_LAMBDA,((ast*)vector_ref(a->table,2))->o_type,v1);
                         v2=vector_init(2);push(v2,(void*)(long)'=');
-                        push(v2,(void*)a1);push(v2,(void*)a2);
+                        push(v2,(void*)a1);push(v2,(void*)a2);ast_print(new_ast(AST_SET,a2->o_type,v2),0);
                         return codegen(new_ast(AST_SET,a2->o_type,v2),env,FALSE);
                     case AST_VAR:   // AST_SET [set_type, AST_VAR [var_name], right_expr]
                                     //          <0,0>             <1,0>       <2>
@@ -387,8 +409,8 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
             } //for(i=0;i<args->_sp;i++) printf("%s\t",((Symbol*)vector_ref(args,i))->_table);printf("\n");
             if (a1->type==AST_ARG_LIST_DOTS) {
                 d=(Data*)malloc(sizeof(Data));
-                d->key=new_symbol("..",3);
-                d->val=OBJ_NONE;
+                    d->key=new_symbol("..",2);printf("%s\n",d->key->_table);
+                    d->val=OBJ_NONE;
                 push(args,(void*)d);
             } vector_print(v);
             push(env,(void*)args);//PR(1);
@@ -504,13 +526,18 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
             for(i=0;i<n;i++) {
                 code_s = codegen((ast*)vector_ref(((ast*)vector_ref(a->table,0))->table,i),env,FALSE);//disassy(code,0);
                 code1 = code_s->code;ct1=code_s->ct;type1 = ct1->type;
+                code = vector_append(code,code1);//disassy(code,0);
                 if (i==0) {
                     if (type1 != OBJ_UFUNC) {printf("SyntaxError:Must be Function!\n");return NULL;}
                     r_type = ct1->functon_ret_type;
+                    //code = vector_append(code,code1);//disassy(code,0);
+                } else if (i==n-1) {    //最後の引数はtypeがvectorであることを確認しそのままcodeにする
+                    if ( type1 != OBJ_VECT) {printf("SyntaxError:Must be Vector!\n");return NULL;}
+                    //code = vector_append(code,code1);//disassy(code,0);
+                } else if (type1 != OBJ_GEN) {  //最初でも最後でもなければtypeを汎用型に変換
+                    //code = vector_append(code,code1);//disassy(code,0);
+                    push(code,(void*)conv_op[type1][OBJ_GEN]);
                 }
-                if (i==n-1 && type1 != OBJ_VECT) {printf("SyntaxError:Must be Vector!\n");return NULL;}
-                if (type1 != OBJ_GEN) push(code,(void*)conv_op[type1][OBJ_GEN]);
-                code = vector_append(code,code1);//disassy(code,0);
             }
             if (tail) {
                 push(code, (void*)TAPL);push(code, (void*)(long)n);

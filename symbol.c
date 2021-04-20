@@ -12,7 +12,10 @@ Symbol * new_symbol(unsigned char * str, unsigned long size) {
     return sym;  
 }
 
-int symbol_eq(Symbol*s1,Symbol*s2) {return (s1->_size) != (s2->_size) ? FALSE : strcmp(s1->_table,s2->_table)==0;}
+int symbol_eq(Symbol*s1,Symbol*s2) {
+    return (s1->_size) != (s2->_size) ? FALSE : strcmp(s1->_table,s2->_table)==0;
+}
+
 Symbol* symbol_cat(Symbol*s1,Symbol*s2) {
         unsigned long s3_size=s1->_size+s2->_size;
         char*s=(char*)malloc(s3_size*sizeof(char));

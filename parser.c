@@ -229,9 +229,12 @@ ast * is_expr_list(Stream * S) {
     return NULL;
 }
 
+ast*is_arg_list(Stream*S);
+
 ast * is_expr_0(Stream *S) {
     // exp_0        : APPLY '(' expr_list ')'
-    //              | factor
+    //              | factor '(' arg_list '..' ')'
+    //              | fator  '(' arg_list ')'
     //              | factor '(' expr_list '..' ')'
     //              | factor '(' expr_list ')'
     //              | factor '(' ')'
@@ -241,6 +244,7 @@ ast * is_expr_0(Stream *S) {
     tokentype t1,t2;
     int token_p = tokenbuff -> _cp,i;
     Vector*v,*v1;
+    // applyの処理
     if ((t=get_token(S))->type==TOKEN_SYM && strcmp(t->source->_table,"apply")==0) {
         if ((get_token(S)->type =='(') && (a1=is_expr_list(S)) && get_token(S)->type==')') {
             v=vector_init(1);push(v,(void*)a1);
@@ -250,13 +254,14 @@ ast * is_expr_0(Stream *S) {
         return NULL;
     }
     unget_token(S);
+    // 
     if (a1 = is_factor(S)) {
         t1 = get_token(S)->type;
         if (t1 !='(' && t1 != '[') {
             unget_token(S);
             return a1;
         }
-        if (a2 = is_expr_list(S)) {
+        if ((a2 = is_arg_list(S)) || (a2 = is_expr_list(S))) {
             t2 = get_token(S) ->type;
             if ((t1=='(' && t2 == ')') || (t1 == '[' && t2==']')) {
                 v = vector_init(2);
@@ -277,11 +282,11 @@ ast * is_expr_0(Stream *S) {
                 push(v, (void * )a1); push(v, (void * )a2);
                 return new_ast(AST_FCALL,OBJ_UFUNC, v);
             }
-        } else {
+        } else { //空引数のfunction call 
             t2 = get_token(S) -> type;
             if (t1=='(' && t2 == ')'){
                 v = vector_init(2);
-                push(v, (void * )a1); push(v, NULL);
+                push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
                 return new_ast(AST_FCALL,OBJ_UFUNC, v);
             }
         }
@@ -501,10 +506,11 @@ ast * is_arg_list(Stream * S) {
                             return new_ast(AST_LAMBDA,a2->o_type,v);
                         }
                     }
-                } else if (get_token(S)->type==')') {
+                } else if (get_token(S)->type==')') {                               //引数がない場合
                     if (a2=is_expr(S)) {
                         v=vector_init(2);
-                        push(v,(void*)0);push(v,(void*)a2);
+                        a1=new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1));           //空のarg_listを作る
+                        push(v,(void*)a1);push(v,(void*)a2);
                         return new_ast(AST_LAMBDA,OBJ_UFUNC,v);
                     }
                 }

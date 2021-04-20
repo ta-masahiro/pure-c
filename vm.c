@@ -580,7 +580,8 @@ _APL:
     l = vector_init(n+ll->_sp-1);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n+1) , (n-2) * (sizeof(void * )) );
     memcpy(l->_table+n-2,ll->_table,(ll->_sp)*(sizeof(void*)));
-    l ->_sp = n+(ll->_sp)-1; S ->_sp = S ->_sp - n; //vector_print(l);
+    //l ->_sp = n+(ll->_sp)-1; S ->_sp = S ->_sp - n; //vector_print(l);
+    l ->_sp = n+(ll->_sp)-2; S ->_sp = S ->_sp - n; //vector_print(l);
     push(R, (void * )C);
     push(EE, (void * )E);
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
