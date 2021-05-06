@@ -13,8 +13,9 @@ char * code_name[] =
      "LTOR",  "LTOF", "RTOF", "RTOO","LTOI","RTOI","RTOL","FTOI", "FTOL","FTOR","LNEG","RNEG", "FNEG", "LINC",
      "LDEC",  "NEQ",  "INEQ", "LNEQ","RNEQ","FNEQ","ONEQ","OTOI", "OTOL","OTOR","VTOO","STOO", "IPOW", "LPOW",
      "RPOW",  "FPOW", "OPOW", "IMOD","LMOD","RMOD","FMOD","OMOD", "IBOR","LBOR","OBOR","IBNOT","LBNOT","OBNOT",
-     "IBAND", "LBAND","OBAND","VLEN","SLEN","OLEN","VAPP","SAPP", "VREF","SREF","OREF", "SSET", "OSET","STOI",
-     "STOL",  "STOR", "STOF", "ITOS","LTOS","RTOS","FTOS","OTOS", "VTOS","$$$" };
+     "IBAND", "LBAND","OBAND","VLEN","SLEN","OLEN","VAPP","SAPP", "VREF","SREF","OREF","SSET", "OSET", "STOI",
+     "STOL",  "STOR", "STOF", "ITOS","LTOS","RTOS","FTOS","OTOS", "VTOS","SPOP","OPOP","OPUSH","SMUL", "VMUL",
+     "VEQ",   "SEQ",  "ISR",  "ISL", "LSR", "LSL", "OSR", "OSL",  "OTOV","VSLS","SSLS","OSLS", "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -29,7 +30,8 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   0,    0,   0  };
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0 };
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -53,7 +55,7 @@ Vector *tosqs(Vector*code, const void** table) {
 
 
 void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash * G) {
-    Symbol * sym;
+    Symbol * sym,*sym1;
     long inst, ff, i, j, n, p, SSP=S->_sp;
     Vector * fn, * keys, * t_exp, * f_exp, * code, * args, * cl, * ref, * Es, * l, *ll;
     void ** g, * v;
@@ -65,6 +67,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
     Vector *C = vector_copy0(Code),*ssp=vector_init(200);
     double* fx,*fy,*fz;
     object*o;
+    char*ch;
     static const void * table[] = {
             &&_STOP,  &&_LDC,  &&_LD,  &&_ADD,  &&_CALL,&&_RTN, &&_SEL, &&_JOIN, &&_LDF, &&_SET, &&_LEQ, &&_LDG,  &&_GSET, &&_SUB,  \
             &&_DEC,   &&_TCALL,&&_TSEL,&&_DROP, &&_EQ,  &&_INC, &&_MUL, &&_DIV,  &&_VEC, &&_REF, &&_VSET,&&_HASH, &&_LDH,  &&_HSET, \
@@ -77,8 +80,9 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LTOR,  &&_LTOF, &&_RTOF,&&_RTOO, &&_LTOI,&&_RTOI,&&_RTOL,&&_FTOI, &&_FTOL,&&_FTOR,&&_LNEG,&&_RNEG, &&_FNEG, &&_LINC, \
             &&_LDEC,  &&_NEQ,  &&_INEQ,&&_LNEQ, &&_RNEQ,&&_FNEQ,&&_ONEQ,&&_OTOI, &&_OTOL,&&_OTOR,&&_VTOO,&&_STOO, &&_IPOW, &&_LPOW, \
             &&_RPOW,  &&_FPOW, &&_OPOW,&&_IMOD, &&_LMOD,&&_RMOD,&&_FMOD,&&_OMOD ,&&_IBOR,&&_LBOR,&&_OBOR,&&_IBNOT,&&_LBNOT,&&_OBNOT,\
-            &&_IBAND, &&_LBAND,&&_OBAND,&&_VLEN,&&_SLEN,&&_OLEN,&&_VAPP,&&_SAPP, &&_VREF,&&_SREF,&&_OREF, &&_SSET,&&_OSET ,&&_STOI, \
-            &&_STOL,  &&_STOR, &&_STOF,&&_ITOS, &&_LTOS,&&_RTOS,&&_FTOS,&&_OTOS, &&_VTOS         };
+            &&_IBAND, &&_LBAND,&&_OBAND,&&_VLEN,&&_SLEN,&&_OLEN,&&_VAPP,&&_SAPP, &&_VREF,&&_SREF,&&_OREF,&&_SSET, &&_OSET ,&&_STOI, \
+            &&_STOL,  &&_STOR, &&_STOF,&&_ITOS, &&_LTOS,&&_RTOS,&&_FTOS,&&_OTOS, &&_VTOS,&&_SPOP,&&_OPOP,&&_OPUSH,&&_SMUL, &&_VMUL, \
+            &&_VEQ,   &&_SEQ,  &&_ISR, &&_ISL,  &&_LSR, &&_LSL, &&_OSR, &&_OSL,  &&_OTOV,&&_VSLS,&&_SSLS,&&_OSLS       };
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -270,8 +274,8 @@ _FTOL:
     goto * dequeue(C);
 _FTOR:
     fz=(double*)pop(S);
-    mpq_init(qz);mpq_set_d(qz,*fz);
     qz=(mpq_ptr)malloc(sizeof(MP_RAT));
+    mpq_init(qz);mpq_set_d(qz,*fz);
     mpq_init(qz);
     mpq_set_d(qz,*fz);
     push(S,(void*)qz);
@@ -638,6 +642,7 @@ _LDF:
     goto * dequeue(C);
 _VEC:
     n = (long)dequeue(C);
+    if (n==0) {l=vector_init(10);push(S,(void*)l);goto *dequeue(C);}
     l = vector_init(n);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n), n * (sizeof(void * )) );
     l ->_sp = n; S ->_sp = S ->_sp - n;  // vector_print(l);
@@ -694,12 +699,29 @@ _HSET:
 _VPUSH:
     v = pop(S);
     l = (Vector * )pop(S);
+    //l = (Vector * )vector_ref(S,S->_sp-1);
     push(l, v);
-    push(S, v);
+    push(S,(void*)l);
     goto * dequeue(C);
+//_SPUSH:
+_OPUSH:
+    //v=vector_ref(S,S->_sp-1);
+    v=pop(S);
+    //objpush((object*)vector_ref(S, S->_sp-2),v);
+    //w=pop(S);
+    w=vector_ref(S,S->_sp-1);
+    objpush((object*)w,v);
+    //push(S,w);
+    goto*dequeue(C);
 _VPOP:
     push(S, pop((Vector * )pop(S)));
     goto * dequeue(C);
+_SPOP:
+    push(S,symbol_pop((Symbol*)pop(S)));
+    goto * dequeue(C);
+_OPOP:
+    push(S,objpop((object*)pop(S)));
+    goto *dequeue(C);
 _DROP:
     pop(S);
     goto * dequeue(C);
@@ -774,6 +796,9 @@ _LDL://small call 内のローカル変数ロード
 _VTOO:
     push(S,(void*)newVECT((Vector*)pop(S)));
     goto*dequeue(C);
+_OTOV:
+    push(S,(void*)((object*)pop(S))->data.ptr);
+    goto*dequeue(C);
 _STOO:
     push(S,(void*)newSTR((Symbol*)pop(S)));
     goto*dequeue(C);
@@ -810,7 +835,7 @@ _FPOW:
     goto *dequeue(C);
 _OPOW:
     o=(object*)pop(S);
-    push(S,objpow(o,(object*)pop(S)));
+    push(S,objpow((object*)pop(S),o));
     goto*dequeue(C);
 _IMOD:
     j=(long)pop(S);i=(long)(pop(S));
@@ -876,7 +901,7 @@ _SLEN:
     push(S,(void*)((Symbol*)pop(S))->_size);
     goto*dequeue(C);
 _OLEN:
-    push(S,(void*)objcpy((object*)pop(S)));
+    push(S,(void*)objlen((object*)pop(S)));
     goto*dequeue(C);
 _VAPP:
     v=pop(S);
@@ -916,7 +941,102 @@ _OTOS:
 _VTOS:
     push(S,(void*)objtype2symbol(OBJ_VECT,pop(S)));
     goto* dequeue(C);
+_VMUL:
+    i=(long)pop(S);
+    ll=(Vector*)pop(S);l=vector_init(10);
+    for (j=0;j<i;j++) l=vector_append(l,ll);
+    push(S,(void*)l);
+    goto*dequeue(C);
+/*
+_SMUL:
+    i=(long)pop(S);
+    sym=(Symbol*)pop(S);sym1=new_symbol("",0);
+    for (j=0;j<i;j++) sym1=symbol_append(sym1,sym);
+    push(S,(void*)sym1);
+    goto*dequeue(C);
+*/
+_SMUL:
+    i=(long)pop(S);sym=(Symbol*)pop(S);
+    ch=(char*)malloc((i*sym->_size+1)*sizeof(char));
+    //strcpy(ch,sym->_table);
+    for(j=0;j<i;j++) //strcat(ch,sym->_table);
+        memcpy(ch+j*sym->_size,sym->_table,sym->_size);
+    ch[i*sym->_size]='\0';
+    push(S,(void*)new_symbol(ch,i*sym->_size));
+    goto *dequeue(C);
+_VEQ:
+    ll=(Vector*)pop(S);
+    if ((l=(Vector*)pop(S))->_sp != ll->_sp) push(S,(void*)FALSE);
+    else if ((long)(void*)l == (long)(void*)ll) push(S,(void*)TRUE) ;
+    else {
+        for(i=0;i<l->_sp;i++) {
+            if (objcmp((object*)vector_ref(l,i), (object*)vector_ref(ll,i)) != 0) {push(S,(void*)FALSE); goto *dequeue(C);}
+        }
+        push(S,(void*)TRUE);
+    }
+    goto*dequeue(C);
+_SEQ:
+    sym=(Symbol*)pop(S);
+    push(S,(void*)(long)symbol_eq((Symbol*)pop(S),sym));
+    goto *dequeue(C);
+_ISR:
+    i=(long)pop(S);
+    push(S,(void*)((long)pop(S)>>i));
+    goto * dequeue(C);
+_ISL:
+    i=(long)pop(S);
+    push(S,(void*)((long)pop(S)<<i));
+    goto * dequeue(C);
+_LSR:
+    i=(long)pop(S);
+    z=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(z);
+    mpz_cdiv_q_2exp(z,(mpz_ptr)pop(S),i);
+    push(S,(void*)z);
+    goto *dequeue(C);
+_LSL:
+    i=(long)pop(S);
+    z=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(z);
+    mpz_mul_2exp(z,(mpz_ptr)pop(S),i);
+    push(S,(void*)z);
+    goto *dequeue(C);
+_OSR:
+    i=(long)pop(S);
+    push(S,(void*)objsr((object*)pop(S),(object*)i));
+    goto *dequeue(C);
+_OSL:
+    i=(long)pop(S);
+    push(S,(void*)objsl((object*)pop(S),(object*)i));
+    goto *dequeue(C);
+_VSLS:
+    j=(long)pop(S);i=(long)pop(S);
+    l=(Vector*)malloc(sizeof(Vector));
+    ll=(Vector*)pop(S);
+    l->_table=&ll->_table[i];
+    l->_cp=0;
+    l->_sp=(j-i);
+    l->_size=ll->_size-i;
+    push(S,(void*)l);
+    goto *dequeue(C);
+_SSLS:
+    j=(long)pop(S);i=(long)pop(S);
+    sym=symbol_cpy_n((Symbol*)pop(S),i,j-i);
+    push(S,(void*)sym);
+    goto *dequeue(C);
+_OSLS:
+    j=(long)pop(S);i=(long)pop(S);
+    push(S,(void*)objslice((object*)pop(S),i,j));
+    goto *dequeue(C);
+
+//_SET_IADD:
+//_SET_ISUB:
+//_SET_IMUL:
+//_SET_IDIV:
+//_SET_IMOD:
+//_SET_IBOR:
+//_SET_IBAND:
+
 }
+
 /*
    Vector * vector_make(void * L[], int N) {
    int i ;

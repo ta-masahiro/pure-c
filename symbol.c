@@ -43,6 +43,14 @@ Symbol*symbol_cpy(Symbol*s) {
     return sym;
 }
 
+Symbol*symbol_cpy_n(Symbol*s,long start,long size) {
+    char *st=(char*)malloc((size+1)*sizeof(char));
+    memcpy(st,s->_table+start*sizeof(char),size*sizeof(char));
+    *(st+size)='\0';
+    Symbol*sym=(Symbol*)malloc(sizeof(Symbol));
+    sym->_size=size;sym->_table=st;
+    return sym;
+}
 Symbol* symbol_ref(Symbol*s,unsigned long pos) {
     Symbol*r=(Symbol*)malloc(sizeof(Symbol));
     char* table=(char*)malloc(2*sizeof(char));
@@ -53,4 +61,17 @@ Symbol* symbol_ref(Symbol*s,unsigned long pos) {
 Symbol*symbol_set(Symbol*t,unsigned long pos,Symbol*s) {
     memcpy(t->_table+pos,s->_table,s->_size);
     return t;
+}
+
+Symbol * symbol_pop(Symbol *s) {
+    Symbol*r=(Symbol*)malloc(sizeof(Symbol));
+    char* table=(char*)malloc(2*sizeof(char));
+    table[0]=s->_table[s->_size-1];table[1]='\0';
+    s->_table[s->_size-1]='\0';s->_size--;
+    r->_size=1;r->_table=table;
+    return r;
+}
+
+void*symbol_push(Symbol *t,Symbol *s) {
+    
 }

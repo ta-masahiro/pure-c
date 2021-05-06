@@ -44,11 +44,11 @@ typedef enum {
     AST_2OP,        // 7:AST_2OP,[op_type,left_ast,right_ast]
     AST_1OP,        // 8:AST_1OP,[op_type,ast] 
     AST_VREF,       // 9:AST_VREF [vect_ast,index_ast] 
-    AST_SLS,        //10:
+    AST_SLS,        //10:AST_SLS,[ast_pair_list]
     AST_LIT,        //11:AST_LIT,[type,value] 
     AST_VAR,        //12:AST_VAR,[value]
     AST_VECT,       //13:AST_VECT,[ast_expr_list]
-    AST_DICT,       //14:
+    AST_DICT,       //14:AST_DICT,[ast_pair_list]
     AST_APPLY,      //15:AST_APPLY,[ast_expr_list]
     AST_FCALL,      //16:AST_FCALL,[ast,[ast_expr_list]] 
     AST_EXP_LIST,   //17:AST_EXP_LIST,[ast_list] 
@@ -58,6 +58,8 @@ typedef enum {
     AST_EXP_LIST_DOTS,
     AST_ARG_LIST,   //22:AST_ARG_LIST,[ast,ast,ast...]
     AST_ARG_LIST_DOTS,
+    AST_PAIR,       //24:AST_PAIR,[car_ast,cdrast]
+    AST_PAIR_LIST,  //25:AST_PAIR_LIST,[pair_ast,pair_ast,...]
 } ast_type; 
 
 

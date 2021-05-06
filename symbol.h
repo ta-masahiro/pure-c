@@ -11,5 +11,7 @@ int symbol_eq(Symbol*s1,Symbol*s2) ;
 Symbol * symbol_append(Symbol*s1,Symbol*s2) ;
 Symbol * symbol_ref(Symbol*s,unsigned long pos);
 Symbol*symbol_cpy(Symbol*s) ;
+Symbol*symbol_cpy_n(Symbol*s,long i,long j) ;
 Symbol*symbol_set(Symbol*t,unsigned long pos,Symbol*s);
+Symbol*symbol_pop(Symbol*s);
 #endif

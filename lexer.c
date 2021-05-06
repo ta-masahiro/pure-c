@@ -428,7 +428,7 @@ token * is_DEL(Stream*S, tokenstate s, char* buff) {
     switch(c) {
         case '+':case '-':case '*': case '/':case '%':case '&':case '|':case '^':case '!': case '<':case '=':case '>':
             cc=get_char(S);
-            if (cc == c || cc == '=' || ( c == '-' && cc == '>')) {
+            if (cc == c || cc == '=' || ( c == '-' && cc == '>') || (c=='<' && cc=='-')) {
                 *(buff ++ ) = c; *(buff ++ ) = cc;
                 return new_token(c*256+cc, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0,S);
             } else { 

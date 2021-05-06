@@ -51,7 +51,7 @@ void vector_resize(Vector * s) {
         free(s -> _table); exit(0); }
     s ->_table = table;  
     s ->_size = maxN;
-    //printf("vector resize:%d to %d\n", oldN, maxN); // vector_print(s);    
+    printf("vector resize:%d to %d\n", oldN, maxN); // vector_print(s);    
 }
 
 Vector * vector_append(Vector*v1,Vector*v2) {

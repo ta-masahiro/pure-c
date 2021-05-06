@@ -530,7 +530,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objRADD(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFADD(itolf(x -> data.intg), (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                default:break;
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -539,7 +539,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objRADD(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFADD(litolf((mpz_ptr)x -> data.ptr), (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                default:break;
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -548,7 +548,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objRADD((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFADD(rtolf((mpq_ptr)x -> data.ptr), (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                default:break;
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -557,7 +557,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objFADD(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFADD(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFADD(itolf(x -> data.intg), (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                default:break;
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -566,8 +566,18 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objLFADD((mpf_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFADD((mpf_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFADD((mpf_ptr)x -> data.ptr, (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                default:break;
             }
+        case OBJ_VECT:
+            if (type_y == OBJ_VECT) {
+                return newVECT(vector_append((Vector*)x->data.ptr,(Vector*)y->data.ptr));
+            }
+            break;
+        case OBJ_SYM:
+            if (type_y == OBJ_SYM) {
+                return newSTR(symbol_append((Symbol*)x->data.ptr,(Symbol*)y->data.ptr));
+            }
+        default:printf("runtime error illegal add op\n");return NULL;
     }
 }
 
@@ -625,6 +635,9 @@ object * objsub(object * x, object * y) {
 object * objmul(object * x, object * y) {
     int type_x = x -> type;
     int type_y = y -> type;
+    long i,n;
+    Vector*v; Symbol* s;
+
     switch(type_x) {
         case OBJ_INT:
             switch(type_y) {
@@ -671,6 +684,30 @@ object * objmul(object * x, object * y) {
                 case OBJ_LFLT:  return objLFMUL((mpf_ptr)x -> data.ptr, (mpf_ptr)y -> data.ptr);
                 default:printf("runtime error illegal add op\n");return NULL;
             }
+        case OBJ_VECT:
+            switch (type_y) {
+                case OBJ_INT:break;
+                case OBJ_LINT: n=litoi((mpz_ptr)y->data.ptr);break;
+                case OBJ_RAT:  n=rtoi((mpq_ptr)y->data.ptr);break;
+                case OBJ_FLT:  n=ftoi((double)y->data.flt);break;
+                case OBJ_LFLT: n=lftoi((mpf_ptr)y->data.ptr);break;
+                default:printf("runtime error illegal mul op\n");return NULL;
+            }
+            v=(Vector*)x->data.ptr;
+            for(i=0;i<n;i++) v=vector_append(v,v);
+            return newVECT(v); 
+        case OBJ_SYM:
+            switch (type_y) {
+                case OBJ_INT:break;
+                case OBJ_LINT: n=litoi((mpz_ptr)y->data.ptr);break;
+                case OBJ_RAT:  n=rtoi((mpq_ptr)y->data.ptr);break;
+                case OBJ_FLT:  n=ftoi((double)y->data.flt);break;
+                case OBJ_LFLT: n=lftoi((mpf_ptr)y->data.ptr);break;
+                default:printf("runtime error illegal mul op\n");return NULL;
+            }
+            s=(Symbol*)x->data.ptr;
+            for(i=0;i<n;i++) s=symbol_append(s,s);
+            return newSTR(s); 
     }
 }
 
@@ -894,9 +931,89 @@ object * objand(object * x, object * y) {
             }
     }
 }
+
+object*objsr(object*x,object*y) {
+    mpz_ptr lz;
+    switch(x->type) {
+        case OBJ_INT:
+            switch(y->type) {
+                case OBJ_INT: return newINT(x->data.intg >> y->data.intg);
+                case OBJ_LINT:return newINT(x->data.intg >> mpz_get_si((mpz_ptr)y->data.ptr));
+                case OBJ_RAT: return newINT(x->data.intg >> rtoi((mpq_ptr)y->data.ptr));
+                case OBJ_FLT: return newINT(x->data.intg >> ftoi(y->data.flt));
+                case OBJ_LFLT:return newINT(x->data.intg >> lftoi((mpf_ptr)y->data.ptr));
+                default:printf("runtime error illegal sr op\n");return NULL;
+                }
+        case OBJ_LINT:
+            lz=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(lz);
+            switch(y->type) {
+                case OBJ_INT:
+                    mpz_cdiv_q_2exp(lz,(mpz_ptr)x->data.ptr,y->data.intg);
+                    return newLINT(lz);
+                case OBJ_LINT:
+                    mpz_cdiv_q_2exp(lz,(mpz_ptr)x->data.ptr,mpz_get_si((mpz_ptr)y->data.ptr));
+                    return newLINT(lz);
+                case OBJ_RAT:
+                    mpz_cdiv_q_2exp(lz,(mpz_ptr)x->data.ptr,rtoi((mpq_ptr)y->data.ptr));
+                    return newLINT(lz);
+                case OBJ_FLT:
+                    mpz_cdiv_q_2exp(lz,(mpz_ptr)x->data.ptr,ftoi(y->data.flt));
+                    return newLINT(lz);
+                case OBJ_LFLT:
+                    mpz_cdiv_q_2exp(lz,(mpz_ptr)x->data.ptr,lftoi((mpf_ptr)y->data.ptr));
+                    return newLINT(lz);
+                default:printf("runtime error illegal sr op\n");return NULL;
+                }
+        default:printf("runtime error illegal sr op\n");return NULL;
+    }
+}
+
+object*objsl(object*x,object*y) {
+    mpz_ptr lz;
+    switch(x->type) {
+        case OBJ_INT:
+            switch(y->type) {
+                case OBJ_INT: return newINT(x->data.intg << y->data.intg);
+                case OBJ_LINT:return newINT(x->data.intg << mpz_get_si((mpz_ptr)y->data.ptr));
+                case OBJ_RAT: return newINT(x->data.intg << rtoi((mpq_ptr)y->data.ptr));
+                case OBJ_FLT: return newINT(x->data.intg << ftoi(y->data.flt));
+                case OBJ_LFLT:return newINT(x->data.intg << lftoi((mpf_ptr)y->data.ptr));
+                default:printf("runtime error illegal sl op\n");return NULL;
+            }                
+        case OBJ_LINT:
+            lz=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(lz);
+            switch(y->type) {
+                case OBJ_INT:
+                    mpz_mul_2exp(lz,(mpz_ptr)x->data.ptr,y->data.intg);
+                    return newLINT(lz);
+                case OBJ_LINT:
+                    mpz_mul_2exp(lz,(mpz_ptr)x->data.ptr,mpz_get_si((mpz_ptr)y->data.ptr));
+                    return newLINT(lz);
+                case OBJ_RAT:
+                    mpz_mul_2exp(lz,(mpz_ptr)x->data.ptr,rtoi((mpq_ptr)y->data.ptr));
+                    return newLINT(lz);
+                case OBJ_FLT:
+                    mpz_mul_2exp(lz,(mpz_ptr)x->data.ptr,ftoi(y->data.flt));
+                    return newLINT(lz);
+                case OBJ_LFLT:
+                    mpz_mul_2exp(lz,(mpz_ptr)x->data.ptr,lftoi((mpf_ptr)y->data.ptr));
+                    return newLINT(lz);
+                default:printf("runtime error illegal sr op\n");return NULL;
+            }
+        default:printf("runtime error illegal sr op\n");return NULL;
+    }
+}
+
 int objcmp(object * x, object * y) {
     int type_x = x -> type;
     int type_y = y -> type;
+    Vector*v1,*v2; Symbol* s1,*s2;
+    int i,n;
+
+    if ((long)(void*)x == (long)(void*)y) return 0;
+    //if (x->type != y->type) return -1;
+    if (x->type == y->type && x->data.ptr == y->data.ptr) return 0;
+
     switch(type_x) {
         case OBJ_INT:
             switch(type_y) {
@@ -905,7 +1022,7 @@ int objcmp(object * x, object * y) {
                 case OBJ_RAT:   return objRCMP(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFCMP(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFCMP(itolf(x -> data.intg), (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return 0;
+                default:return -2;
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -914,7 +1031,7 @@ int objcmp(object * x, object * y) {
                 case OBJ_RAT:   return objRCMP(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFCMP(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFCMP(litolf((mpz_ptr)x -> data.ptr), (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return 0;
+                default:return -2;
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -923,7 +1040,7 @@ int objcmp(object * x, object * y) {
                 case OBJ_RAT:   return objRCMP((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFCMP(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFCMP(rtolf((mpq_ptr)x -> data.ptr), (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return 0;
+                default:return -2;
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -932,7 +1049,7 @@ int objcmp(object * x, object * y) {
                 case OBJ_RAT:   return objFCMP(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFCMP(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFCMP(ftolf(x -> data.intg), (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return 0;
+                default:return -2;
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -941,8 +1058,27 @@ int objcmp(object * x, object * y) {
                 case OBJ_RAT:   return objLFCMP((mpf_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFCMP((mpf_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFCMP((mpf_ptr)x -> data.ptr, (mpf_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return 0;
+                default:return -2;
             }
+        case OBJ_VECT:
+            if (type_y == OBJ_VECT) {
+                if ((n=((Vector*)(x->data.ptr))->_sp) != ((Vector*)(x->data.ptr))->_sp) return -2;
+                v1=(Vector*)x->data.ptr; v2=(Vector*)y->data.ptr;
+                if ((long)(void*)v1 == (long)(void*)v2) return 0 ;
+                for(i=0;i<n;i++) {
+                    if (objcmp(vector_ref(v1,i),vector_ref(v2,i)) != 0) return -2;
+                }
+                return 0;
+            }
+            return -2;
+        case OBJ_SYM:
+            if (type_y == OBJ_SYM) {
+                if ((n=((Symbol*)(x->data.ptr))->_size) != ((Symbol*)(x->data.ptr))->_size) return -2;
+                s1=(Symbol*)x->data.ptr; s2=(Symbol*)y->data.ptr;
+                if ((long)(void*)s1 == (long)(void*)s2) return 0 ;
+                return strcmp(s1->_table,s2->_table);
+            }
+            return -2;
     }
 }
 
@@ -1020,20 +1156,21 @@ object * objsqrt(object *x) {
 }
 
 int objlt(object*x,object*y){
-    if (objcmp(x,y)<0) return TRUE;
+    if (objcmp(x,y)==-1) return TRUE;
     return FALSE;
 }
 int objle(object*x,object*y){
-    if (objcmp(x,y)>0) return FALSE;
-    return TRUE;
+    int c;
+    if ((c=objcmp(x,y))==-1 || c==0 ) return TRUE;
+    return FALSE;
 }
 int objgt(object*x,object*y){
-    if (objcmp(x,y)<0) return TRUE;
+    if (objcmp(x,y)>0) return TRUE;
     return FALSE;
 }
 int objge(object*x,object*y){
-    if (objcmp(x,y)<0) return FALSE;
-    return TRUE;
+    if (objcmp(x,y)>=0) return TRUE;
+    return FALSE;
 }
 int objeq(object*x,object*y){
     if (objcmp(x,y)==0) return TRUE;
@@ -1043,10 +1180,11 @@ int objneq(object*x,object*y){
     if (objcmp(x,y)!=0) return TRUE;
     return FALSE;
 }
-
+/*
 char * objtostr(object * o) {
-    char ret[4096]="[ ";
-    char *buf = (char*)malloc(1024*sizeof(char));   // オーバーフローの可能性ありあとで見直すこと
+    //char ret[4096]="[ ";
+    int new_size,buf_size=1024;
+    char *str,*buf = (char*)malloc(1024*sizeof(char));   // オーバーフローの可能性ありあとで見直すこと
     mp_exp_t e;
     int i,n;
     switch(o -> type){
@@ -1062,10 +1200,14 @@ char * objtostr(object * o) {
                         strcpy(buf, "[ ");
                         if (n>0) {
                             for(i=0;i<n-1;i++) {
-                                strcat(buf,objtostr((object*)vector_ref(((Vector*)o->data.ptr),i)));
+                                str=objtostr((object*)vector_ref(((Vector*)o->data.ptr),i));
+                                if ((new_size=strlen(buf)+strlen(str)+1)>=buf_size) {buf=(char*)realloc(buf,new_size*2);buf_size=new_size*2;}
+                                strcat(buf,str);
                                 strcat(buf,", ");
                             }
-                            strcat(buf,objtostr((object*)vector_ref(((Vector*)o->data.ptr),n-1)));
+                            str=objtostr((object*)vector_ref(((Vector*)o->data.ptr),n-1));
+                            if ((new_size=strlen(buf)+strlen(str)+2)>=buf_size) {buf=(char*)realloc(buf,new_size*2);buf_size=new_size*2;}
+                            strcat(buf,str);
                         }
                         strcat(buf," ]");
                         return buf;
@@ -1074,12 +1216,18 @@ char * objtostr(object * o) {
     }
     return NULL;
 }
+*/
+char*objtostr(object* o) {
+    switch(o->type) {
+        case OBJ_INT:return objtype2str(OBJ_INT,(void*)(o->data.intg));
+        case OBJ_FLT:return objtype2str(OBJ_FLT,(void*)(&(o->data.flt)));
+        default:     return objtype2str(o->type,(void*)(o->data.ptr));
+    }
+}
 
-//char*objtostr(object* o) {
-//    return objtype2str(o->type,(void*)o->data);
-//}
 char * objtype2str(obj_type type, void* value) {
-    char *buf = (char*)malloc(1024*sizeof(char));   /* オーバーフローの可能性ありあとで見直すこと */
+    int new_size,buf_size=1024;
+    char *str,*buf = (char*)malloc(buf_size*sizeof(char)); 
     mp_exp_t e;
     int i,n;
     //if (type != OBJ_NONE && value==NULL) return "NULL";
@@ -1095,15 +1243,20 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_SYM:   return ((Symbol*)value)->_table;                //
         case OBJ_VECT://printf("vectorsize:%d",((Vector*)value)->_sp);
                         n=((Vector*)value)->_sp;
-                        strcpy(buf,"[ ");
+                        strcpy(buf,"[");
                         if (n > 0) {
+                            //結構無駄なことをしている気がする
                             for(i=0;i<n-1;i++) {//printf("##%s\n",objtostr((object*)vector_ref(((Vector*)value),i)));
-                                strcat(buf,objtostr((object*)vector_ref(((Vector*)value),i)));
+                                str=objtostr((object*)vector_ref(((Vector*)value),i));
+                                if ((new_size=strlen(buf)+strlen(str)+1)>=buf_size) {buf=(char*)realloc(buf,new_size*2);buf_size=new_size*2;}
+                                strcat(buf,str);
                                 strcat(buf,", ");
                             }
-                            strcat(buf,objtostr((object*)vector_ref(((Vector*)value),n-1)));
+                            str=objtostr((object*)vector_ref(((Vector*)value),n-1));
+                            if ((new_size=strlen(buf)+strlen(str)+1)>=buf_size) {buf=(char*)realloc(buf,new_size*2);buf_size=new_size*2;}
+                            strcat(buf,str);
                         }
-                        strcat(buf," ]");
+                        strcat(buf,"]");
                         return buf;
         case OBJ_UFUNC:PR(13); sprintf(buf,"<UserFunction: %lx>",(long)value);return buf;
         default:printf("RntimeError:Illegal print args!\n");
@@ -1155,11 +1308,11 @@ object * objcpy(object * s) {
     return NULL;
 }
 
-int objlen(object* o) {
+long objlen(object* o) {
     switch(o->type) {
         case OBJ_VECT:return ((Vector*)o->data.ptr)->_sp;
         case OBJ_SYM :return ((Symbol*)o->data.ptr)->_size;
-        default:printf("RntimeError:Illegal length Method!\n");
+        default:printf("RntimeError:Illegal length Method!%d\n",o->type);
     }
     return 0;
 }
@@ -1167,11 +1320,48 @@ object*objref(object*t,long i) {
     object*o;
     if (t->type==OBJ_VECT) return vector_ref((Vector*)t->data.ptr,i);
     if (t->type==OBJ_SYM)  {o=(object*)malloc(sizeof(object));o->data.ptr=(void*)symbol_ref((Symbol*)t->data.ptr,i);o->type=OBJ_SYM;return o;}
+    printf("RntimeError:Illegal ref Method!\n");
 }
 void objset(object*t,long i,object*v) {
-    object*o;
     if (t->type==OBJ_VECT) vector_set((Vector*)t->data.ptr,i,(void*)v);
     if (t->type==OBJ_SYM)  symbol_set((Symbol*)t->data.ptr,i,(Symbol*)v->data.ptr);
+    printf("RntimeError:Illegal set Method!\n");
+}
+
+object* objpop(object*t) {
+    object*o=(object*)malloc(sizeof(object));
+    if (t->type==OBJ_VECT) return (object*)pop((Vector*)t->data.ptr);
+    if (t->type==OBJ_SYM) {
+        o->data.ptr=(void*)symbol_pop((Symbol*)t->data.ptr);
+        o->type=OBJ_SYM;
+        return o;
+    }
+    printf("RntimeError:Illegal pop Method!\n");
+}
+
+void objpush(object *o,object* value) {
+    if (o->type == OBJ_VECT) push((Vector*)o->data.ptr,(void*)value);
+    else printf("RntimeError:Illegal push Method!\n");
+}
+
+object * objslice(object* o,long start,long end) {
+    Vector * l,*ll;Symbol * sym;
+    if (o->type == OBJ_VECT) {
+        l=(Vector*)malloc(sizeof(Vector));
+        ll=(Vector*)o->data.ptr;
+        l->_table=&ll->_table[start];
+        l->_cp=0;
+        l->_sp=(end-start);
+        l->_size=ll->_size-start;
+        return newVECT(l);
+    } else if (o->type == OBJ_SYM) {
+        sym=symbol_cpy_n((Symbol*)o->data.ptr,start,end-start);
+        return newSTR(sym);
+    }else printf("RntimeError:Illegal push Method!\n");
+}
+
+Symbol * vector2sym(Vector*v) {
+
 }
 /*
    void * _realloc(void * ptr, size_t old_size, size_t new_size) {
