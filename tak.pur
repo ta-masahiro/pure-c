@@ -1,0 +1,3 @@
+{function tak; 
+tak(int x,int y,int z)=if x<=y:z:tak(tak(x--,y,z),tak(y--,z,x),tak(z--,x,y));
+tak(19,8,0)};

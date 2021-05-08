@@ -24,7 +24,8 @@ void vector_print(Vector * s) ;
 inline int is_stac_empty(Vector * s) { return s ->_sp == 0; }
 inline int is_queu_empty(Vector * s) { return s ->_sp == s ->_cp; }
 inline void push(Vector * s, void * data) {
-    if (s ->_sp >= s ->_size ) vector_resize(s);  
+    if (s ->_sp >= s ->_size ) 
+        vector_resize(s);  
     s ->_table[(s ->_sp) ++ ] = data;
 }
 inline void * pop(Vector * s) {return s ->_table[  -- (s ->_sp)]; }

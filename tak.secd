@@ -1,55 +1,55 @@
 [
     LDF
     [
-        LD  [0 0]
-        LD  [0 1]
-        LD  [0 2]
+        LD00
+        LD01
+        LD02
         LDF
         [
-;             LD [1 0]
+;             LD10
 ;             INC
-;             SET [1 0]
+;             SET10
 ;             POP
-            LD [0 0]
-            LD [0 1]
+            LD00
+            LD01
             LEQ
             TSEL
             [
-                LD [0 2]
+                LD02
                 RTN
             ]
             [
-                LD [0 0]
+                LD00
                 ; LDC 1
                 ; SUB
                 DEC
-                LD  [0 1]
-                LD  [0 2]
-                LD  [1 1]
+                LD01
+                LD02
+                LD11
                 CALL 3
-                LD [0 1]
+                LD01
                 ; LDC 1
                 ; SUB
                 DEC 
-                LD  [0 2]
-                LD  [0 0]
-                LD  [1 1]
+                LD02
+                LD00
+                LD11
                 CALL 3
-                LD  [0 2]
+                LD02
                 ; LDC 1
                 ; SUB
                 DEC
-                LD  [0 0]
-                LD  [0 1]
-                LD  [1 1]
+                LD00
+                LD01
+                LD11
                 CALL 3
-                LD  [1 1]
+                LD11
                 TCALL 3
                 RTN
             ]
             STOP
         ]
-        SET [0 1]
+        SET01
         CALL 3
         RTN
     ]

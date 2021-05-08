@@ -14,4 +14,6 @@
  
 #define TRUE    1
 #define FALSE   0
-#define PR(n) (printf("### %d ###\n",n))
+//#define PR(n) (printf("### %d ###\n",n))
+#define MAX(a,b) (a>=b ? a :b )
+#define MIN(a,b) (a<=b ? a :b )

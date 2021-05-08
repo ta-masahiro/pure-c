@@ -2,20 +2,22 @@
 //typedef void*(*Funcpointer)(Vector*);
 
 char * code_name[] = 
-    {"STOP",  "LDC",  "LD",  "ADD", "CALL", "RTN", "SEL", "JOIN", "LDF", "SET", "LEQ", "LDG",  "GSET", "SUB",
-     "DEC",   "TCALL","TSEL","DROP","EQ",   "INC", "MUL", "DIV",  "VEC", "REF", "VSET","HASH", "LDH",  "HSET",
-     "VPUSH", "VPOP", "LADD","LSUB","LMUL", "ITOL","LPR", "PCALL","LDM", "DUP", "SWAP","ROT",  "_2ROT","CALLS",
-     "TCALLS","RTNS", "LDP", "LDL", "FADD", "FSUB","FMUL","FDIV", "FPR", "ITOF","LCPY","OADD", "OSUB", "OMUL",
-     "ODIV",  "OEQ",  "OLEQ","ITOO","OPR",  "ODEC","OINC","IADD", "ISUB","IMUL","IDIV","IEQ",  "ILEQ", "IDEC",
-     "IINC",  "LTOO", "FTOO","IJTOO","SPR", "LDIV","OLT", "LT"  , "ILT", "GT",  "IGT", "OGT",  "GEQ",  "IGEQ",
-     "OGEQ",  "NEG",  "INEG","ONEG", "BNOT","APL", "TAPL","FEQ",  "FLEQ","FGEQ","FLT", "FGT",  "LEQ",  "LLEQ",
-     "LGEQ",  "LLT",  "LGT", "RADD", "RSUB","RMUL","RDIV","REQ",  "RLEQ","RGEQ","RLT", "RGT",  "ITOR", "OTOF",
-     "LTOR",  "LTOF", "RTOF", "RTOO","LTOI","RTOI","RTOL","FTOI", "FTOL","FTOR","LNEG","RNEG", "FNEG", "LINC",
-     "LDEC",  "NEQ",  "INEQ", "LNEQ","RNEQ","FNEQ","ONEQ","OTOI", "OTOL","OTOR","VTOO","STOO", "IPOW", "LPOW",
-     "RPOW",  "FPOW", "OPOW", "IMOD","LMOD","RMOD","FMOD","OMOD", "IBOR","LBOR","OBOR","IBNOT","LBNOT","OBNOT",
-     "IBAND", "LBAND","OBAND","VLEN","SLEN","OLEN","VAPP","SAPP", "VREF","SREF","OREF","SSET", "OSET", "STOI",
-     "STOL",  "STOR", "STOF", "ITOS","LTOS","RTOS","FTOS","OTOS", "VTOS","SPOP","OPOP","OPUSH","SMUL", "VMUL",
-     "VEQ",   "SEQ",  "ISR",  "ISL", "LSR", "LSL", "OSR", "OSL",  "OTOV","VSLS","SSLS","OSLS", "$$$" };
+    {"STOP",  "LDC",  "LD",  "ADD", "CALL", "RTN", "SEL",  "JOIN", "LDF",  "SET",  "LEQ",  "LDG",  "GSET", "SUB",
+     "DEC",   "TCALL","TSEL","DROP","EQ",   "INC", "MUL",  "DIV",  "VEC",  "REF",  "VSET", "HASH", "LDH",  "HSET",
+     "VPUSH", "VPOP", "LADD","LSUB","LMUL", "ITOL","LPR",  "PCALL","LDM",  "DUP",  "SWAP", "ROT",  "_2ROT","CALLS",
+     "TCALLS","RTNS", "LDP", "LDL", "FADD", "FSUB","FMUL", "FDIV", "FPR",  "ITOF", "LCPY", "OADD", "OSUB", "OMUL",
+     "ODIV",  "OEQ",  "OLEQ","ITOO","OPR",  "ODEC","OINC", "IADD", "ISUB", "IMUL", "IDIV", "IEQ",  "ILEQ", "IDEC",
+     "IINC",  "LTOO", "FTOO","IJTOO","SPR", "LDIV","OLT",  "LT"  , "ILT",  "GT",   "IGT",  "OGT",  "GEQ",  "IGEQ",
+     "OGEQ",  "NEG",  "INEG","ONEG", "BNOT","APL", "TAPL", "FEQ",  "FLEQ", "FGEQ", "FLT",  "FGT",  "LEQ",  "LLEQ",
+     "LGEQ",  "LLT",  "LGT", "RADD", "RSUB","RMUL","RDIV", "REQ",  "RLEQ", "RGEQ", "RLT",  "RGT",  "ITOR", "OTOF",
+     "LTOR",  "LTOF", "RTOF", "RTOO","LTOI","RTOI","RTOL", "FTOI", "FTOL", "FTOR", "LNEG", "RNEG", "FNEG", "LINC",
+     "LDEC",  "NEQ",  "INEQ", "LNEQ","RNEQ","FNEQ","ONEQ", "OTOI", "OTOL", "OTOR", "VTOO", "STOO", "IPOW", "LPOW",
+     "RPOW",  "FPOW", "OPOW", "IMOD","LMOD","RMOD","FMOD", "OMOD", "IBOR", "LBOR", "OBOR", "IBNOT","LBNOT","OBNOT",
+     "IBAND", "LBAND","OBAND","VLEN","SLEN","OLEN","VAPP", "SAPP", "VREF", "SREF", "OREF", "SSET", "OSET", "STOI",
+     "STOL",  "STOR", "STOF", "ITOS","LTOS","RTOS","FTOS", "OTOS", "VTOS", "SPOP", "OPOP", "OPUSH","SMUL", "VMUL",
+     "VEQ",   "SEQ",  "ISR",  "ISL", "LSR", "LSL", "OSR",  "OSL",  "OTOV", "VSLS", "SSLS", "OSLS", "LD00", "LD01",
+     "LD02",  "LD03", "LD10", "LD11","LD12","LD13","SET00","SET01","SET02","SET03","SET10","SET11","SET12","SET13",
+     "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -31,7 +33,8 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0 };
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    0 };
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -69,20 +72,21 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
     object*o;
     char*ch;
     static const void * table[] = {
-            &&_STOP,  &&_LDC,  &&_LD,  &&_ADD,  &&_CALL,&&_RTN, &&_SEL, &&_JOIN, &&_LDF, &&_SET, &&_LEQ, &&_LDG,  &&_GSET, &&_SUB,  \
-            &&_DEC,   &&_TCALL,&&_TSEL,&&_DROP, &&_EQ,  &&_INC, &&_MUL, &&_DIV,  &&_VEC, &&_REF, &&_VSET,&&_HASH, &&_LDH,  &&_HSET, \
-            &&_VPUSH, &&_VPOP, &&_LADD,&&_LSUB, &&_LMUL,&&_ITOL,&&_LPR, &&_PCALL,&&_LDM, &&_DUP, &&_SWAP,&&_ROT,  &&_2ROT, &&_CALLS,\
-            &&_TCALLS,&&_RTNS, &&_LDP, &&_LDL,  &&_FADD,&&_FSUB,&&_FMUL,&&_FDIV ,&&_FPR, &&_ITOF,&&_LCPY,&&_OADD, &&_OSUB, &&_OMUL, \
-            &&_ODIV,  &&_OEQ,  &&_OLEQ,&&_ITOO, &&_OPR ,&&_ODEC,&&_OINC,&&_IADD, &&_ISUB,&&_IMUL,&&_IDIV,&&_IEQ,  &&_ILEQ, &&_IDEC, \
-            &&_IINC,  &&_LTOO, &&_FTOO,&&_IJTOO,&&_SPR ,&&_LDIV,&&_OLT, &&_LT,   &&_ILT ,&&_GT,  &&_IGT, &&_OGT,  &&_GEQ,  &&_IGEQ, \
-            &&_OGEQ,  &&_NEG,  &&_INEG,&&_ONEG, &&_BNOT,&&_APL, &&_TAPL,&&_FEQ,  &&_FLEQ,&&_FGEQ,&&_FLT, &&_FGT,  &&_LEQ,  &&_LLEQ, \
-            &&_LGEQ,  &&_LLT,  &&_LGT, &&_RADD, &&_RSUB,&&_RMUL,&&_RDIV,&&_REQ,  &&_RLEQ,&&_RGEQ,&&_RLT, &&_RGT,  &&_ITOR, &&_ITOF, \
-            &&_LTOR,  &&_LTOF, &&_RTOF,&&_RTOO, &&_LTOI,&&_RTOI,&&_RTOL,&&_FTOI, &&_FTOL,&&_FTOR,&&_LNEG,&&_RNEG, &&_FNEG, &&_LINC, \
-            &&_LDEC,  &&_NEQ,  &&_INEQ,&&_LNEQ, &&_RNEQ,&&_FNEQ,&&_ONEQ,&&_OTOI, &&_OTOL,&&_OTOR,&&_VTOO,&&_STOO, &&_IPOW, &&_LPOW, \
-            &&_RPOW,  &&_FPOW, &&_OPOW,&&_IMOD, &&_LMOD,&&_RMOD,&&_FMOD,&&_OMOD ,&&_IBOR,&&_LBOR,&&_OBOR,&&_IBNOT,&&_LBNOT,&&_OBNOT,\
-            &&_IBAND, &&_LBAND,&&_OBAND,&&_VLEN,&&_SLEN,&&_OLEN,&&_VAPP,&&_SAPP, &&_VREF,&&_SREF,&&_OREF,&&_SSET, &&_OSET ,&&_STOI, \
-            &&_STOL,  &&_STOR, &&_STOF,&&_ITOS, &&_LTOS,&&_RTOS,&&_FTOS,&&_OTOS, &&_VTOS,&&_SPOP,&&_OPOP,&&_OPUSH,&&_SMUL, &&_VMUL, \
-            &&_VEQ,   &&_SEQ,  &&_ISR, &&_ISL,  &&_LSR, &&_LSL, &&_OSR, &&_OSL,  &&_OTOV,&&_VSLS,&&_SSLS,&&_OSLS       };
+            &&_STOP,  &&_LDC,  &&_LD,  &&_ADD,  &&_CALL,&&_RTN, &&_SEL,  &&_JOIN, &&_LDF,  &&_SET,  &&_LEQ,  &&_LDG,  &&_GSET, &&_SUB,  \
+            &&_DEC,   &&_TCALL,&&_TSEL,&&_DROP, &&_EQ,  &&_INC, &&_MUL,  &&_DIV,  &&_VEC,  &&_REF,  &&_VSET, &&_HASH, &&_LDH,  &&_HSET, \
+            &&_VPUSH, &&_VPOP, &&_LADD,&&_LSUB, &&_LMUL,&&_ITOL,&&_LPR,  &&_PCALL,&&_LDM,  &&_DUP,  &&_SWAP, &&_ROT,  &&_2ROT, &&_CALLS,\
+            &&_TCALLS,&&_RTNS, &&_LDP, &&_LDL,  &&_FADD,&&_FSUB,&&_FMUL, &&_FDIV ,&&_FPR,  &&_ITOF, &&_LCPY, &&_OADD, &&_OSUB, &&_OMUL, \
+            &&_ODIV,  &&_OEQ,  &&_OLEQ,&&_ITOO, &&_OPR ,&&_ODEC,&&_OINC, &&_IADD, &&_ISUB, &&_IMUL, &&_IDIV, &&_IEQ,  &&_ILEQ, &&_IDEC, \
+            &&_IINC,  &&_LTOO, &&_FTOO,&&_IJTOO,&&_SPR ,&&_LDIV,&&_OLT,  &&_LT,   &&_ILT , &&_GT,   &&_IGT,  &&_OGT,  &&_GEQ,  &&_IGEQ, \
+            &&_OGEQ,  &&_NEG,  &&_INEG,&&_ONEG, &&_BNOT,&&_APL, &&_TAPL, &&_FEQ,  &&_FLEQ, &&_FGEQ, &&_FLT,  &&_FGT,  &&_LEQ,  &&_LLEQ, \
+            &&_LGEQ,  &&_LLT,  &&_LGT, &&_RADD, &&_RSUB,&&_RMUL,&&_RDIV, &&_REQ,  &&_RLEQ, &&_RGEQ, &&_RLT,  &&_RGT,  &&_ITOR, &&_ITOF, \
+            &&_LTOR,  &&_LTOF, &&_RTOF,&&_RTOO, &&_LTOI,&&_RTOI,&&_RTOL, &&_FTOI, &&_FTOL, &&_FTOR, &&_LNEG, &&_RNEG, &&_FNEG, &&_LINC, \
+            &&_LDEC,  &&_NEQ,  &&_INEQ,&&_LNEQ, &&_RNEQ,&&_FNEQ,&&_ONEQ, &&_OTOI, &&_OTOL, &&_OTOR, &&_VTOO, &&_STOO, &&_IPOW, &&_LPOW, \
+            &&_RPOW,  &&_FPOW, &&_OPOW,&&_IMOD, &&_LMOD,&&_RMOD,&&_FMOD, &&_OMOD ,&&_IBOR, &&_LBOR, &&_OBOR, &&_IBNOT,&&_LBNOT,&&_OBNOT,\
+            &&_IBAND, &&_LBAND,&&_OBAND,&&_VLEN,&&_SLEN,&&_OLEN,&&_VAPP, &&_SAPP, &&_VREF, &&_SREF, &&_OREF, &&_SSET, &&_OSET ,&&_STOI, \
+            &&_STOL,  &&_STOR, &&_STOF,&&_ITOS, &&_LTOS,&&_RTOS,&&_FTOS, &&_OTOS, &&_VTOS, &&_SPOP, &&_OPOP, &&_OPUSH,&&_SMUL, &&_VMUL, \
+            &&_VEQ,   &&_SEQ,  &&_ISR, &&_ISL,  &&_LSR, &&_LSL, &&_OSR,  &&_OSL,  &&_OTOV, &&_VSLS, &&_SSLS, &&_OSLS ,&&_LD00, &&_LD01, \
+            &&_LD02,  &&_LD03, &&_LD10,&&_LD11, &&_LD12,&&_LD13,&&_SET00,&&_SET01,&&_SET02,&&_SET03,&&_SET10,&&_SET11,&&_SET12,&&_SET13      };
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -604,7 +608,7 @@ _TAPL:
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);
-_PCALL:
+_PCALL: // primitive function call
     n = (long)dequeue(C);
     func = (Funcpointer)pop(S);
     l = vector_init(n);
@@ -642,8 +646,8 @@ _LDF:
     goto * dequeue(C);
 _VEC:
     n = (long)dequeue(C);
-    if (n==0) {l=vector_init(10);push(S,(void*)l);goto *dequeue(C);}
-    l = vector_init(n);
+    if (n==0) {l=vector_init(100);push(S,(void*)l);goto *dequeue(C);}
+    l = vector_init(n>100 ? n : 100);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n), n * (sizeof(void * )) );
     l ->_sp = n; S ->_sp = S ->_sp - n;  // vector_print(l);
     push(S, (void * )l);
@@ -652,8 +656,8 @@ _VEC:
 _REF:
 _VREF:
     n = (long)pop(S);
-    //push(S, (void * )vector_ref((Vector * )(((object*)pop(S))->data.ptr), n));
-    push(S, (void * )vector_ref((Vector * )pop(S),n));
+    l = (Vector*)pop(S);if (n<0) n=l->_sp+n;
+    push(S, (void * )vector_ref(l,n));
     goto * dequeue(C);
 _SREF:
     n=(long)pop(S);
@@ -941,10 +945,19 @@ _OTOS:
 _VTOS:
     push(S,(void*)objtype2symbol(OBJ_VECT,pop(S)));
     goto* dequeue(C);
+/*
 _VMUL:
     i=(long)pop(S);
     ll=(Vector*)pop(S);l=vector_init(10);
     for (j=0;j<i;j++) l=vector_append(l,ll);
+    push(S,(void*)l);
+    goto*dequeue(C);
+*/
+_VMUL:
+    i=(long)pop(S);
+    ll=(Vector*)pop(S);l=vector_init(i*ll->_sp);
+    for(j=0;j<i;j++) memcpy(l->_table+j*ll->_sp,ll->_table,ll->_sp*sizeof(void*));
+    l->_sp=i*ll->_sp;
     push(S,(void*)l);
     goto*dequeue(C);
 /*
@@ -1011,6 +1024,8 @@ _VSLS:
     j=(long)pop(S);i=(long)pop(S);
     l=(Vector*)malloc(sizeof(Vector));
     ll=(Vector*)pop(S);
+    if (i<0) i=ll->_sp+i;
+    if (j<=0) j=ll->_sp+j;
     l->_table=&ll->_table[i];
     l->_cp=0;
     l->_sp=(j-i);

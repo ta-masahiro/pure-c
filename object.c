@@ -1258,7 +1258,7 @@ char * objtype2str(obj_type type, void* value) {
                         }
                         strcat(buf,"]");
                         return buf;
-        case OBJ_UFUNC:PR(13); sprintf(buf,"<UserFunction: %lx>",(long)value);return buf;
+        case OBJ_UFUNC: sprintf(buf,"<UserFunction: %lx>",(long)value);return buf;
         default:printf("RntimeError:Illegal print args!\n");
     }
 }

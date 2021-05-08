@@ -68,6 +68,7 @@ enum CODE get_convert_op(obj_type from, obj_type to) {
 
 Hash* G;
 Hash* GLOBAL_VAR;
+extern Hash* PRIMITIVE_FUNC;
 typedef struct {
     obj_type type;
     obj_type functon_ret_type;
@@ -219,7 +220,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                             a2->o_type=a1->o_type;
                             v=vector_init(2);
                             push(v,(void*)TOKEN_NONE);push(v,(void*)NULL);
-                                push(a_arg_v,new_ast(AST_LIT,a1->o_type,v));printf("######\n<<<a_arg_v:%d>>>\n",j);ast_print(new_ast(AST_LIT,OBJ_NONE,v),0);                           // a_arg_v:actual arg list
+                                push(a_arg_v,new_ast(AST_LIT,a1->o_type,v));//printf("######\n<<<a_arg_v:%d>>>\n",j);ast_print(new_ast(AST_LIT,OBJ_NONE,v),0);                           // a_arg_v:actual arg list
                             push(d_arg_v,(void*)a2);                                    // d_arg_v:dummy arg list
                         } else if (a2->type==AST_SET &&                                 // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
                                     ((ast*)vector_ref(a2->table,1))->type==AST_VAR) {   //                        <1>                 <2>
@@ -270,13 +271,13 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                 return new_code(code,code_s->ct);
             } else {
                 v1=vector_init(2);v2=vector_init(1);
-                push(v1,(void*)new_ast(AST_ARG_LIST,OBJ_NONE, d_arg_v));printf("##########\n<<<v1>>>\n");ast_print(new_ast(AST_ARG_LIST,OBJ_NONE,d_arg_v),0);//dummy arg list
+                push(v1,(void*)new_ast(AST_ARG_LIST,OBJ_NONE, d_arg_v));//printf("##########\n<<<v1>>>\n");ast_print(new_ast(AST_ARG_LIST,OBJ_NONE,d_arg_v),0);//dummy arg list
                 //push(v2,new_ast(AST_EXP_LIST,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v_expr_body));
-                push(v2,new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body));printf("##########\n<<<v2>>>\n");ast_print(new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body),0);
+                push(v2,new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body));//printf("##########\n<<<v2>>>\n");ast_print(new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body),0);
                 //push(v1,(void*)new_ast(AST_ML,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v2));//ast_print(new_ast(AST_ML,v5),0) ;      // v3:[AST_EXP_LIST,AST_ML]
                 push(v1,(void*)new_ast(AST_ML,OBJ_NONE,v2));//ast_print(new_ast(AST_ML,OBJ_NONE,v2),0) ;      // v3:[AST_EXP_LIST,AST_ML]
                 //a1=new_ast(AST_LAMBDA,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v1);ast_print(a1,0);
-                a1=new_ast(AST_LAMBDA,OBJ_NONE,v1);printf("########\n<<<a1>>>\n");ast_print(a1,0);//ここまでOK!
+                a1=new_ast(AST_LAMBDA,OBJ_NONE,v1);//printf("########\n<<<a1>>>\n");ast_print(a1,0);//ここまでOK!
                 //
                 v3=vector_init(3);
                 push(v3,(void*)a1);
@@ -350,7 +351,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                         push(v1,(void*)vector_ref(a->table,2)); //push righ expr
                         a2=new_ast(AST_LAMBDA,((ast*)vector_ref(a->table,2))->o_type,v1);
                         v2=vector_init(2);push(v2,(void*)(long)'=');
-                        push(v2,(void*)a1);push(v2,(void*)a2);ast_print(new_ast(AST_SET,a2->o_type,v2),0);
+                        push(v2,(void*)a1);push(v2,(void*)a2);//ast_print(new_ast(AST_SET,a2->o_type,v2),0);
                         return codegen(new_ast(AST_SET,a2->o_type,v2),env,FALSE);
                     case AST_VAR:   // AST_SET [set_type, AST_VAR [var_name], right_expr]
                                     //          <0,0>             <1,0>       <2>
@@ -367,7 +368,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                                 //envに保存してある戻り型情報がない関数型変数のコードタイプをct2で置き換える
                                 i=(env->_sp)-(long)vector_ref(pos,0)-1;j=(long)vector_ref(pos,1);   //env内のポジションを計算して
                                 d=(Data*)malloc(sizeof(Data));d->key=s;d->val=ct1;                  //入れるべきデータを作って
-                                vector_set((Vector*)vector_ref(env,i),j,(void*)d);printf("||changed||\n");env_print(env);                  //セットする
+                                vector_set((Vector*)vector_ref(env,i),j,(void*)d);//printf("||changed||\n");env_print(env);                  //セットする
                             } else if (ct1->type != ct2->type) {
                                 if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!\n");return NULL;}
                                 push(code,(void*)conv_op[ct2->type][ct1->type]);
@@ -410,10 +411,10 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
             } //for(i=0;i<args->_sp;i++) printf("%s\t",((Symbol*)vector_ref(args,i))->_table);printf("\n");
             if (a1->type==AST_ARG_LIST_DOTS) {
                 d=(Data*)malloc(sizeof(Data));
-                    d->key=new_symbol("..",2);printf("%s\n",d->key->_table);
+                    d->key=new_symbol("..",2);//printf("%s\n",d->key->_table);
                     d->val=OBJ_NONE;
                 push(args,(void*)d);
-            } vector_print(v);
+            } //vector_print(v);
             push(env,(void*)args);//PR(1);
             code_s=codegen((ast*)vector_ref(a->table,1),env,TRUE);//PR(2);
             code1=code_s->code;ct1=code_s->ct;
@@ -493,7 +494,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                 m = v->_sp;//PR(2);                       // number of dummy parameters
                 //n = a1->table->_sp;//PR(3);                 // number of actual parameters
                 if (!(dot=code_s->ct->dotted) && n != m) {printf("SyntaxError: Illegal parameter number!\n");return NULL;}
-                for(i=0;i<n;i++) {PR(i);
+                for(i=0;i<n;i++) {//PR(i);
                     code_s = codegen((ast*)vector_ref(a1->table,i),env,FALSE);
                     code1 = code_s->code;ct1=code_s->ct;type1=ct1->type;                            // ct1/type1:actual parameter type
                     if (dot && i >= m-1) type2=OBJ_GEN ; else type2 = (int)(long)vector_ref(v,i);  // ct2/type2:dummy parameter type
@@ -644,11 +645,18 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                 return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
             }
         case AST_VAR:   // AST_VAR [var_symbol]
-            _pos=var_location((Symbol*)vector_ref(a->table,0),env);//PR(3333);// printf("var_location OK!!\n");
-            if (_pos) {//PR(4444);
+            s=(Symbol*)vector_ref(a->table,0);  // s:var name
+            // macroにあるか…後で
+            // システム定義変数か…後で
+            // primitive functionか？
+            
+            // ローカル変数かチェック
+            _pos=var_location(s,env);//PR(3333);// printf("var_location OK!!\n");
+            if (_pos) { // ローカル変数である
                 pos=(Vector*)vector_ref(_pos,0);ct=(code_type*)vector_ref(_pos,1);
                 push(code,(void*)LD);push(code,(void*)pos);//disassy(code,0,stdout);
-            } else {
+            //} else if 
+            } else {    // 大域変数の場合
                 s=(Symbol*)vector_ref(a->table,0);
                 if (get_gv(s) == NULL) {printf("SyntaxError :Global value not defined!\n");return NULL;}
                 ct=get_gv(s);
@@ -808,9 +816,9 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
 int main(int argc, char*argv[]) {
     void* value;
     ast *a;
-    printf("PURE REPL Version 0.02\nCopyright 2021.04.02- M.Taniguro\n\n>>");
+    printf("PURE REPL Version 0.13 Copyright 2021.05.08 M.Taniguro\n");
     Stream *S;
-    int token_p;
+    int token_p,DEBUG=FALSE;
     Vector*env;
     Vector*code;
     code_ret *code_s;
@@ -822,34 +830,50 @@ int main(int argc, char*argv[]) {
     Vector * Stack = vector_init(500000); 
     //Vector * C, * CC ; 
     Vector * Ret = vector_init(500); 
-    Vector * Env = vector_init(50); 
+    Vector * Env = vector_init(5); 
+    Vector * EEnv = vector_init(50); 
     Hash * G = Hash_init(128); // must be 2^n 
     GLOBAL_VAR=Hash_init(128);
-    if (argc<=1) S=new_stream(stdin);
-    else {
-        FILE*fp = fopen(argv[1], "r");
-        if (fp == NULL) {printf("file %s doesn't exist\n", argv[1]); return  - 1; }
-        S = new_stream(fp); 
+    //if (argc<=1) S=new_stream(stdin);
+    FILE*fp=stdin;
+    int i=1;
+    while (i<argc) {
+        if (strcmp(argv[i],"-d")==0) {DEBUG=TRUE;i++;continue;}
+        if (strcmp(argv[i],"-f")==0) {
+            fp = fopen(argv[++i], "r");
+            if (fp == NULL) {printf("file %s doesn't exist\n", argv[i]); return  - 1; }
+            i++;continue;
+        }
+        //if (strcmp(argv[i],'-i')==0) {
+        //    while (i<argv) {
+        //        fp=fopen(argv[++i],"r");
+        //        if (fp == NULL) {printf("file %s doesn't exist\n", argv[i]); continue; }
+        //    }
+        //}
     }
-
-        tokenbuff=vector_init(100);
+    S = new_stream(fp);
+    tokenbuff=vector_init(100);
     while (TRUE) {
+        //printf(">>");
         //tokenbuff=vector_init(100);
         env=vector_init(10);
         //token_p=tokenbuff->_cp;
         //token_print(tokenbuff);
         if ((a=is_expr(S)) && get_token(S)->type==';') {
-            ast_print(a,0);
+            if (DEBUG) ast_print(a,0);
             code_s = codegen(a,env,FALSE);//PR(121);
             code=code_s->code;push(code,(void*)STOP);//PR(122);
-            ct=code_s->ct;type=ct->type;printf("expr type:%d\n",type);
-            if (type==OBJ_UFUNC ) {
-                    if (ct->functon_ret_type !=0) {printf("arg type:");vector_print(ct->arg_type);printf("ret type: %d\n",ct->functon_ret_type);}
-                else {printf("argment & return type not assigned!\n");}
+            ct=code_s->ct;type=ct->type;
+            if (DEBUG) {
+                printf("expr type:%d\n",type);
+                if (type==OBJ_UFUNC ) {
+                        if (ct->functon_ret_type !=0) {printf("arg type:");vector_print(ct->arg_type);printf("ret type: %d\n",ct->functon_ret_type);}
+                        else {printf("argment & return type not assigned!\n");}
+                }
+                disassy(code,0,stdout);
             }
-            disassy(code,0,stdout);
-            value = eval(Stack,Env,code,Ret,Env,G);
-            printf("%s ok\n>>", objtype2str(type,value));
+            value = eval(Stack,Env,code,Ret,EEnv,G);
+            printf("%s ok\n", objtype2str(type,value));
         } else {
             printf("Not expression!\n");
            // tokenbuff->_cp=token_p;

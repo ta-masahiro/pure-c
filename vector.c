@@ -1,9 +1,10 @@
 #include "vector.h"
-
-Vector *  vector_init( int maxN) {
+#define INIT_SIZE 32    //vectorの初期サイズ
+Vector *  vector_init( int init) {
     Vector * s = (Vector * )malloc(sizeof(Vector)); 
-    s ->_size = maxN; 
-    s ->_table = (void ** )malloc(maxN * sizeof(void * ));
+    int size=MAX(INIT_SIZE,init);//printf("vector_init:size=%d\n",size);
+    s ->_size = size; 
+    s ->_table = (void ** )malloc(init * sizeof(void * ));
     s ->_cp = 0;
     s ->_sp = 0;  
     return s; 
@@ -55,10 +56,11 @@ void vector_resize(Vector * s) {
 }
 
 Vector * vector_append(Vector*v1,Vector*v2) {
-    void**vd=(void**)malloc((v1->_sp+v2->_sp)*sizeof(void*));
+    int new_size; 
+    void**vd=(void**)malloc((new_size = MAX(v1->_sp+v2->_sp, INIT_SIZE))*sizeof(void*));
     memcpy(vd,v1->_table,(v1->_sp)*sizeof(void*));memcpy(vd+(v1->_sp),v2->_table,(v2->_sp)*sizeof(void*));
     Vector *v=(Vector*)malloc(sizeof(Vector));
-    v->_cp=0;v->_sp=(v1->_sp+v2->_sp);v->_table=vd;v->_size=v->_sp;
+    v->_cp=0;v->_sp=(v1->_sp+v2->_sp);v->_table=vd;v->_size=new_size;
     return v;
 }
 
