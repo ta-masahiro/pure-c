@@ -1,0 +1,3 @@
+function fib; 
+fib(n, a, b) = if n == 0:b:fib(n -- , a + b, a); 
+fib(1000000, 1L, 0L); 
