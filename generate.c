@@ -264,7 +264,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                 //return code_s;
                 for(i=0;i<v_expr_body->_sp-1;i++) {
                     code_s=codegen((ast*)vector_ref(v_expr_body,i),env,FALSE);
-                    code=vector_append(code,code_s->code);
+                    code=vector_append(code,code_s->code);push(code,(void*)DROP);
                 }
                 code_s=codegen((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1),env,tail);
                 code=vector_append(code,code_s->code);
