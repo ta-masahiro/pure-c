@@ -426,15 +426,16 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
             return code_s;
         case AST_DCL:   // AST_DCL [AST_EXPR_LIST [exp1,exp2...]]
                         //          <0>            <0,0>,<0,1>
-            a1=a;
-            for(j=0;j<((ast*)vector_ref(a1->table,0))->table->_sp;j++) {
-                a2 = (ast*)vector_ref(((ast*)vector_ref(a1->table,0))->table,j);//ast_print(a2,0);
-                if (a2->type==AST_VAR) {
+            a1=a;                                                               // a1->o_type:宣言された型
+            for(j=0;j<((ast*)vector_ref(a1->table,0))->table->_sp;j++) {        // declear内のexpr_listを順番に見ていき
+                a2 = (ast*)vector_ref(((ast*)vector_ref(a1->table,0))->table,j);// a2:宣言式のj番目の式
+                if (a2->type==AST_VAR) {                                        // int I,J,K;等初期代入がない場合
                     if (get_gv(s=(Symbol*)vector_ref(a2->table,0))!=NULL) {printf("Warning!:DupricateDifinition!\n");}  //警告を出して続行
                     // printf("!!!!\n");
-                    ct=new_ct(a1->o_type,OBJ_NONE,(void*)0,FALSE);
-                    put_gv(s,ct);
-                    push(code,(void*)LDC);push(code,create_zero(a1->o_type));push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);//PR(12);
+                    ct=new_ct(a1->o_type,OBJ_NONE,(void*)0,FALSE);              // 宣言された型でctを作り
+                    put_gv(s,ct);                                               // 型をgvに登録する
+                    push(code,(void*)LDC);push(code,create_zero(a1->o_type));   // 「0」で初期化しておく
+                    push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);// declear式は値を返さない;
                 } else if (a2->type==AST_SET &&                                 // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
                             ((ast*)vector_ref(a2->table,1))->type==AST_VAR) {   //                        <1>                 <2>
                     //変数名を取り出してSymbol*sに取っておき、定義済(GVにある)ならエラー
@@ -460,6 +461,12 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                     }
                     push(code,(void*)GSET);push(code,(void*)s);
                     push(code,(void*)DROP);
+                //} else if (a2->type==AST_FCALL) {   //  typeが関数呼出し≒関数宣言(所謂プロトタイプ宣言)の場合である
+                //    // a2:ASF_FCALL [AST_VAR[],AST_ARG_LIST[ast0,ast1,.....]]
+                //    //               <0>       <1>          <1,0>,<1,1>,...
+                //    for(i=0;i<((ast*)vector_ref(a2->table,1))->table->_sp;i++) {
+                //        a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,i);
+                //    }
                 } else {
                     printf("Syntax error :decliation in ml_expr\n");
                     return NULL;

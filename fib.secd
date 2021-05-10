@@ -43,4 +43,4 @@
     gset fib
     STOP
 ]
- [LDC 1000000 LDG fib CALL 1 LPR STOP]
+ [LDC 100000 LDG fib CALL 1 LPR STOP]
