@@ -1,0 +1,4 @@
+irange=lambda(int start,int end,int step) {function loop(int i,vector s)= if i>=end :s: loop(i+step,s<-i);loop(0,[])};irange(0, 1000, 1); 
+function tak;tak(int x,int y,int z)={function t(int x,int y,int z)=if x<=y:z:t(t(x--,y,z),t(y--,z,x),t(z--,x,y));t(x,y,z)};tak(19, 8, 0); 
+function fib;fib(int n)={function t(int n,long a,long b)=if n==0:b:t(n--,a+b,a);t(n,1,0)};fib(10000); 
+function SUM; SUM=lambda(vector x){function sum;sum=lambda(i,s) if i<0:s:sum(i--,s=s+x[i]);sum(@x-1,0)};SUM([1, 2, 3, 4, 5, 6]);  

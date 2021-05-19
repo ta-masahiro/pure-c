@@ -126,6 +126,11 @@ ast *  is_lit(Stream*S) {
             push(v, (void*)(long)t->type); push(v, (void*)t->source);
             a=new_ast(AST_LIT,OBJ_FLT,v);
             return a;
+        case TOKEN_LEFLT:
+            v = vector_init(3);
+            push(v, (void*)(long)t->type); push(v, (void*)t->source);
+            a=new_ast(AST_LIT,OBJ_LFLT,v);
+            return a;
         case TOKEN_STR:
             v = vector_init(3);
             push(v, (void*)(long)t->type); push(v, (void*)t->source);
@@ -183,18 +188,23 @@ ast * is_factor(Stream*S) {
             //error()
         }
     } else if (t=='[') {
-        if (a=is_expr_list(S)) {
-            if (get_token(S)->type==']') {
-                v=vector_init(1);
-                a->o_type=OBJ_GEN;
-                push(v,(void*)a);
-                return new_ast(AST_VECT,OBJ_VECT,v);
-            }
-        } else if (get_token(S)->type==']') {   //[]の場合
+        if (get_token(S)->type==']') {   //[]の場合
             v=vector_init(1);
             push(v,(void*)new_ast(AST_LIT,OBJ_NONE,(void*)0));
             return new_ast(AST_VECT,OBJ_VECT,v);
+        } else {
+            unget_token(S);
+            if (a=is_expr_list(S)) {
+                if (get_token(S)->type==']') {
+                    v=vector_init(1);
+                    a->o_type=OBJ_GEN;
+                    push(v,(void*)a);
+                    return new_ast(AST_VECT,OBJ_VECT,v);
+                }
+            }
         }
+        printf("SyntaxError:Not a exper list or ']' error\n");
+        Throw(1);
     } else {
         unget_token(S);
         if (a=is_ml_expr(S)) {
@@ -242,7 +252,7 @@ ast * is_pair_list(Stream * S) {
                 ;
             } else {
                 printf("Syntax error in pair_list\n");
-                return NULL;
+                Throw(1);
             }
         }
     }
@@ -270,7 +280,7 @@ ast * is_expr_list(Stream * S) {
                 ;
             } else {
                 printf("Syntax error in expr_list\n");
-                return NULL;
+                Throw(1);
             }
         }
     }
@@ -301,7 +311,7 @@ ast * is_expr_0(Stream *S) {
             return new_ast(AST_APPLY,OBJ_UFUNC,v);
         }
         printf("Syntax error in apply\n");
-        return NULL;
+        Throw(1);
     }
     unget_token(S);
     // 
@@ -312,6 +322,7 @@ ast * is_expr_0(Stream *S) {
             return a1;
         }
         if ((a2 = is_pair_list(S)) || (a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
+        //if ((a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
             t2 = get_token(S) ->type;
             if ((t1=='(' && t2 == ')') || (t1 == '[' && t2==']')) {
                 v = vector_init(2);
@@ -341,7 +352,7 @@ ast * is_expr_0(Stream *S) {
             }
         }
         printf("syntax error in function call/vector\n");
-        return NULL;
+        Throw(1);
     }
     tokenbuff -> _cp = token_p;
     return NULL;
@@ -489,7 +500,7 @@ ast * is_expr_2n(Stream * S,int n) {
                 a1 = new_ast(AST_2OP, max(a1->o_type,a2->o_type),v) ;
             } else {
                 printf("Syntax error! not expression\n");
-                return NULL;
+                Throw(1);
             }
         }
         tokenbuff->_cp = token_p;
@@ -592,7 +603,7 @@ ast * is_arg_list(Stream * S) {
                 }
             }
             printf("Syntax error in lambda\n");
-            return NULL;
+            Throw(1);
         }
         tokenbuff->_cp=token_p;
         return NULL;
@@ -618,23 +629,23 @@ ast * is_arg_list(Stream * S) {
                                 return new_ast(AST_IF,a2->o_type,v);
                             } else {
                                 printf("Syntax error! must be FALSE expression\n");
-                                return NULL;
+                                Throw(1);
                             }
                         } else {
                             printf("Syntax error! Must be ':'\n");
-                            return NULL;
+                            Throw(1);
                         }
                     } else {
                         printf("Syntax error! must be TRUE expression\n");
-                        return NULL;
+                        Throw(1);
                     }
                 } else {
                     printf("Syntax error! Must be ':'\n");
-                    return NULL;
+                    Throw(1);
                 }
             } else {
                 printf("Syntax error! Must be cond expression!\n");
-                return NULL;
+                Throw(1);
             }
         }
         tokenbuff->_cp=token_p;
@@ -694,6 +705,8 @@ ast * is_arg_list(Stream * S) {
            is_while_expr(p)    ||
            is_and_or_expr(p)   ||
            return NULL;*/
+        printf("SyntaxErroor:Not a exprssion!\n");
+        Throw(1);
     }
 
     ast *  is_ml_expr(Stream * S ) {
@@ -734,7 +747,7 @@ ast * is_arg_list(Stream * S) {
                     ;
                 } else {
                     printf("Syntax error in ml_expr_list\n");
-                    return NULL;
+                    Throw(1);
                 }
             }
         }

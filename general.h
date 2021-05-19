@@ -6,6 +6,9 @@
 #include <limits.h>
 #include <gc.h>
 #include <gmp.h>
+#include <mpfr.h>
+
+#include "CException.h"
 
 #define malloc(size) GC_malloc(size)
 #define realloc(p, size) GC_realloc(p, size)

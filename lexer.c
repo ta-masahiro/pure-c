@@ -143,6 +143,8 @@ token * is_NUM(Stream * S, tokenstate s, char* buff ) {
                 return is_NUM(S, TOKEN_FLT, buff);
             } else if (c=='L' || c=='l') {
                 return new_token(TOKEN_LINT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+            //} else if (c=='F' || c=='f') {
+            //    return new_token(TOKEN_LEFLT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
             } else if (c =='/') {           // 「/」が来て数字が続けば分数に移行
                 cc = get_char(S); 
                 if (isdigit(cc)) {
@@ -154,19 +156,21 @@ token * is_NUM(Stream * S, tokenstate s, char* buff ) {
                     unget_char(S); 
                     return new_token(TOKEN_INT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
                 }
-            } else if ( c=='e' || c=='E' ) {// 「e」「E」が来たら指数付き小数かどうか試す 
+            } else if ( c=='e' || c=='E' || c=='f' ||c=='F' ) {// 「e」「E」「f」「F」が来たら指数付き小数かどうか試す 
                 cc=get_char(S);
                 if (isdigit(cc)) {
-                    *(buff ++) = c; 
+                    //*(buff ++) = c; 
+                    *(buff ++) = 'e'; 
                     *(buff++) = cc; 
-                    return is_NUM(S, TOKEN_EFLT, buff);
+                    return is_NUM(S, (c=='e' || c=='E') ? TOKEN_EFLT :TOKEN_LEFLT, buff);
                 } else if (cc=='+' || cc=='-') { 
                     ccc=get_char(S);
                     if (isdigit(ccc)) {
-                        *(buff++)=c;
+                        //*(buff++)=c;
+                        *(buff++)='e';
                         *(buff++)=cc;
                         *(buff++)=ccc;
-                        return is_NUM(S,TOKEN_EFLT,buff);
+                        return is_NUM(S,(c=='e' || c=='E') ? TOKEN_EFLT : TOKEN_LEFLT,buff);
                     } else {
                         unget_char(S); 
                         unget_char(S); 
@@ -194,19 +198,21 @@ token * is_NUM(Stream * S, tokenstate s, char* buff ) {
                 return new_token(TOKEN_RAT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
             }
         case TOKEN_FLT:
-            if ( c=='e' || c=='E' ) { 
+            if ( c=='e' || c=='E' || c=='f' || c=='F') { 
                 cc=get_char(S);
                 if (isdigit(cc)) {
-                    *(buff ++) = c; 
+                    //*(buff ++) = c; 
+                    *(buff ++) = 'e'; 
                     *(buff++) = cc; 
-                    return is_NUM(S, TOKEN_EFLT, buff);
+                    return is_NUM(S, (c=='e' || c=='E') ? TOKEN_EFLT : TOKEN_LEFLT, buff);
                 } else if (cc=='+' || cc=='-') { 
                     ccc=get_char(S);
                     if (isdigit(ccc)) {
-                        *(buff++)=c;
+                        //*(buff++)=c;
+                        *(buff++)='e';
                         *(buff++)=cc;
                         *(buff++)=ccc;
-                        return is_NUM(S,TOKEN_EFLT,buff);
+                        return is_NUM(S,(c=='e' || c=='E') ? TOKEN_EFLT : TOKEN_LEFLT, buff);
                     } else {
                         unget_char(S); 
                         unget_char(S); 
@@ -232,6 +238,14 @@ token * is_NUM(Stream * S, tokenstate s, char* buff ) {
             } else {
                 unget_char(S); 
                 return new_token(TOKEN_EFLT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+            }
+        case TOKEN_LEFLT:
+            if (isdigit(c)) {
+                *(buff ++) = c; 
+                return is_NUM(S,s,buff); 
+            } else {
+                unget_char(S); 
+                return new_token(TOKEN_LEFLT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
             }
         case TOKEN_HEX:
             if ((c>='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F')) {

@@ -1,0 +1,8 @@
+SUM=lambda(x){function sum;sum=lambda(x,i,s) if i<0:s:sum(x,i--,s=s+x[i]);sum(x,@x-1,0)};
+mapref=lambda(vector L,int n) { function loop;loop=lambda(int i,vector s) if i>=@L:s:loop(i+1,s<-(L[i])[n]);loop(0,[])};
+mapref=lambda(L,n) { function loop;loop=lambda(i,s) if i>=@L:s:loop(i+1,s<-(L[i])[n]);loop(0,[])};
+irange=lambda(int start,int end,int step) {function loop(int i,vector s)= if i>=end :s: loop(i+step,s<-i);loop(0,[])};
+function tak;tak(int x,int y,int z)={function t(int x,int y,int z)=if x<=y:z:t(t(x--,y,z),t(y--,z,x),t(z--,x,y));t(x,y,z)};
+function fib;fib(int n)={function t(int n,long a,long b)=if n==0:b:t(n--,a+b,a);t(n,1,0)};
+##以下動かず
+test=lambda(function f,x) f(x);test(lambda(rational x) x+1,1/2);　

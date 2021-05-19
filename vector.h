@@ -28,12 +28,15 @@ inline void push(Vector * s, void * data) {
         vector_resize(s);  
     s ->_table[(s ->_sp) ++ ] = data;
 }
-inline void * pop(Vector * s) {return s ->_table[  -- (s ->_sp)]; }
+//inline void * pop(Vector * s) {return s ->_table[  -- (s ->_sp)]; }
+inline void * pop(Vector * s) {
+    return (s->_sp>0) ? s ->_table[  -- (s ->_sp)] : NULL ;
+}
 inline void * dequeue(Vector * s) { return (s ->_cp > s ->_sp ) ? NULL : s ->_table[ (s ->_cp) ++  ]; }
 //inline void * vector_ref(Vector * v, int index) {return v ->_table[index + v->_cp];}
-inline void * vector_ref(Vector * v, int index) {return v ->_table[index ];}
+inline void * vector_ref(Vector * v, int index) {return (index <v->_sp && index >=0) ? v->_table[index ] : NULL;}
 //inline void vector_set(Vector * v, int index, void ** val) {v ->_table[index + v->_cp] = val; }
-inline void vector_set(Vector * v, int index, void ** val) {v ->_table[index] = val; }
+inline void vector_set(Vector * v, int index, void ** val) {if (index<v->_sp && index >=0) v ->_table[index] = val; }
 //inline int vector_length(Vector *v) {return (v->_sp) - (v->_cp); }
 inline int vector_length(Vector *v) {return (v->_sp); }
 

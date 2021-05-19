@@ -2,9 +2,10 @@
 #define INIT_SIZE 32    //vectorの初期サイズ
 Vector *  vector_init( int init) {
     Vector * s = (Vector * )malloc(sizeof(Vector)); 
-    int size=MAX(INIT_SIZE,init);//printf("vector_init:size=%d\n",size);
+    //int size=MAX(INIT_SIZE,init);//printf("vector_init:size=%d\n",size);
+    int size=INIT_SIZE>init ? INIT_SIZE : init;//printf("vector_init:size=%d\n",size);
     s ->_size = size; 
-    s ->_table = (void ** )malloc(init * sizeof(void * ));
+    s ->_table = (void ** )malloc(size * sizeof(void * ));
     s ->_cp = 0;
     s ->_sp = 0;  
     return s; 
@@ -52,7 +53,7 @@ void vector_resize(Vector * s) {
         free(s -> _table); exit(0); }
     s ->_table = table;  
     s ->_size = maxN;
-    printf("vector resize:%d to %d\n", oldN, maxN); // vector_print(s);    
+    //printf("vector resize:%d to %d\n", oldN, maxN); // vector_print(s);    
 }
 
 Vector * vector_append(Vector*v1,Vector*v2) {
