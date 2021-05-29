@@ -1,14 +1,18 @@
 #include "vector.h"
 #include "symbol.h"
-#include <float.h>
-#include <math.h>
+//#include <float.h>
+//#include <math.h>
 
 #ifndef OBJECT
 #define OBJECT
-typedef enum { OBJ_NONE=0, 
-    OBJ_INT, OBJ_LINT, OBJ_RAT, OBJ_FLT,OBJ_LFLT,OBJ_GEN,
+typedef enum { OBJ_NONE=0,
+    // 1     2          3       4        5         6          7
+    OBJ_INT, OBJ_LINT, OBJ_RAT, OBJ_FLT, OBJ_LFLT, OBJ_CMPLX, OBJ_GEN,
+    //      8          9      10
     OBJ_PFUNC, OBJ_UFUNC, OBJ_CNT,
+    //    11        12        13      14
     OBJ_VECT, OBJ_DICT, OBJ_PAIR,OBJ_SYM,
+    // 15
     OBJ_IO,
 } obj_type;
 
@@ -47,12 +51,14 @@ object * newFLT(double d) ;
 object * newLFLT(mpfr_ptr F) ;
 object * newLFFT_f(double f) ;
 object * newVECT(Vector*v);
+object * newCMPLX(complex *c);
 object * newSTR(Symbol*s);
 long obj2int(object*o);
 mpz_ptr obj2long(object*o);
 mpq_ptr obj2rat(object*o);
 double obj2flt(object*o);
 mpfr_ptr obj2lflt(object *o);
+complex *obj2c(object *o);
 //
 object * objIADD(long x, long y) ;
 object * objISUB(long x, long y) ;

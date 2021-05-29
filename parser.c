@@ -320,7 +320,14 @@ ast * is_expr_0(Stream *S) {
         if (t1 !='(' && t1 != '[') {
             unget_token(S);
             return a1;
+        } // factorの後に'('または'['が続く場合
+        t2 = get_token(S) -> type;
+        if (t1=='(' && t2 == ')'){
+            v = vector_init(2);
+            push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
+            return new_ast(AST_FCALL,OBJ_UFUNC, v);
         }
+        unget_token(S);
         if ((a2 = is_pair_list(S)) || (a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
         //if ((a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
             t2 = get_token(S) ->type;
@@ -343,13 +350,13 @@ ast * is_expr_0(Stream *S) {
                 push(v, (void * )a1); push(v, (void * )a2);
                 return new_ast(AST_FCALL,OBJ_UFUNC, v);
             }
-        } else { //空引数のfunction call 
-            t2 = get_token(S) -> type;
-            if (t1=='(' && t2 == ')'){
-                v = vector_init(2);
-                push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
-                return new_ast(AST_FCALL,OBJ_UFUNC, v);
-            }
+        //} else { //空引数のfunction call 
+        //    t2 = get_token(S) -> type;
+        //    if (t1=='(' && t2 == ')'){
+        //        v = vector_init(2);
+        //        push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
+        //        return new_ast(AST_FCALL,OBJ_UFUNC, v);
+        //    }
         }
         printf("syntax error in function call/vector\n");
         Throw(1);
@@ -508,8 +515,8 @@ ast * is_expr_2n(Stream * S,int n) {
     }
 }
 
-char*dcl_string[]={"none",   "int",  "long",  "rational","float", "lfloat","var",\
-    //                  OBJ_NONE,OBJ_INT,OBJ_LINT,OBJ_RAT,    OBJ_FLT,OBJ_LFLT,OBJ_GEN,
+char*dcl_string[]=     {"none",   "int",  "long",  "rational","float", "lfloat","complex","var",\
+    //                  OBJ_NONE,OBJ_INT,OBJ_LINT,OBJ_RAT,    OBJ_FLT,OBJ_LFLT, OBJ_CMPLX, OBJ_GEN,
                         "_function","function","cont","vector", "dict",   "pair"   ,"string",    \
     //                  OBJ_PFUNC,  OBJ_UFUNC,OBJ_CNT,OBJ_VECT, OBJ_DICT,  OBJ_PAIR,OBJ_SYM,
                         "file",(void*)0};
@@ -705,6 +712,7 @@ ast * is_arg_list(Stream * S) {
            is_while_expr(p)    ||
            is_and_or_expr(p)   ||
            return NULL;*/
+        if (get_token(S) == NULL) return NULL;  // tokenがない場合
         printf("SyntaxErroor:Not a exprssion!\n");
         Throw(1);
     }

@@ -27,7 +27,7 @@ typedef struct {
     code_type * ct;
 } code_ret;
 
-
+code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot );
 code_ret*new_code(Vector*code, code_type * ct);
 code_ret* codegen(ast*a,Vector*v,int tail);
 #endif

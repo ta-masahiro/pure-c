@@ -1,38 +1,3 @@
-/*
-#include <ctype.h>
-#include "vector.h"
-
-typedef struct {
-    unsigned long _size;
-    unsigned char *_table;
-} Symbol;
-
-typedef struct {
-    int     _line;
-    int     _pos; 
-    FILE *  _fp; 
-    char *  _buff;
-} Stream;
-
-//typedef enum {NON=128, NOTEQ, POW, MULSET, ADDSET, DDOT, INT, TOKEN_RAT, TOKEN_FLT, STR, ID} tokentype; 
-typedef enum {
-    TOKEN_NONE, TOKEN_INT, TOKEN_RAT, TOKEN_FLT, TOKEN_EFLT, TOKEN_SYM, TOKEN_STR, TOKEN_CHR
-//  初期状態、整数、分数、小数、指数付き少数、シンボル、文字列、文字 
-} tokenstate; 
-
-typedef tokenstate tokentype; 
-
-typedef struct {
-    int         type; 
-    Symbol *    source;
-    int         line, pos;
-    union {
-        long    intg; 
-        double  flt; 
-        void *  ptr; 
-    } value; 
-} token;
-*/
 #include "lexparse.h"
 
 #define MAXBUFF 1024
@@ -47,18 +12,7 @@ Stream  * new_stream(FILE * f) {
     if (p == NULL) return NULL;  
     return S; 
 }
-/*
-Symbol * new_symbol(unsigned char * str, unsigned long size) {
-    char * s = (char * )malloc((size + 1) * sizeof(char)); 
-    // strcpy(s, str); // printf("%s\n", s);
-    memcpy(s,str,size);
-    // if (strcmp(s, "LDC") == 0) printf("!LDC!\n");  
-    Symbol * sym = (Symbol * )malloc(sizeof(Symbol));
-    sym -> _size = size; 
-    sym -> _table = s;  
-    return sym;  
-}
-*/
+
 char * re_load(Stream * S) {
     char * p; 
     S ->_pos = 0;
@@ -489,8 +443,13 @@ token * _get_token(Stream * S){
     if (t = is_CHR(S, TOKEN_NONE, STR_BUFF)) return t; // 文字なら  
     if (t = is_DEL(S, TOKEN_NONE, STR_BUFF)) return t; // 記号なら 
 
-    return NULL;                                 // いずれでもないならNULLを返す 
+    if (t == NULL) return NULL;                        // NULLならNULLを返す
+    // いずれでもない場合
+    printf("SyntaxError:Ileagal Token!\n");
+    Throw(0); 
 }
+
+
 /*
 Vector * tokenbuff; 
 

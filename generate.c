@@ -7,7 +7,7 @@ void disassy(Vector*v,int i,FILE*fp);
 
 int op2_1[] = {'+', '-', '*', '/', '%', '*'*256+'*','<'*256+'-','|','&', '>'*256+'>', '<'*256+'<', '>', '<', '='*256+'=', '!'*256+'=', '>'*256+'=', '<'*256+'=',0};
 //char*op2_alt_name[]={"add","sub","mul","div","mod","pow","push",NULL,NULL,"sr","sl","gt","lt","eq","neq","ge","le"};
-enum CODE op2_2[15][18] = {
+enum CODE op2_2[16][18] = {
                 {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_NONEはINTと同じに   
               //{ADD,  SUB,  MUL,  DIV,  MOD,  POW,  PUSH, BOR,  BAND, SR,  SL,  GT,  LT,  EQ,  NEQ,  GEQ,  LEQ , 0},
                 {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_INT
@@ -15,6 +15,7 @@ enum CODE op2_2[15][18] = {
                 {RADD, RSUB, RMUL, RDIV, RMOD, RPOW, 0,    0,    0,    0,   0,   RGT, RLT, REQ, RNEQ, RGEQ, RLEQ, 0},   // OBJ_RAT
                 {FADD, FSUB, FMUL, FDIV, FMOD, FPOW, 0,    0,    0,    0,   0,   FGT, FLT, FEQ, FNEQ, FGEQ, FLEQ, 0},   // OBJ_FLT
                 {LFADD,LFSUB,LFMUL,LFDIV,LFMOD,LFPOW,0,    0,    0,    0,   0,   LFGT,LFLT,LFEQ,LFNEQ,LFGEQ,LFLEQ,0},   // OBJ_LFLT
+                {CADD, CSUB, CMUL, CDIV, 0,    CPOW, 0,    0,    0,    0,   0,   0,   0,   0,   0,    0    ,0    ,0},   // OBJ_CMPLX
                 {OADD, OSUB, OMUL, ODIV, OMOD, OPOW, OPUSH,OBOR, OBAND,OSR, OSL, OGT, OLT, OEQ, ONEQ, OGEQ, OLEQ, 0},   // OBJ_GEN
                 {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_PFUNC
                 {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_UFUNC
@@ -28,41 +29,43 @@ enum CODE op2_2[15][18] = {
 obj_type op2_3[]={0,0,0,0,0,0,0,0,0,0,0,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,0};
 
 int op1_1[] = {'-', '~', '@','+'*256+'+', '-'*256+'-', '-'*256+'>', 0};
-enum CODE op1_2[15][6] = 
-               {{INEG, IBNOT,0,    IINC, DEC , 0   },
-              //{NEG, BNOT,  0,　　INC,  DEC , VPOP},
-                {INEG, BNOT, 0,    INC,  DEC , 0},
-                {LNEG, LBNOT,0,    LINC, LDEC, 0},
-                {RNEG, 0,    0,    0,    0   , 0},
-                {FNEG, 0,    0,    0,    0   , 0},
-                {LFNEG,0,    0,    0,    0   , 0},
+enum CODE op1_2[16][6] = 
+               {{INEG, IBNOT,0,    IINC, DEC , 0   },   // NONE
+              //{NEG, BNOT,  0,　　INC,  DEC , VPOP},   
+                {INEG, BNOT, 0,    INC,  DEC , 0   },   // INT
+                {LNEG, LBNOT,0,    LINC, LDEC, 0   },   // LONG
+                {RNEG, 0,    0,    0,    0   , 0   },   // RAT
+                {FNEG, 0,    0,    0,    0   , 0   },   // FLOAT
+                {LFNEG,0,    0,    0,    0   , 0   },   // LFLOAT
+                {CNEG,0,    0,    0,    0   , 0   },    // CMPLX 
                 {ONEG, OBNOT,OLEN, OINC, ODEC, OPOP},     // GEN
-                {0,    0,    0,    0,    0   , 0},     // PFUNC
-                {0,    0,    0,    0,    0   , 0},     // UFUNC
-                {0,    0,    0,    0,    0   , 0},     // CNT
+                {0,    0,    0,    0,    0   , 0   },     // PFUNC
+                {0,    0,    0,    0,    0   , 0   },     // UFUNC
+                {0,    0,    0,    0,    0   , 0   },     // CNT
                 {0,    0,    VLEN, 0,    0   , VPOP},     // VECT
-                {0,    0,    0,    0,    0   , 0},     // DICT
-                {0,    0,    0,    0,    0   , 0},     // PAIR
+                {0,    0,    0,    0,    0   , 0   },     // DICT
+                {0,    0,    0,    0,    0   , 0   },     // PAIR
                 {0,    0,    SLEN, 0,    0   , SPOP},     // SYM
-                {0,    0,    0,    0,    0   ,0},     // IO
+                {0,    0,    0,    0,    0   ,0    },     // IO
                };
 obj_type op1_3[]={0,0,OBJ_INT,0,0,OBJ_GEN};
-enum CODE conv_op[15][15] = {{0, 0,    ITOL,    ITOR,    ITOF,   0,     ITOO   },    //OBJ_NONEには0が入っているのでINTとみなす
-                    //  NONE  INT   LONG  RAT   FLOAT LFLOAT GEN    PFUNC UFUNC CNT   VECT DICT PAIR SYM   IO
-                        {0,   0,    ITOL, ITOR, ITOF, ITOLF, ITOO,  0,    0,    0,    0,   0,   0,   ITOS, 0  },
-                        {0,   LTOI, 0   , LTOR, LTOF, LTOLF, LTOO,  0,    0,    0,    0,   0,   0,   LTOS, 0  },
-                        {0,   RTOI, RTOL, 0   , RTOF, RTOLF, RTOO,  0,    0,    0,    0,   0,   0,   RTOS, 0  },
-                        {0,   FTOI, FTOL, FTOR, 0   , FTOLF, FTOO,  0,    0,    0,    0,   0,   0,   FTOS, 0  },
-                        {0,   LFTOI,LFTOL,LFTOR,LFTOF,0,     LFTOO, 0,    0,    0,    0,   0,   0,   0,    0  },
-                        {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, 0,     0,    0,    0,    OTOV,0,   0,   OTOS, 0  },
-                        {0,   0,    0,    0,    0,    0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//PFTOO},
-                        {0,   0,    0,    0,    0,    0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//UFTOO},
-                        {0,   0,    0,    0,    0,    0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//CNTOO},
-                        {0,   0,    0,    0,    0,    0,     VTOO,  0,    0,    0,    0,   0,   0,   VTOS, 0  },
-                        {0,   0,    0,    0,    0,    0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//DTOO} ,
-                        {0,   0,    0,    0,    0,    0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//PATOO},
-                        {0,   STOI, STOL, STOR, STOF, 0,     STOO,  0,    0,    0,    0,   0,   0,   0,    0  },
-                        {0,   0,    0,    0,    0,    0,     0,     0,    0,    0,    0,   0,   0,   0,    0  }};//IOTOO}};
+enum CODE conv_op[16][16] = {{0, 0,    ITOL,    ITOR,    ITOF,   0,     ITOO   },    //OBJ_NONEには0が入っているのでINTとみなす
+                    //  NONE  INT   LONG  RAT   FLOAT LFLOAT CMPLX  GEN    PFUNC UFUNC CNT   VECT DICT PAIR SYM   IO
+                        {0,   0,    ITOL, ITOR, ITOF, ITOLF, ITOC,  ITOO,  0,    0,    0,    0,   0,   0,   ITOS, 0  },
+                        {0,   LTOI, 0   , LTOR, LTOF, LTOLF, LTOC,  LTOO,  0,    0,    0,    0,   0,   0,   LTOS, 0  },
+                        {0,   RTOI, RTOL, 0   , RTOF, RTOLF, RTOC,  RTOO,  0,    0,    0,    0,   0,   0,   RTOS, 0  },
+                        {0,   FTOI, FTOL, FTOR, 0   , FTOLF, FTOC,  FTOO,  0,    0,    0,    0,   0,   0,   FTOS, 0  },
+                        {0,   LFTOI,LFTOL,LFTOR,LFTOF,0,     LFTOC, LFTOO, 0,    0,    0,    0,   0,   0,   LFTOS,0  },
+                        {0,   0,    0,    0,    0,    0,     0,     CTOO,  0,    0,    0,    0,   0,   0,   CTOS, 0  },
+                        {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, OTOC,  0,     0,    0,    0,    OTOV,0,   0,   OTOS, 0  },
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//PFTOO},
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//UFTOO},
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//CNTOO},
+                        {0,   0,    0,    0,    0,    0,     0,     VTOO,  0,    0,    0,    0,   0,   0,   VTOS, 0  },
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//DTOO} ,
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//PATOO},
+                        {0,   STOI, STOL, STOR, STOF, 0,     0,     STOO,  0,    0,    0,    0,   0,   0,   0,    0  },
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  }};//IOTOO}};
 
 enum CODE get_convert_op(obj_type from, obj_type to) {
     if (from<=to) return 0;
@@ -322,7 +325,23 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
     Vector*_pos=var_location(s,env);//PR(3333);// printf("var_location OK!!\n");
     if (_pos) { // ローカル変数である
         Vector*pos=(Vector*)vector_ref(_pos,0);ct=(code_type*)vector_ref(_pos,1);
-        push(code,(void*)LD);push(code,(void*)pos);//disassy(code,0,stdout);
+        if ((long)vector_ref(pos, 0) == 0) {
+            switch((long)vector_ref(pos, 1)) {
+                case 0: push(code, (void * )LD00); break; 
+                case 1: push(code, (void * )LD01); break; 
+                case 2: push(code, (void * )LD02); break; 
+                case 3: push(code, (void * )LD03); break; 
+            }
+        } else if ((long)vector_ref(pos, 0) == 1) {
+            switch((long)vector_ref(pos, 1)) {
+                case 0: push(code, (void * )LD10); break; 
+                case 1: push(code, (void * )LD11); break; 
+                case 2: push(code, (void * )LD12); break; 
+                case 3: push(code, (void * )LD13); break; 
+            }
+        } else{
+            push(code,(void*)LD);push(code,(void*)pos);//disassy(code,0,stdout);
+        }
     //} else if 
     } else {    // 大域変数の場合
         s=(Symbol*)vector_ref(var_ast->table,0);
@@ -671,14 +690,42 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
     //
     Vector *code = vector_init(3);push(code,(void*)LDF);
     code_ret *code_s=codegen((ast*)vector_ref(lambda_ast->table,1),env,TRUE);//PR(2);
-    code=vector_append(code,code_s->code);
+    Vector * code1 = code_s -> code; push(code1,(void*)RTN);
+    // code=vector_append(code,code_s->code);
     code_type *ct=code_s->ct;
-    push(code,(void*)RTN);
+    push(code,(void*)code1);
     //
     pop(env);// !!don't forget!!!
     code_s= new_code(code,new_ct(OBJ_UFUNC,ct->type,v,0));//code_s->arg_type=v;code_s->function_r_type=type1;
     if (arg_list_ast->type==AST_ARG_LIST_DOTS) code_s->ct->dotted=1;
     return code_s;
+}
+
+code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[cond_expr,true_expr,false_expr]
+                                                                    //printf("if in!\n");
+    code_ret *code_s1 = codegen(vector_ref(a -> table, 0),env,FALSE);
+    Vector *code=code_s1->code;                                             // make cond_code 
+    code_s1 = codegen(vector_ref(a->table,1),env,TRUE);             // make true_code
+    Vector *code1=code_s1->code;code_type *ct1=code_s1->ct;
+    code_s1 = codegen(vector_ref(a->table,2),env,TRUE);             // make false_code
+    Vector *code2=code_s1->code;code_type *ct2=code_s1->ct;
+    if (tail) push(code,(void*)TSEL); else push(code,(void*)SEL);   
+
+    if (ct1->type == ct2->type || ct1->type==OBJ_NONE || ct2->type==OBJ_NONE) { // 暫定処置
+        if (tail) {push(code1,(void*)RTN);push(code2,(void*)RTN);}
+        else {push(code1,(void*)JOIN);push(code2,(void*)JOIN);}
+        push(code ,(void*)code1); push(code,(void*)code2); 
+        if (ct1->type >= ct2->type) return new_code(code,ct1);      
+        return new_code(code,ct2);
+    } else {
+        if (ct1->type != OBJ_GEN)  {push(code1,(void*)conv_op[ct1->type][OBJ_GEN]);}
+        if (ct2->type != OBJ_GEN)  {push(code2,(void*)conv_op[ct2->type][OBJ_GEN]);}
+
+        if (tail) {push(code1,(void*)RTN);push(code2,(void*)RTN);}
+        else {push(code1,(void*)JOIN);push(code2,(void*)JOIN);}
+        push(code,(void*)code1);push(code,(void*)code2);
+        return new_code(code, new_ct(OBJ_GEN,OBJ_GEN,(void*)0,FALSE));
+    }
 }
 
 code_ret * codegen(ast * a, Vector * env, int tail) {
@@ -780,6 +827,8 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
             }
         case AST_IF:    // AST_IF,[cond_expr,true_expr,false_expr]
                 //printf("if in!\n");
+                return codegen_if(a,env,tail);
+                /*
                 code_s1 = codegen(vector_ref(a -> table, 0),env,FALSE);
                 code=code_s1->code;                                             // make cond_code 
                 code_s1 = codegen(vector_ref(a->table,1),env,TRUE);             // make true_code
@@ -803,6 +852,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                     push(code,(void*)code1);push(code,(void*)code2);
                     return new_code(code, new_ct(OBJ_GEN,OBJ_GEN,(void*)0,FALSE));
                 }
+                */
         case AST_SET:// AST_SET [set_type, AST_left_expr, AST_right_expr]
                 switch(((ast*)vector_ref(a->table,1))->type) {
                     case AST_VREF:  // AST_SET [set_type, AST_VREF [vect_expr,index] ], right_expr]
@@ -864,11 +914,27 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                                 d=(Data*)malloc(sizeof(Data));d->key=s;d->val=ct1;                  //入れるべきデータを作って
                                 vector_set((Vector*)vector_ref(env,i),j,(void*)d);//printf("||changed||\n");env_print(env);                  //セットする
                             } else if (ct1->type != ct2->type) {
-                                if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!\n");Throw(0);}
+                                if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!%d %d\n",ct1->type,ct2->type);Throw(0);}
                                 push(code,(void*)conv_op[ct2->type][ct1->type]);
                             }
-
-                            push(code,(void*)SET);push(code,(void*)pos);
+                            //
+                            if ((long)vector_ref(pos,0)== 0) {
+                                switch((long)vector_ref(pos,1)) {
+                                    case 0: push(code, (void*)SET00);break;
+                                    case 1: push(code, (void*)SET01);break;
+                                    case 2: push(code, (void*)SET02);break;
+                                    case 3: push(code, (void*)SET03);break;
+                                }
+                            } else if ((long)vector_ref(pos,0)== 1) {
+                                switch((long)vector_ref(pos,1)) {
+                                    case 0: push(code, (void*)SET10);break;
+                                    case 1: push(code, (void*)SET11);break;
+                                    case 2: push(code, (void*)SET12);break;
+                                    case 3: push(code, (void*)SET13);break;
+                                }
+                            } else {
+                                push(code,(void*)SET);push(code,(void*)pos);
+                            }
                         } else {
                             if ((ct1=get_gv(s))==NULL) {            //変数テーブルに名前がないなら
                                 //printf("SyntaxError:variable not defined!");return NULL;
@@ -876,7 +942,11 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                             } else if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
                                 ct1=ct2;put_gv(s,ct1);
                                 //if (ct2->type==OBJ_UFUNC) {gvt->type=OBJ_UFUNC;gvt->arg_type=v;gvt->functon_ret_type=r_type;put_gv(s,gvt);}
-                            }else if (ct1->type != ct2->type) push(code,(void*)conv_op[ct2->type][ct1->type]);
+                            }else if (ct1->type != ct2->type) { 
+                                if (conv_op[ct2->type][ct1->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
+                                push(code,(void*)conv_op[ct2->type][ct1->type]);
+                            }
+                            //
                             push(code,(void*)GSET);push(code,(void*)s);
                         }
                         return new_code(code,ct1);
@@ -887,8 +957,9 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                         //return code_s;
                     default:printf("jhdjadjaw4yy87wfhwj\n");
                 }
-        case AST_LAMBDA:    // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]
+        case AST_LAMBDA:return codegen_lambda(a,env,tail);    // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]
                             //                           <0,0,0>,<0,0,1>,...   <1>
+            /*
             args=vector_init(3);
             v=vector_init(3);
             a1=(ast*)vector_ref(a->table,0);    //arg_list
@@ -918,6 +989,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
             code_s= new_code(code,new_ct(OBJ_UFUNC,ct1->type,v,0));//code_s->arg_type=v;code_s->function_r_type=type1;
             if (a1->type==AST_ARG_LIST_DOTS) code_s->ct->dotted=1;
             return code_s;
+            */
         case AST_DCL:  return codegen_dcl(a,env,tail);
         /* 
                         // AST_DCL [AST_EXPR_LIST [exp1,exp2...]]
@@ -1041,6 +1113,8 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
             Throw(0);
     } 
 }
+
+void ctrc_handler() {Throw(4);};
 //Hash *G;
 void disassy(Vector * code, int indent, FILE*fp) {
     int i; long c; 
@@ -1091,7 +1165,7 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
 int main(int argc, char*argv[]) {
     void* value;
     ast *a;
-    printf("PURE REPL Version 0.13 Copyright 2021.05.08 M.Taniguro\n");
+    printf("PURE REPL Version 0.2.1 Copyright 2021.05.27 M.Taniguro\n");
     Stream *S;
     int token_p,DEBUG=FALSE;
     Vector*env;
@@ -1131,6 +1205,7 @@ int main(int argc, char*argv[]) {
     //DEBUG=TRUE;
     S = new_stream(fp);
     tokenbuff=vector_init(100);
+    signal(SIGINT,ctrc_handler);
     while (TRUE) {
         //printf(">>");
         //tokenbuff=vector_init(100);
@@ -1138,40 +1213,41 @@ int main(int argc, char*argv[]) {
         //token_p=tokenbuff->_cp;
         //token_print(tokenbuff);
         Try {
-        if ((a=is_expr(S)) && get_token(S)->type==';') {
-            if (DEBUG) ast_print(a,0);
-            code_s = codegen(a,env,FALSE);//PR(121);
-            code=code_s->code;push(code,(void*)STOP);//PR(122);
-            ct=code_s->ct;type=ct->type;
-            if (DEBUG) {
-                printf("expr type:%d\n",type);
-                if (type==OBJ_UFUNC ) {
-                        if (ct->functon_ret_type !=0) {printf("arg type:");vector_print(ct->arg_type);printf("ret type: %d\n",ct->functon_ret_type);}
-                        else {printf("argment & return type not assigned!\n");}
+            if ((a=is_expr(S)) && get_token(S)->type==';') {
+                if (DEBUG) ast_print(a,0);
+                code_s = codegen(a,env,FALSE);//PR(121);
+                code=code_s->code;push(code,(void*)STOP);//PR(122);
+                ct=code_s->ct;type=ct->type;
+                if (DEBUG) {
+                    printf("expr type:%d\n",type);
+                    if (type==OBJ_UFUNC ) {
+                            if (ct->functon_ret_type !=0) {printf("arg type:");vector_print(ct->arg_type);printf("ret type: %d\n",ct->functon_ret_type);}
+                            else {printf("argment & return type not assigned!\n");}
+                    }
+                    disassy(code,0,stdout);
                 }
-                disassy(code,0,stdout);
-            }
-            value = eval(Stack,Env,code,Ret,EEnv,G);
-            printf("%s ok\n", objtype2str(type,value));
-        } /* else {
-            printf("Not expression!\n");
-           // tokenbuff->_cp=token_p;
-           tokenbuff=vector_init(100);
-        } */
+                value = eval(Stack,Env,code,Ret,EEnv,G);
+                printf("%s ok\n", objtype2str(type,value));
+            }  else {
+                if (a==NULL) exit(0);
+                // tokenbuff->_cp=token_p;
+                tokenbuff=vector_init(100);
+            } 
         } Catch(e) {
             switch(e) {
                 case 0: printf("Error in generator\n");break;
                 case 1: printf("Error in parser\n");break;
                 case 3: printf("Error in VM\n");break;
+                case 4: printf("Ctr-C pressed!\n");break;
             }
             tokenbuff=vector_init(100);
             continue;
 
         }
         //token_print(tokenbuff); 
-        //tokenbuff->_cp=0;tokenbuff->_sp=0;
-        if (get_token(S)==NULL) exit(0);
-        unget_token(S);
+        tokenbuff->_cp=0;tokenbuff->_sp=0;
+        //if (get_token(S)==NULL) exit(0);
+        //unget_token(S);
     }
 
 }

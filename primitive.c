@@ -1,7 +1,10 @@
 #include "generate.h"
 
 //extern Hash * PRIMITIVE_FUNC;
+void * p_exit() {exit(0);}
+void * p_forget(Vector *v) {
 
+}
 void * p_set_prec(Vector *v) {
     mpfr_set_default_prec((long)vector_ref(v,0));
     return NULL;
@@ -84,50 +87,84 @@ void *p_log10(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = lo
 void *p_logE(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = log  (*(double*)vector_ref(v,0)); return (void*)f;}
 void *p_log1p(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = log1p(*(double*)vector_ref(v,0)); return (void*)f;}
 void *p_log(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = log  (*(double*)vector_ref(v,1))/log(*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_exp(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = exp  (*(double*)vector_ref(v,0)); }
+void *p_iabs(Vector *v)     {return (void*)labs((long)vector_ref(v,0));}
+void *p_fabs(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = fabs(*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
+void *p_fsqrt(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = sqrt(*(double*)vector_ref(v,0)); return (void*)f;}
+//
+void *p_labs(Vector *v)     {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_abs(L,L);return (void*)L;}
+void *p_rabs(Vector *v)     {mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_set(Q,(mpq_ptr)vector_ref(v,0));mpq_abs(Q,Q);return (void*)Q;}
+void *p_lfabs(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_abs(F,F,MPFR_RNDA);return (void*)F;}
+void *p_cabs(Vector *v)     {complex *c = (complex*)malloc(sizeof(complex));*c = cabs(*(complex*)vector_ref(v,0)); return (void*)c;}
+void *p_lsqrt(Vector *v)     {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_sqrt(L,L);return (void*)L;}
+//void *p_rsqrt(Vector *v)     {mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_set(Q,(mpq_ptr)vector_ref(v,0));mpq_abs(Q,Q);return (void*)Q;}
+void *p_lfsqrt(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_sqrt(F,F,MPFR_RNDA);return (void*)F;}
+void *p_csqrt(Vector *v)     {complex *c = (complex*)malloc(sizeof(complex));*c = csqrt(*(complex*)vector_ref(v,0)); return (void*)c;}
 
+//
+void *p_lfsin(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_sin(F,F,MPFR_RNDA);return (void*)F;}
 
-
-Funcpointer primitive_func[]  = {p_set_prec,p_get_prec,
+Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_open, p_close, p_gets, p_getc, p_sin, p_cos, p_tan, 
                                  p_asin, p_acos, p_atan, p_sinh, p_cosh, p_tanh, p_asinh, p_acosh, p_atanh,
-                                 p_log10, p_logE, p_log, NULL};
-char*primitive_function_name[]={"set_prec","get_prec",
+                                 p_log10, p_logE, p_log, p_exp, p_iabs, p_fabs, p_isqrt, p_fsqrt,
+                                 p_labs, p_rabs, p_lfabs, p_cabs, p_lsqrt, p_lfsqrt, p_csqrt,
+                                 p_lfsin, NULL};
+char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "open", "close", "gets", "getc", "sin", "cos", "tan", 
-                                 "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
-                                 "log10", "logE", "log", NULL};
+                                "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
+                                "log10", "logE", "log", "exp", "iabs", "fabs", "isqrt", "fsqrt",
+                                "labs", "rabs", "flabs", "cabs", "lsqrt", "lfsqrt","csqrt",
+                                "lfsin",NULL};
 int primitive_function_arglisti[][3] = {//{OBJ_GEN},                                      // print
-                                    {OBJ_INT},                                      // set_prec
-                                    {OBJ_NONE},                                     // get_prec
-                                    {OBJ_GEN},                                      // print
-                                    {OBJ_SYM,OBJ_SYM},                              // open
-                                    {OBJ_IO},                                       // close
-                                    {OBJ_IO},                                       // gets
-                                    {OBJ_IO},                                       // getc
-                                    {OBJ_FLT},                                      // sin
-                                    {OBJ_FLT},                                      // cos 
-                                    {OBJ_FLT},                                      // tan
-                                    {OBJ_FLT},                                      // asin
-                                    {OBJ_FLT},                                      // acos 
-                                    {OBJ_FLT},                                      // atan
-                                    {OBJ_FLT},                                      // sinh
-                                    {OBJ_FLT},                                      // cosh
-                                    {OBJ_FLT},                                      // tanh
-                                    {OBJ_FLT},                                      // asinh
-                                    {OBJ_FLT},                                      // acosh 
-                                    {OBJ_FLT},                                      // atanh
-                                    {OBJ_FLT},                                      // log10 
-                                    {OBJ_FLT},                                      // logE
-                                    {OBJ_FLT, OBJ_FLT},                                      // log
-                                    };
+                                {OBJ_NONE},
+                                {OBJ_INT},                                      // set_prec
+                                {OBJ_NONE},                                     // get_prec
+                                {OBJ_GEN},                                      // print
+                                {OBJ_SYM,OBJ_SYM},                              // open
+                                {OBJ_IO},                                       // close
+                                {OBJ_IO},                                       // gets
+                                {OBJ_IO},                                       // getc
+                                {OBJ_FLT},                                      // sin
+                                {OBJ_FLT},                                      // cos 
+                                {OBJ_FLT},                                      // tan
+                                {OBJ_FLT},                                      // asin
+                                {OBJ_FLT},                                      // acos 
+                                {OBJ_FLT},                                      // atan
+                                {OBJ_FLT},                                      // sinh
+                                {OBJ_FLT},                                      // cosh
+                                {OBJ_FLT},                                      // tanh
+                                {OBJ_FLT},                                      // asinh
+                                {OBJ_FLT},                                      // acosh 
+                                {OBJ_FLT},                                      // atanh
+                                {OBJ_FLT},                                      // log10 
+                                {OBJ_FLT},                                      // logE
+                                {OBJ_FLT, OBJ_FLT},                             // log
+                                {OBJ_FLT},                                      // exp
+                                {OBJ_INT},                                      // iabs
+                                {OBJ_FLT},                                      // fabs
+                                {OBJ_INT},                                      // isqrt
+                                {OBJ_FLT},                                      // fsqrt
+                                {OBJ_LINT},                                     // labs
+                                {OBJ_RAT},                                      // rabs
+                                {OBJ_LFLT},                                     // lfabs
+                                {OBJ_CMPLX},                                    // cabs
+                                {OBJ_LINT},                                     // lsqrt
+                                {OBJ_LFLT},                                     // lfsqrt
+                                {OBJ_CMPLX},                                    // caqrt
+                                {OBJ_LFLT}                                      // lfsin
+                                };
 
 int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        // print
+                                {OBJ_NONE,0, FALSE},
                                 {OBJ_NONE,1, FALSE},
                                 {OBJ_INT, 0, FALSE},
                                 {OBJ_NONE,1, TRUE},
-                                {OBJ_IO,  2, FALSE},                 // open
+                                {OBJ_IO,  2, FALSE},                        // open
                                 {OBJ_NONE,1, FALSE},                        // close
-                                {OBJ_SYM, 1, FALSE},                         // gets
-                                {OBJ_SYM, 1, FALSE},                         // getc
+                                {OBJ_SYM, 1, FALSE},                        // gets
+                                {OBJ_SYM, 1, FALSE},                        // getc
                                 {OBJ_FLT, 1, FALSE},                        // sin
                                 {OBJ_FLT, 1, FALSE},                        // cos
                                 {OBJ_FLT, 1, FALSE},                        // tan
@@ -143,15 +180,33 @@ int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        /
                                 {OBJ_FLT, 1, FALSE},                        // log10 
                                 {OBJ_FLT, 1, FALSE},                        // logE
                                 {OBJ_FLT, 2, FALSE},                        // log
+                                {OBJ_FLT, 1, FALSE},                        // exp
+                                {OBJ_INT, 1, FALSE},                        // iabs
+                                {OBJ_FLT, 1, FALSE},                        // fabs
+                                {OBJ_INT, 1, FALSE},                        // isqrt
+                                {OBJ_FLT, 1, FALSE},                        // fsqrt
+                                {OBJ_LINT,1, FALSE},                        // labs
+                                {OBJ_RAT, 1, FALSE},                        // rabs
+                                {OBJ_LFLT,1, FALSE},                        // lfabs
+                                {OBJ_CMPLX,1, FALSE},                       // cabs
+                                {OBJ_LINT, 1, FALSE},                       // lsqrt
+                                {OBJ_LFLT, 1, FALSE},                       // lfsqrt
+                                {OBJ_CMPLX,1, FALSE},                       // caqrt
+                                {OBJ_LFLT, 1, FALSE}                        // lfsin
                                  };
 
 void * make_primitive() {
     int i = 0,j;
     code_type *ct;
     Vector *v,*vv;
-    char *s; 
-    PRIMITIVE_FUNC = Hash_init(128);
+    char *s;
+    complex *c=(complex*)malloc(sizeof(complex));
+    *c=I;
 
+    PRIMITIVE_FUNC = Hash_init(128);
+    Symbol *char_I=new_symbol("I",1);
+    Hash_put(G,char_I,(void*)c);
+    Hash_put(GLOBAL_VAR,char_I,new_ct(OBJ_CMPLX,OBJ_NONE,(void*)0,FALSE));
     while (primitive_func[i] != NULL) {
         v=vector_init(3);
         for (j=0;j<primitive_function_ct[i][1];j++) {

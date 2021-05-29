@@ -27,6 +27,12 @@ mpfr_ptr itolf(long n) {
     return F;
 }
 
+complex *itoc(long n) {
+    complex *c=malloc(sizeof(complex));
+    *c=n+0.0*I;
+    return c;
+}
+
 long litoi(mpz_ptr L) {
     if (L==NULL) none_error();
     return mpz_get_si(L);
@@ -48,6 +54,13 @@ mpfr_ptr litolf(mpz_ptr L) {
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F); mpfr_set_z(F, L, MPFR_RNDA);
     return F;
+}
+
+complex *litoc(mpz_ptr L) {
+    if (L==NULL) none_error();
+    complex*c=(complex*)malloc(sizeof(complex));
+    *c=mpz_get_d(L)+0.0*I;
+    return c;
 }
 
 long rtoi(mpq_ptr Q) {
@@ -75,6 +88,14 @@ mpfr_ptr rtolf(mpq_ptr Q) {
     mpfr_init(F); mpfr_set_q(F, Q, MPFR_RNDA);
     return F;
 }
+
+complex *rtoc(mpq_ptr Q) {
+    if (Q==NULL) none_error();
+    complex *c=(complex*)malloc(sizeof(complex));
+    *c=mpq_get_d(Q)+0.0*I;
+    return c;
+}
+
 long ftoi(double d) {return (long)d;}
 
 mpz_ptr ftoli(double d) {
@@ -89,6 +110,12 @@ mpfr_ptr ftolf(double f) {
     return F;
 }
 
+complex *ftoc(double f) {
+    complex *c = (complex*)malloc(sizeof(complex));
+    *c = f+0.0*I;
+    return c;
+}
+
 long lftoi(mpfr_ptr F) {
     if (F==NULL) none_error();
     return mpfr_get_si(F,MPFR_RNDA);}
@@ -99,6 +126,12 @@ long lftoi(mpfr_ptr F) {
    return L;
    }
    */
+complex *lftoc(mpfr_ptr F) {
+    if (F==NULL) none_error();
+    complex *c = (complex*)malloc(sizeof(complex));
+    *c=mpfr_get_d(F,MPFR_RNDA)+0.0*I;
+}
+
 object * newINT(long n) {
     object * o = (object * )malloc(sizeof(object));
     o -> type = OBJ_INT;
@@ -167,6 +200,13 @@ object * newLFFT_f(double f) {
     return o;
 }
 
+object *newCMPLX(complex*c) {
+    object * o = (object * )malloc(sizeof(object));
+    o -> type = OBJ_CMPLX;
+    o ->data.ptr = (void * )c;
+    return o;
+
+}
 object *newSTR(Symbol*s) {
     if (s==NULL) none_error();
     object*o=(object*)malloc(sizeof(object));
@@ -192,6 +232,9 @@ object*newOBJ(obj_type t, void* v) {
         case OBJ_LINT:return newLINT((mpz_ptr)v);
         case OBJ_RAT:return newRAT((mpq_ptr)v);
         case OBJ_SYM:return newSTR((Symbol*)v);
+        case OBJ_CMPLX:return newCMPLX((complex*)v);
+        case OBJ_VECT:return newVECT((Vector*)v);
+        default:printf("RuntimeError:Illegal Object!\n");Throw(3);
     }
 }
 
@@ -223,7 +266,15 @@ long obj2int(object*o) {
     if (o==NULL) none_error();
     if (o->type != OBJ_LFLT) {printf("RuntimeErroe:Must be LFloat!\n");Throw(3);}
     return (mpfr_ptr)o->data.ptr;
+ }
+
+complex *obj2c(object *o) {
+    if (o==NULL) none_error();
+    if (o->type != OBJ_CMPLX) {printf("RuntimeErroe:Must be Complex!\n");Throw(3);}
+    return (complex*)o->data.ptr;
+
 }
+
 object * objIADD(long x, long y) {
     long z;
     object * o = (object * )malloc(sizeof(object));
@@ -552,6 +603,43 @@ object*objLFPOW(mpfr_ptr x, mpfr_ptr y) {
     o->type=OBJ_LFLT;o->data.ptr=(void*)F;
     return o;
 }
+
+object *objCADD(complex *x, complex *y) {
+    object * o = (object*)malloc(sizeof(object) );
+    complex * c=(complex*)malloc(sizeof(complex));
+    *c=(*x)+(*y);
+    o->type=OBJ_CMPLX;o->data.ptr=(void*)c;
+    return o;
+}
+object *objCSUB(complex *x, complex *y) {
+    object * o = (object*)malloc(sizeof(object) );
+    complex * c=(complex*)malloc(sizeof(complex));
+    *c=(*x)-(*y);
+    o->type=OBJ_CMPLX;o->data.ptr=(void*)c;
+    return o;
+}
+object *objCMUL(complex *x, complex *y) {
+    object * o = (object*)malloc(sizeof(object) );
+    complex * c=(complex*)malloc(sizeof(complex));
+    *c=(*x)-(*y);
+    o->type=OBJ_CMPLX;o->data.ptr=(void*)c;
+    return o;
+}
+object *objCDIV(complex *x, complex *y) {
+    object * o = (object*)malloc(sizeof(object) );
+    complex * c=(complex*)malloc(sizeof(complex));
+    *c=(*x)/(*y);
+    o->type=OBJ_CMPLX;o->data.ptr=(void*)c;
+    return o;
+}
+object *objCPOW(complex *x, complex *y) {
+    object * o = (object*)malloc(sizeof(object) );
+    complex * c=(complex*)malloc(sizeof(complex));
+    *c=cpow((*x),(*y));
+    o->type=OBJ_CMPLX;o->data.ptr=(void*)c;
+    return o;
+}
+
 int objICMP(long x, long y)         {return (x>y)?1:((x == y)?0: - 1);}
 int objLCMP(mpz_ptr x, mpz_ptr y)   {return mpz_cmp(x, y);}
 int objRCMP(mpq_ptr x, mpq_ptr y)   {return mpq_cmp(x, y);}
@@ -570,6 +658,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objRADD(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFADD(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
+                case OBJ_CMPLX: return objCADD(itoc(x->data.intg), (complex*)x->data.ptr);
                 default:break;
             }
         case OBJ_LINT:
@@ -579,6 +668,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objRADD(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFADD(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
+                case OBJ_CMPLX: return objCADD(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
                 default:break;
             }
         case OBJ_RAT:
@@ -588,6 +678,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objRADD((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFADD(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
+                case OBJ_CMPLX: return objCADD(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
                 default:break;
             }
         case OBJ_FLT:
@@ -596,7 +687,8 @@ object * objadd(object * x, object * y) {
                 case OBJ_LINT:  return objFADD(x -> data.flt, litof((mpz_ptr)y -> data.ptr));
                 case OBJ_RAT:   return objFADD(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFADD(x -> data.flt, y -> data.flt);
-                case OBJ_LFLT:  return objLFADD(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
+                case OBJ_LFLT:  return objLFADD(ftolf(x -> data.flt), (mpfr_ptr)y -> data.ptr);
+                case OBJ_CMPLX: return objCADD(ftoc(x->data.flt), (complex*)x->data.ptr);
                 default:break;
             }
         case OBJ_LFLT:
@@ -606,6 +698,17 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objLFADD((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFADD((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFADD((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
+                case OBJ_CMPLX: return objCADD(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
+                default:break;
+            }
+        case OBJ_CMPLX:
+            switch(type_y) {
+                case OBJ_INT:   return objCADD((complex*)x -> data.ptr, itoc(y -> data.intg));
+                case OBJ_LINT:  return objCADD((complex*)x -> data.ptr, litoc((mpz_ptr)y -> data.ptr));
+                case OBJ_RAT:   return objCADD((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
+                case OBJ_FLT:   return objCADD((complex*)x -> data.ptr, ftoc(y -> data.flt));
+                case OBJ_LFLT:  return objCADD((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
+                case OBJ_CMPLX: return objCADD((complex*)x -> data.ptr, (complex*)x->data.ptr);
                 default:break;
             }
         case OBJ_VECT:
@@ -617,7 +720,7 @@ object * objadd(object * x, object * y) {
             if (type_y == OBJ_SYM) {
                 return newSTR(symbol_append((Symbol*)x->data.ptr,(Symbol*)y->data.ptr));
             }
-        default:printf("runtime error illegal add op\n");return NULL;
+        default:printf("runtime error illegal add op\n");Throw(3);
     }
 }
 
@@ -633,7 +736,8 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objRSUB(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFSUB(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCSUB(itoc(x->data.intg), (complex*)x->data.ptr);
+                default:break;
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -642,7 +746,8 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objRSUB(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFSUB(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCSUB(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
+                default:break;
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -651,7 +756,8 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objRSUB((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFSUB(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCSUB(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
+                default:break;
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -660,7 +766,8 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objFSUB(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFSUB(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(ftolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCSUB(ftoc(x->data.flt), (complex*)x->data.ptr);
+                default:break;
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -669,8 +776,20 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objLFSUB((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFSUB((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFSUB((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCSUB(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
+                default:break;
             }
+        case OBJ_CMPLX:
+            switch(type_y) {
+                case OBJ_INT:   return objCSUB((complex*)x -> data.ptr, itoc(y -> data.intg));
+                case OBJ_LINT:  return objCSUB((complex*)x -> data.ptr, litoc((mpz_ptr)y -> data.ptr));
+                case OBJ_RAT:   return objCSUB((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
+                case OBJ_FLT:   return objCSUB((complex*)x -> data.ptr, ftoc(y -> data.flt));
+                case OBJ_LFLT:  return objCSUB((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
+                case OBJ_CMPLX: return objCSUB((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                default:break;
+            }
+        default:printf("runtime error illegal add op\n");Throw(3);
     }
 }
 object * objmul(object * x, object * y) {
@@ -688,7 +807,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objRMUL(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMUL(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFMUL(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCMUL(itoc(x->data.intg), (complex*)x->data.ptr);
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -697,7 +816,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objRMUL(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMUL(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFMUL(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCMUL(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -706,7 +825,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objRMUL((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMUL(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFMUL(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCMUL(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -715,7 +834,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objFMUL(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFMUL(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFMUL(ftolf(x -> data.flt), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCMUL(ftoc(x->data.flt), (complex*)x->data.ptr);
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -724,7 +843,17 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objLFMUL((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFMUL((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFMUL((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCMUL(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
+            }
+        case OBJ_CMPLX:
+            switch(type_y) {
+                case OBJ_INT:   return objCMUL((complex*)x -> data.ptr, itoc(y -> data.intg));
+                case OBJ_LINT:  return objCMUL((complex*)x -> data.ptr, litoc((mpz_ptr)y -> data.ptr));
+                case OBJ_RAT:   return objCMUL((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
+                case OBJ_FLT:   return objCMUL((complex*)x -> data.ptr, ftoc(y -> data.flt));
+                case OBJ_LFLT:  return objCMUL((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
+                case OBJ_CMPLX: return objCMUL((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                default:break;
             }
         case OBJ_VECT:
             switch (type_y) {
@@ -733,7 +862,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:  n=rtoi((mpq_ptr)y->data.ptr);break;
                 case OBJ_FLT:  n=ftoi((double)y->data.flt);break;
                 case OBJ_LFLT: n=lftoi((mpfr_ptr)y->data.ptr);break;
-                default:printf("runtime error illegal mul op\n");return NULL;
+                default:printf("runtime error illegal mul op\n");Throw(3);
             }
             v=(Vector*)x->data.ptr;
             for(i=0;i<n;i++) v=vector_append(v,v);
@@ -745,11 +874,12 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:  n=rtoi((mpq_ptr)y->data.ptr);break;
                 case OBJ_FLT:  n=ftoi((double)y->data.flt);break;
                 case OBJ_LFLT: n=lftoi((mpfr_ptr)y->data.ptr);break;
-                default:printf("runtime error illegal mul op\n");return NULL;
+                default:printf("Runtime error illegal mul op\n");Throw(3);
             }
             s=(Symbol*)x->data.ptr;
             for(i=0;i<n;i++) s=symbol_append(s,s);
             return newSTR(s); 
+        default:printf("Runtime Error Illegal mul op\n");Throw(3);
     }
 }
 
@@ -765,7 +895,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objRDIV(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFDIV(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFDIV(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCDIV(itoc(x->data.intg), (complex*)x->data.ptr);
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -774,7 +904,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objRDIV(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFDIV(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFDIV(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCDIV(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -783,7 +913,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objRDIV((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFDIV(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFDIV(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCDIV(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -792,7 +922,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objFDIV(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFDIV(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFDIV(ftolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCDIV(ftoc(x->data.flt), (complex*)x->data.ptr);
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -801,8 +931,19 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objLFDIV((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFDIV((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFDIV((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCDIV(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
             }
+        case OBJ_CMPLX:
+            switch(type_y) {
+                case OBJ_INT:   return objCDIV((complex*)x -> data.ptr, itoc(y -> data.intg));
+                case OBJ_LINT:  return objCDIV((complex*)x -> data.ptr, litoc((mpz_ptr)y -> data.ptr));
+                case OBJ_RAT:   return objCDIV((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
+                case OBJ_FLT:   return objCDIV((complex*)x -> data.ptr, ftoc(y -> data.flt));
+                case OBJ_LFLT:  return objCDIV((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
+                case OBJ_CMPLX: return objCDIV((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                default:break;
+            }
+        default:printf("runtime error illegal add op\n");Throw(3);
     }
 }
 
@@ -818,7 +959,6 @@ object * objmod(object * x, object * y) {
                 case OBJ_RAT:   return objRMOD(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMOD(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFMOD(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -827,7 +967,6 @@ object * objmod(object * x, object * y) {
                 case OBJ_RAT:   return objRMOD(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMOD(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFMOD(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -836,7 +975,6 @@ object * objmod(object * x, object * y) {
                 case OBJ_RAT:   return objRMOD((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMOD(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFMOD(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -845,7 +983,6 @@ object * objmod(object * x, object * y) {
                 case OBJ_RAT:   return objFMOD(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFMOD(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFMOD(ftolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -854,8 +991,8 @@ object * objmod(object * x, object * y) {
                 case OBJ_RAT:   return objLFMOD((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFMOD((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFMOD((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
             }
+        default:printf("runtime error illegal add op\n");Throw(3);
     }
 }
 
@@ -871,7 +1008,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objLPOW(itol(x -> data.intg), rtoi((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFPOW(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFPOW(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCPOW(itoc(x->data.intg), (complex*)x->data.ptr);
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -880,7 +1017,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objLPOW((mpz_ptr)x -> data.ptr, rtoi((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFPOW(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFPOW(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCPOW(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -889,7 +1026,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objRPOW((mpq_ptr)x -> data.ptr, rtoi((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFPOW(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFPOW(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCPOW(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -898,7 +1035,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objFPOW(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFPOW(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFPOW(ftolf(x -> data.flt), (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCPOW(ftoc(x->data.flt), (complex*)x->data.ptr);
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -907,8 +1044,19 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objLFPOW_i((mpfr_ptr)x -> data.ptr, rtoi((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFPOW((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFPOW((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                default:printf("runtime error illegal add op\n");return NULL;
+                case OBJ_CMPLX: return objCPOW(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
             }
+        case OBJ_CMPLX:
+            switch(type_y) {
+                case OBJ_INT:   return objCPOW((complex*)x -> data.ptr, itoc(y -> data.intg));
+                case OBJ_LINT:  return objCPOW((complex*)x -> data.ptr, litoc((mpz_ptr)y -> data.ptr));
+                case OBJ_RAT:   return objCPOW((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
+                case OBJ_FLT:   return objCPOW((complex*)x -> data.ptr, ftoc(y -> data.flt));
+                case OBJ_LFLT:  return objCPOW((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
+                case OBJ_CMPLX: return objCPOW((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                default:break;
+            }
+        default:printf("runtime error illegal POW op\n");Throw(3);
     }
 }
 
@@ -927,7 +1075,6 @@ object * objor(object * x, object * y) {
                                 mpz_ior(z,z,(mpz_ptr)y->data.ptr); 
                                 o->data.ptr=(void*)z;o->type=OBJ_LINT;
                                 return o;                  
-                default:printf("runtime error illegal bor op\n");return NULL;
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -941,8 +1088,8 @@ object * objor(object * x, object * y) {
                                 mpz_ior(z,(mpz_ptr)x->data.ptr,(mpz_ptr)y->data.ptr); 
                                 o->data.ptr=(void*)z;o->type=OBJ_LINT;
                                 return o;                                 
-                default:printf("runtime error illegal add op\n");return NULL;
             }
+        default:printf("runtime error illegal add op\n");Throw(3);
     }
 }
 object * objand(object * x, object * y) {
@@ -960,7 +1107,6 @@ object * objand(object * x, object * y) {
                                 mpz_and(z,z,(mpz_ptr)y->data.ptr); 
                                 o->data.ptr=(void*)z;o->type=OBJ_LINT;
                                 return o;                  
-                default:printf("runtime error illegal bor op\n");return NULL;
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -974,8 +1120,8 @@ object * objand(object * x, object * y) {
                                 mpz_and(z,(mpz_ptr)x->data.ptr,(mpz_ptr)y->data.ptr); 
                                 o->data.ptr=(void*)z;o->type=OBJ_LINT;
                                 return o;                                 
-                default:printf("runtime error illegal add op\n");return NULL;
             }
+        default:printf("runtime error illegal bor op\n");Throw(3);
     }
 }
 
@@ -990,7 +1136,6 @@ object*objsr(object*x,object*y) {
                 case OBJ_RAT: return newINT(x->data.intg >> rtoi((mpq_ptr)y->data.ptr));
                 case OBJ_FLT: return newINT(x->data.intg >> ftoi(y->data.flt));
                 case OBJ_LFLT:return newINT(x->data.intg >> lftoi((mpfr_ptr)y->data.ptr));
-                default:printf("runtime error illegal sr op\n");return NULL;
                 }
         case OBJ_LINT:
             lz=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(lz);
@@ -1010,9 +1155,8 @@ object*objsr(object*x,object*y) {
                 case OBJ_LFLT:
                     mpz_cdiv_q_2exp(lz,(mpz_ptr)x->data.ptr,lftoi((mpfr_ptr)y->data.ptr));
                     return newLINT(lz);
-                default:printf("runtime error illegal sr op\n");return NULL;
                 }
-        default:printf("runtime error illegal sr op\n");return NULL;
+        default:printf("runtime error illegal sr op\n");Throw(3);
     }
 }
 
@@ -1027,7 +1171,6 @@ object*objsl(object*x,object*y) {
                 case OBJ_RAT: return newINT(x->data.intg << rtoi((mpq_ptr)y->data.ptr));
                 case OBJ_FLT: return newINT(x->data.intg << ftoi(y->data.flt));
                 case OBJ_LFLT:return newINT(x->data.intg << lftoi((mpfr_ptr)y->data.ptr));
-                default:printf("runtime error illegal sl op\n");return NULL;
             }                
         case OBJ_LINT:
             lz=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(lz);
@@ -1047,9 +1190,8 @@ object*objsl(object*x,object*y) {
                 case OBJ_LFLT:
                     mpz_mul_2exp(lz,(mpz_ptr)x->data.ptr,lftoi((mpfr_ptr)y->data.ptr));
                     return newLINT(lz);
-                default:printf("runtime error illegal sr op\n");return NULL;
             }
-        default:printf("runtime error illegal sr op\n");return NULL;
+        default:printf("runtime error illegal sr op\n");Throw(3);
     }
 }
 
@@ -1110,6 +1252,10 @@ int objcmp(object * x, object * y) {
                 case OBJ_LFLT:  return objLFCMP((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
                 default:return -2;
             }
+        //case OBJ_CMPLX:
+        //    if (type_y == OBJ_CMPLX) {
+        //        if ((complex*)x->data.ptr)
+        //    }
         case OBJ_VECT:
             if (type_y == OBJ_VECT) {
                 if ((n=((Vector*)(x->data.ptr))->_sp) != ((Vector*)(x->data.ptr))->_sp) return -2;
@@ -1135,13 +1281,14 @@ int objcmp(object * x, object * y) {
 object * objneg(object *x) {
     if (x==NULL) none_error();
     mpz_ptr L; mpq_ptr Q; mpfr_ptr F;
-    object * o = objcpy(x);
+    object * o = objcpy(x);complex *c;
     switch(x->type) {
         case OBJ_INT : o->data.intg = - (o->data.intg); return o;
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_neg(L,L); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_neg(Q, Q); o->data.ptr=(void*)Q;return o;
         case OBJ_FLT : o->data.flt = - (o->data.flt); return o;
         case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_neg(F,F,MPFR_RNDA); o->data.ptr=(void*)F;return o;
+        case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=-(*c);return o;
         default:printf("runtime error illegal add op\n");return NULL;
     }
 }
@@ -1153,66 +1300,72 @@ object * objnot(object *x) {
     switch(x->type) {
         case OBJ_INT : o->data.intg = ~ (o->data.intg); return o;
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_com(L,L); o->data.ptr=(void*)L;return o;
-        default:printf("runtime error illegal add op\n");return NULL;
+        default:printf("runtime error illegal NOT op\n");return NULL;
     }
 }
 
 object * objabs(object *x) {
     if (x==NULL) none_error();
     mpz_ptr L; mpq_ptr Q; mpfr_ptr F;
-    object * o = objcpy(x);
+    object * o = objcpy(x);complex*c;
     switch(x->type) {
         case OBJ_INT : o->data.intg = labs(o->data.intg); return o;
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_abs(L,L); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_abs(Q, Q); o->data.ptr=(void*)Q;return o;
         case OBJ_FLT : o->data.flt = fabs(o->data.flt); return o;
         case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_abs(F,F,MPFR_RNDA); o->data.ptr=(void*)F;return o;
-        default:printf("runtime error illegal add op\n");return NULL;
+        case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=cabs((*c));return o;
+        default:printf("runtime error illegal ABS op\n");return NULL;
     }
 }
 
 object*objinc(object *x) {
     if (x==NULL) none_error();
     mpz_ptr L; mpq_ptr Q, QQ; mpfr_ptr F;
-    object * o = objcpy(x);
+    object * o = objcpy(x);complex *c;
     switch(x->type) {
         case OBJ_INT : (o->data.intg)++; return o;
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_add_ui(L,L,1); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_init(QQ); mpq_set_ui(QQ,1,1);mpq_add(Q, Q, QQ); o->data.ptr=(void*)Q;return o;
         case OBJ_FLT : o->data.flt += 1.0; return o;
         case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_add_ui(F,F,1,MPFR_RNDA); o->data.ptr=(void*)F;return o;
-        default:printf("runtime error illegal add op\n");return NULL;
+        case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=(*c)+1.0;return o;
+        default:printf("runtime error illegal INC op\n");return NULL;
     }
 }
 
 object*objdec(object *x) {
     if (x==NULL) none_error();
     mpz_ptr L; mpq_ptr Q, QQ; mpfr_ptr F;
-    object * o = objcpy(x);
+    object * o = objcpy(x);complex *c;
     switch(x->type) {
         case OBJ_INT : (o->data.intg)--; return o;
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_sub_ui(L,L,1); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_init(QQ); mpq_set_ui(QQ,1,1);mpq_sub(Q, Q, QQ); o->data.ptr=(void*)Q;return o;
         case OBJ_FLT : o->data.flt -= 1.0; return o;
         case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_sub_ui(F,F,1,MPFR_RNDA); o->data.ptr=(void*)F;return o;
-        default:printf("runtime error illegal add op\n");return NULL;
+        case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=(*c)-1.0;return o;
+        default:printf("runtime error illegal DEC op\n");return NULL;
     }
 }
 object * objsqrt(object *x) {
     if (x==NULL) none_error();
     mpz_ptr L; mpq_ptr Q; mpfr_ptr F;
-    object * o = objcpy(x);
+    object * o = objcpy(x);complex *c;
     switch(x->type) {
         case OBJ_INT : o->data.intg = (long)sqrt((double)o->data.intg); return o;
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_sqrt(L,L); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpfr_init_set_q(F,Q,MPFR_RNDA);mpfr_sqrt(F, F,MPFR_RNDA); o->data.ptr=(void*)F;o->type=OBJ_LFLT;return o; case OBJ_FLT : o->data.flt = sqrt(o->data.flt); return o;
         case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_sqrt(F,F,MPFR_RNDA); o->data.ptr=(void*)F;return o;
-        default:printf("runtime error illegal add op\n");return NULL;
+        case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=csqrt((*c));return o;
+        default:printf("runtime error illegal SQRT op\n");return NULL;
     }
 }
 
 int objlt(object*x,object*y){
+    //int c;
     if (objcmp(x,y)==-1) return TRUE;
+    //if (c==-2) {}
     return FALSE;
 }
 int objle(object*x,object*y){
@@ -1304,6 +1457,7 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_LINT:  return mpz_get_str(NULL, 10, (mpz_ptr)value);
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);
         case OBJ_FLT:   sprintf(buf,"%g",*(double*)value); return buf;
+        case OBJ_CMPLX: sprintf(buf,"%g%+gI",creal(*(complex*)value),cimag(*(complex*)value)); return buf;
         case OBJ_LFLT:  //mpfr_sprintf(buf,"%.Rg", (mpfr_ptr)value);return buf;
                         mpfr_sprintf(buf,set_lf_format((mpfr_ptr)value),(mpfr_ptr)value);return buf;
         case OBJ_GEN:   return objtostr((object*)value);
@@ -1329,7 +1483,7 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_UFUNC: sprintf(buf,"<UserFunction: %lx>",(long)value);return buf;
         case OBJ_PFUNC: sprintf(buf,"<PrimitiveFunction: %lx>",(long)value);return buf;
         case OBJ_IO   : sprintf(buf,"<I/O_file: %lx>",(long)value);return buf;
-        default:printf("RntimeError:Illegal print args!\n");
+        default:printf("RntimeError:Illegal print args!\n");Throw(3);
     }
 }
 
@@ -1344,20 +1498,30 @@ object*symbol2obj(Symbol*s,obj_type t) {
 void*symbol2objtype(Symbol*s,obj_type t){
     if (s==NULL) none_error();
     void*w;
-    long num;
+
     switch (t) {
         case OBJ_INT:
-            sscanf(s->_table,"%ld",&num);
-            return (void*)num;
+            w=malloc(sizeof(long));
+            sscanf(s->_table,"%ld",(long*)w);
+            return w;
         case OBJ_LINT:
+            w=malloc(sizeof(MP_INT));
             mpz_init_set_str((mpz_ptr)w,s->_table,10);
             return w;
         case OBJ_RAT:
+            w=malloc(sizeof(MP_RAT));
             mpq_init((mpq_ptr)w);mpq_set_str((mpq_ptr)w,s->_table,10);mpq_canonicalize((mpq_ptr)w);
             return w;
         case OBJ_FLT:
+            w=malloc(sizeof(double));
             sscanf(s->_table,"%lg",(double*)w);
             return w;
+        case OBJ_LFLT:
+            w=malloc(sizeof(__mpfr_struct));
+            mpfr_init_set_str((mpfr_ptr)w,s->_table,10,MPFR_RNDA);
+            return w;
+        //case OBJ_CMPLX:
+        default:printf("RntimeError:CanotConvert Symbol to Complex!\n");Throw(3);
     }
 
 }
@@ -1375,7 +1539,7 @@ object * objcpy(object * s) {
                        mpfr_init_set(F, (mpfr_ptr)s ->data.ptr,MPFR_RNDA); t -> data.ptr = (void * )F; return t;
         case OBJ_VECT:t->data.ptr=(void*)vector_copy0((Vector*)t->data.ptr);t->type=OBJ_VECT;return t;
         case OBJ_SYM: t->data.ptr=(void*)symbol_cpy((Symbol*)t->data.ptr);t->type=OBJ_SYM;return t;
-        default:printf("RntimeError:Illegal copy Method!\n");
+        default:printf("RntimeError:Illegal copy Method!\n");Throw(3);
     }
     return NULL;
 }
@@ -1385,7 +1549,7 @@ long objlen(object* o) {
     switch(o->type) {
         case OBJ_VECT:return ((Vector*)o->data.ptr)->_sp;
         case OBJ_SYM :return ((Symbol*)o->data.ptr)->_size;
-        default:printf("RntimeError:Illegal length Method!%d\n",o->type);
+        default:printf("RntimeError:Illegal length Method!%d\n",o->type);Throw(3);
     }
     return 0;
 }
@@ -1394,13 +1558,13 @@ object*objref(object*t,long i) {
     object*o;
     if (t->type==OBJ_VECT) return vector_ref((Vector*)t->data.ptr,i);
     if (t->type==OBJ_SYM)  {o=(object*)malloc(sizeof(object));o->data.ptr=(void*)symbol_ref((Symbol*)t->data.ptr,i);o->type=OBJ_SYM;return o;}
-    printf("RntimeError:Illegal ref Method!\n");
+    printf("RntimeError:Illegal ref Method!\n");Throw(3);
 }
 void objset(object*t,long i,object*v) {
     if (t==NULL) none_error();
     if (t->type==OBJ_VECT) vector_set((Vector*)t->data.ptr,i,(void*)v);
     if (t->type==OBJ_SYM)  symbol_set((Symbol*)t->data.ptr,i,(Symbol*)v->data.ptr);
-    printf("RntimeError:Illegal set Method!\n");
+    printf("RntimeError:Illegal set Method!\n");Throw(3);
 }
 
 object* objpop(object*t) {
@@ -1419,7 +1583,7 @@ object* objpop(object*t) {
 void objpush(object *o,object* value) {
     if (o==NULL) none_error();
     if (o->type == OBJ_VECT) push((Vector*)o->data.ptr,(void*)value);
-    else printf("RntimeError:Illegal push Method!\n");
+    else {printf("RntimeError:Illegal push Method!\n");Throw(3);}
 }
 
 object * objslice(object* o,long start,long end) {
