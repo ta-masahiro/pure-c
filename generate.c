@@ -728,6 +728,118 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
     }
 }
 
+code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_type, AST_left_expr, AST_right_expr]
+    code_ret *code_s;
+    Vector *code, *code1;
+    code_type *ct, *ct1;
+    ast *a1 ;
+    Symbol *s;
+    int i,j;
+    switch(((ast*)vector_ref(set_ast->table,1))->type) {
+        case AST_VREF:  // AST_SET [set_type, AST_VREF [vect_expr,index] ], right_expr]
+                        //          <0,0>               <1,0>     <1,1>    <2>
+                        // -> right_code vect_name_code index_code VSET
+            //right exprをcode化
+            code_s=codegen(vector_ref(set_ast->table,2),env,FALSE);
+            code=code_s->code;ct=code_s->ct;;
+            //left exprをcode化
+            code_s=codegen(vector_ref(set_ast->table,1),env,FALSE);
+            code1=code_s->code;ct1=code_s->ct;
+            //vector_set(code1,code1->_sp-1,(void*)VSET);
+            i=(long)pop(code1);
+            if ((i==REF || i==OREF) && ct->type != OBJ_GEN ) {
+               push(code,(void*)conv_op[ct->type][OBJ_GEN]);
+            } else if (i==SREF && ct->type != OBJ_SYM ) {
+               //push(code,(void*)conv_op[ct->type][OBJ_SYM]);
+                printf("SyntaxError:Must be Symbol!\n");Throw(0);
+            }
+            if (i==REF) {
+                push(code1,(void*)VSET);
+                return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
+            } else if (i==SREF) {
+                push(code1,(void*)SSET);
+                return new_code(vector_append(code,code1),new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));
+            } else {
+                push(code1,(void*)OSET);
+                return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
+            }
+        case AST_FCALL: // AST_SET [set_type,AST_FCALL [expr_name , expr_list],right_expr]
+                        //          <0,0>              <1,0>        <1,1>      <2>
+            a1=(ast*)vector_ref(((ast*)vector_ref(set_ast->table,1))->table,0);                       //a1:expr name
+            if (a1->type != AST_VAR) {printf("SyntaxError:Must be Function Name!\n");Throw(0);}                            
+            s=(Symbol * )vector_ref(a1->table,0);                                            
+               //dcl宣言式を作成する
+            
+            Vector *v1=vector_init(2);
+            ast *a0=(ast*)vector_ref(((ast*)vector_ref(set_ast->table,1))->table,1);                        //a:expr_list
+            push(v1,(void*)a0);                      //push expr_list
+            push(v1,(void*)vector_ref(set_ast->table,2)); //push righ expr
+            ast *a2=new_ast(AST_LAMBDA,((ast*)vector_ref(set_ast->table,2))->o_type,v1);
+            Vector *v2=vector_init(2);push(v2,(void*)(long)'=');
+            push(v2,(void*)a1);push(v2,(void*)a2);//ast_print(new_ast(AST_SET,a2->o_type,v2),0);
+            return codegen(new_ast(AST_SET,a2->o_type,v2),env,FALSE);
+        case AST_VAR:   // AST_SET [set_type, AST_VAR [var_name], right_expr]
+                        //          <0,0>             <1,0>       <2>
+            code_s=codegen((ast*)vector_ref(set_ast->table,2),env,FALSE);
+            code=code_s->code;code_type *ct2=code_s->ct;
+            //if (type2==OBJ_UFUNC) {v2=code_s->arg_type;r_type2=code_s->function_r_type;dot2=code_s->dotted;}
+            s=(Symbol*)vector_ref(((ast*)vector_ref(set_ast->table,1))->table,0);
+            Vector *_pos=var_location(s,env);
+            if (_pos) {
+                Vector *pos=(Vector*)vector_ref(_pos,0);
+                ct1=(code_type*)(long)vector_ref(_pos,1);   //ct1は変数名のコードタイプ
+                if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
+                    ct1=ct2;
+                    //envに保存してある戻り型情報がない関数型変数のコードタイプをct2で置き換える
+                    i=(env->_sp)-(long)vector_ref(pos,0)-1;j=(long)vector_ref(pos,1);   //env内のポジションを計算して
+                    Data *d=(Data*)malloc(sizeof(Data));d->key=s;d->val=ct1;                  //入れるべきデータを作って
+                    vector_set((Vector*)vector_ref(env,i),j,(void*)d);//printf("||changed||\n");env_print(env);                  //セットする
+                } else if (ct1->type != ct2->type) {
+                    if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!%d %d\n",ct1->type,ct2->type);Throw(0);}
+                    push(code,(void*)conv_op[ct2->type][ct1->type]);
+                }
+                //
+                if ((long)vector_ref(pos,0)== 0) {
+                    switch((long)vector_ref(pos,1)) {
+                        case 0: push(code, (void*)SET00);break;
+                        case 1: push(code, (void*)SET01);break;
+                        case 2: push(code, (void*)SET02);break;
+                        case 3: push(code, (void*)SET03);break;
+                    }
+                } else if ((long)vector_ref(pos,0)== 1) {
+                    switch((long)vector_ref(pos,1)) {
+                        case 0: push(code, (void*)SET10);break;
+                        case 1: push(code, (void*)SET11);break;
+                        case 2: push(code, (void*)SET12);break;
+                        case 3: push(code, (void*)SET13);break;
+                    }
+                } else {
+                    push(code,(void*)SET);push(code,(void*)pos);
+                }
+            } else {
+                if ((ct1=get_gv(s))==NULL) {            //変数テーブルに名前がないなら
+                    //printf("SyntaxError:variable not defined!");return NULL;
+                    put_gv(s,ct2);ct1=ct2;              //新たにct2=右辺値のコードタイプで変数を作り左辺値のコードタイプは右辺値と同一
+                } else if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
+                    ct1=ct2;put_gv(s,ct1);
+                    //if (ct2->type==OBJ_UFUNC) {gvt->type=OBJ_UFUNC;gvt->arg_type=v;gvt->functon_ret_type=r_type;put_gv(s,gvt);}
+                }else if (ct1->type != ct2->type) { 
+                    if (conv_op[ct2->type][ct1->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
+                    push(code,(void*)conv_op[ct2->type][ct1->type]);
+                }
+                //
+                push(code,(void*)GSET);push(code,(void*)s);
+            }
+            return new_code(code,ct1);
+            //if (type1==OBJ_UFUNC) {
+            //    if 
+            //    code_s->function_r_type=r_type;code_s->arg_type=v;code_s->dotted=dot;
+            //}
+            //return code_s;
+        default:printf("jhdjadjaw4yy87wfhwj\n");
+    }
+}
+
 code_ret * codegen(ast * a, Vector * env, int tail) {
     Vector * code = vector_init(10), *code1, *code2,*v,*v1,*v2,*v3,*a_arg_v,*d_arg_v,*pos,*_pos,*args,*v_expr_body;
     code_ret* code_s,*code_s1;
@@ -853,7 +965,8 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                     return new_code(code, new_ct(OBJ_GEN,OBJ_GEN,(void*)0,FALSE));
                 }
                 */
-        case AST_SET:// AST_SET [set_type, AST_left_expr, AST_right_expr]
+        case AST_SET:return codegen_set(a,env,tail);// AST_SET [set_type, AST_left_expr, AST_right_expr]
+                /*
                 switch(((ast*)vector_ref(a->table,1))->type) {
                     case AST_VREF:  // AST_SET [set_type, AST_VREF [vect_expr,index] ], right_expr]
                                     //          <0,0>               <1,0>     <1,1>    <2>
@@ -957,6 +1070,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                         //return code_s;
                     default:printf("jhdjadjaw4yy87wfhwj\n");
                 }
+                */
         case AST_LAMBDA:return codegen_lambda(a,env,tail);    // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]
                             //                           <0,0,0>,<0,0,1>,...   <1>
             /*
@@ -1165,7 +1279,7 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
 int main(int argc, char*argv[]) {
     void* value;
     ast *a;
-    printf("PURE REPL Version 0.2.1 Copyright 2021.05.27 M.Taniguro\n");
+    printf("PURE REPL Version 0.2.2 Copyright 2021.05.30 M.Taniguro\n");
     Stream *S;
     int token_p,DEBUG=FALSE;
     Vector*env;

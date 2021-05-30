@@ -1234,9 +1234,10 @@ _OTOC:
     push(S, (void*)obj2c((object*)pop(S)));
     goto *dequeue(C);
 _CTOO:
-    fy=pop(S);fx=pop(S);cz=(complex*)malloc(sizeof(complex));
-    *cz=(*fx)+(*fy)*I;
-    push(S,(void*)cz);
+    //fy=pop(S);fx=pop(S);cz=(complex*)malloc(sizeof(complex));
+    //*cz=(*fx)+(*fy)*I;
+    //push(S,(void*)cz);
+    push(S, (void*)newCMPLX((complex*)pop(S)));
     goto *dequeue(C);
 _CTOS:
     push(S,(void*)objtype2symbol(OBJ_CMPLX,pop(S)));
