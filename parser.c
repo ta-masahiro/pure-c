@@ -5,8 +5,10 @@ Vector * tokenbuff;
 token * get_token(Stream * S) {
     token*t;
     if (is_queu_empty(tokenbuff)) {
-        if ((t= _get_token(S))==NULL) return NULL;
-        else push(tokenbuff,(void*)t);
+        if ((t= _get_token(S))==NULL) 
+            return NULL;
+        else 
+            push(tokenbuff,(void*)t);
     }
     return dequeue(tokenbuff);
 }
@@ -701,6 +703,8 @@ ast * is_arg_list(Stream * S) {
 
     ast * is_expr(Stream *S) {
         ast * a;
+        if (get_token(S) == NULL) return NULL;  // tokenがない場合
+        unget_token(S);
         if (a = is_dcl_expr(S)) return a;
         if (a = is_set_expr(S)) return a;
         if (a = is_if_expr(S)) return a;
@@ -712,7 +716,7 @@ ast * is_arg_list(Stream * S) {
            is_while_expr(p)    ||
            is_and_or_expr(p)   ||
            return NULL;*/
-        if (get_token(S) == NULL) return NULL;  // tokenがない場合
+        //if (get_token(S) == NULL) return NULL;  // tokenがない場合
         printf("SyntaxErroor:Not a exprssion!\n");
         Throw(1);
     }

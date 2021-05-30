@@ -104,19 +104,46 @@ void *p_csqrt(Vector *v)     {complex *c = (complex*)malloc(sizeof(complex));*c 
 
 //
 void *p_lfsin(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_sin(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfcos(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_cos(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lftan(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_tan(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfasin(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_asin(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfacos(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_acos(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfatan(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_atan(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfsinh(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_sinh(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfcosh(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_cosh(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lftanh(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_tanh(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfasinh(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_asinh(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfacosh(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_acosh(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfatanh(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_atanh(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lflog10(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log10(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lflogE(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lflog(Vector *v)     {
+    mpfr_ptr E = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(E);mpfr_init(F);
+    mpfr_log(E,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log(F,(mpfr_ptr)vector_ref(v,1),MPFR_RNDA);
+    mpfr_div(F,F,E,MPFR_RNDA);
+    return (void*)F;
+}
+void *p_lflog1p(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log1p(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfexp(Vector *v)     {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_exp(F,F,MPFR_RNDA);return (void*)F;}
+
 
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_open, p_close, p_gets, p_getc, p_sin, p_cos, p_tan, 
                                  p_asin, p_acos, p_atan, p_sinh, p_cosh, p_tanh, p_asinh, p_acosh, p_atanh,
                                  p_log10, p_logE, p_log, p_exp, p_iabs, p_fabs, p_isqrt, p_fsqrt,
                                  p_labs, p_rabs, p_lfabs, p_cabs, p_lsqrt, p_lfsqrt, p_csqrt,
-                                 p_lfsin, NULL};
+                                 p_lfsin, p_lfcos, p_lftan,p_lfasin, p_lfacos, p_lfatan,
+                                 p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
+                                 p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp,NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "open", "close", "gets", "getc", "sin", "cos", "tan", 
                                 "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
                                 "log10", "logE", "log", "exp", "iabs", "fabs", "isqrt", "fsqrt",
                                 "labs", "rabs", "flabs", "cabs", "lsqrt", "lfsqrt","csqrt",
-                                "lfsin",NULL};
+                                "lfsin","lfcos", "lftan","lfasin","lfacos","lfatan",
+                                "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
+                                "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", NULL};
 int primitive_function_arglisti[][3] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT},                                      // set_prec
@@ -153,7 +180,23 @@ int primitive_function_arglisti[][3] = {//{OBJ_GEN},                            
                                 {OBJ_LINT},                                     // lsqrt
                                 {OBJ_LFLT},                                     // lfsqrt
                                 {OBJ_CMPLX},                                    // caqrt
-                                {OBJ_LFLT}                                      // lfsin
+                                {OBJ_LFLT},                                      // lfsin
+                                {OBJ_LFLT},                                      // lfcos
+                                {OBJ_LFLT},                                      // lftan
+                                {OBJ_LFLT},                                      // lfasin
+                                {OBJ_LFLT},                                      // lfacos
+                                {OBJ_LFLT},                                      // lfatan
+                                {OBJ_LFLT},                                      // lfsinh
+                                {OBJ_LFLT},                                      // lfcosh
+                                {OBJ_LFLT},                                      // lftanh
+                                {OBJ_LFLT},                                      // lfasinh
+                                {OBJ_LFLT},                                      // lfacosh
+                                {OBJ_LFLT},                                      // lfatanh
+                                {OBJ_LFLT},                                      // lflog10
+                                {OBJ_LFLT, OBJ_LFLT},                                      // lflogE
+                                {OBJ_LFLT},                                      // lflog
+                                {OBJ_LFLT},                                      // lflog1p
+                                {OBJ_LFLT}                                      // lfexp
                                 };
 
 int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        // print
@@ -192,7 +235,23 @@ int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        /
                                 {OBJ_LINT, 1, FALSE},                       // lsqrt
                                 {OBJ_LFLT, 1, FALSE},                       // lfsqrt
                                 {OBJ_CMPLX,1, FALSE},                       // caqrt
-                                {OBJ_LFLT, 1, FALSE}                        // lfsin
+                                {OBJ_LFLT, 1, FALSE},                        // lfsin
+                                {OBJ_LFLT, 1, FALSE},                        // lfcos
+                                {OBJ_LFLT, 1, FALSE},                        // lftan
+                                {OBJ_LFLT, 1, FALSE},                        // lfasin
+                                {OBJ_LFLT, 1, FALSE},                        // lfacos
+                                {OBJ_LFLT, 1, FALSE},                        // lfatan
+                                {OBJ_LFLT, 1, FALSE},                        // lfsinh
+                                {OBJ_LFLT, 1, FALSE},                        // lfcosh
+                                {OBJ_LFLT, 1, FALSE},                        // lftanh
+                                {OBJ_LFLT, 1, FALSE},                        // lfasinh
+                                {OBJ_LFLT, 1, FALSE},                        // lfacosh
+                                {OBJ_LFLT, 1, FALSE},                        // lfatanh
+                                {OBJ_LFLT, 1, FALSE},                        // lflo10
+                                {OBJ_LFLT, 1, FALSE},                        // lflogE
+                                {OBJ_LFLT, 2, FALSE},                        // lflog
+                                {OBJ_LFLT, 1, FALSE},                        // lflog1p
+                                {OBJ_LFLT, 1, FALSE},                        // lfexp
                                  };
 
 void * make_primitive() {

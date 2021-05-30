@@ -429,12 +429,13 @@ token * _get_token(Stream * S){
     // tokenがなくなったらNULLを返す  
     token * t;
     char c,*p;
-    while (isblank(c=get_char(S))) ;            // 空白を読み飛ばして  
-    if (c =='\n') {
+    while (isblank(c=get_char(S))) ;            // 空白を読み飛ばして 
+    while (c == '\n') { 
         p=re_load(S);                           // 改行文字ならもう1行読み込んで 
-        if (p==NULL) return NULL;               // 
+        if (p==NULL) return NULL;
+        while (isblank(c=get_char(S)));               // 
     }
-    else unget_char(S);                         // そうでなければ読み込んだ文字を返して
+    unget_char(S);                         // そうでなければ読み込んだ文字を返して
     // if (c == EOF) return NULL; 
     // unget_char(S); 
     if (t = is_NUM(S, TOKEN_NONE, STR_BUFF)) return t; // 数値ならそれをtokenに入れて返す  

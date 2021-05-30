@@ -17,8 +17,9 @@ char * code_name[] =
      "STOL",  "STOR", "STOF", "ITOS", "LTOS", "RTOS", "FTOS", "OTOS", "VTOS", "SPOP", "OPOP", "OPUSH","SMUL", "VMUL",
      "VEQ",   "SEQ",  "ISR",  "ISL",  "LSR",  "LSL",  "OSR",  "OSL",  "OTOV", "VSLS", "SSLS", "OSLS", "LD00", "LD01",
      "LD02",  "LD03", "LD10", "LD11", "LD12", "LD13", "SET00","SET01","SET02","SET03","SET10","SET11","SET12","SET13",
-     "LFADD", "LFSUB","LFMUL","LFDIV","LFMOD","LFPOW","LFGT", "LFLT", "LFEQ", "LFNEQ","LFGEQ","LFLEQ","LFNEG","ITOLF",\
-     "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","$$$" };
+     "LFADD", "LFSUB","LFMUL","LFDIV","LFMOD","LFPOW","LFGT", "LFLT", "LFEQ", "LFNEQ","LFGEQ","LFLEQ","LFNEG","ITOLF",
+     "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","CADD", "CSUB", "CMUL", "CDIV", "CPOW",
+     "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS"  "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -37,7 +38,8 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   0,    0,   0 };
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0 };
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -70,6 +72,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
     mpz_ptr x, y, z, w;
     mpq_ptr qx,qy,qz;
     mpfr_ptr lfx,lfy,lfz;
+    complex *cx,*cy,*cz;
     enum CODE op;
     Vector *C = vector_copy0(Code),*ssp=vector_init(200);
     double* fx,*fy,*fz;
@@ -92,7 +95,8 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_VEQ,   &&_SEQ,  &&_ISR,  &&_ISL,  &&_LSR,  &&_LSL,  &&_OSR,  &&_OSL,  &&_OTOV, &&_VSLS, &&_SSLS, &&_OSLS ,&&_LD00, &&_LD01, \
             &&_LD02,  &&_LD03, &&_LD10, &&_LD11, &&_LD12, &&_LD13, &&_SET00,&&_SET01,&&_SET02,&&_SET03,&&_SET10,&&_SET11,&&_SET12,&&_SET13,\
             &&_LFADD, &&_LFSUB,&&_LFMUL,&&_LFDIV,&&_LFMOD,&&_LFPOW,&&_LFGT, &&_LFLT, &&_LFEQ, &&_LFNEQ,&&_LFGEQ,&&_LFLEQ,&&_LFNEG,&&_ITOLF,\
-            &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO  };
+            &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO,&&_CADD, &&_CSUB, &&_CMUL, &&_CDIV ,&&_CPOW, \
+            &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS   };
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -170,16 +174,16 @@ _SET03:
     vector_set((Vector*)vector_ref(E,E->_sp-1),3,vector_ref(S,S->_sp-1));
     goto *dequeue(C);
 _SET10:
-    vector_set((Vector*)vector_ref(E,E->_sp-1),0,vector_ref(S,S->_sp-2));
+    vector_set((Vector*)vector_ref(E,E->_sp-2),0,vector_ref(S,S->_sp-1));
     goto *dequeue(C);
 _SET11:
-    vector_set((Vector*)vector_ref(E,E->_sp-1),1,vector_ref(S,S->_sp-2));
+    vector_set((Vector*)vector_ref(E,E->_sp-2),1,vector_ref(S,S->_sp-1));
     goto *dequeue(C);
 _SET12:
-    vector_set((Vector*)vector_ref(E,E->_sp-1),2,vector_ref(S,S->_sp-2));
+    vector_set((Vector*)vector_ref(E,E->_sp-2),2,vector_ref(S,S->_sp-1));
     goto *dequeue(C);
 _SET13:
-    vector_set((Vector*)vector_ref(E,E->_sp-1),3,vector_ref(S,S->_sp-2));
+    vector_set((Vector*)vector_ref(E,E->_sp-2),3,vector_ref(S,S->_sp-1));
     goto *dequeue(C);
 _GSET:
     v = vector_ref(S, S ->_sp - 1);
@@ -574,7 +578,7 @@ _CALL:
     push(R, (void * )C);
     push(EE, (void * )E);
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
-    //  E = (Vector * )vector_ref(fn, 2); push(E,l);
+    //E = (Vector * )vector_ref(fn, 2); push(E,l);
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);
 _TCALL:
@@ -588,7 +592,7 @@ _TCALL:
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);
 _APL:
-    n = (long)dequeue(C);printf("%ld\n",n);
+    n = (long)dequeue(C);//printf("%ld\n",n);
     fn = (Vector * )vector_ref(S, S->_sp-n);
     ll=(Vector*)vector_ref(S,S->_sp-1);
     l = vector_init(n+ll->_sp-1);
@@ -602,7 +606,7 @@ _APL:
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);
 _TAPL:
-    n = (long)dequeue(C);printf("%ld\n",n);
+    n = (long)dequeue(C);//printf("%ld\n",n);
     fn = (Vector * )vector_ref(S, S->_sp-n);
     ll=(Vector*)vector_ref(S,S->_sp-1);
     l = vector_init(n+ll->_sp-1);
@@ -1169,7 +1173,74 @@ _LFTOF:
 _LFTOO:
     push(S,(void*)newLFLT((mpfr_ptr)pop(S)));
     goto*dequeue(C);
-
+_LFTOS:
+    push(S,(void*)objtype2str(OBJ_LFLT,pop(S)));
+    goto *dequeue(C);
+_CADD:
+    cy=(complex*)pop(S);cx=(complex*)pop(S);
+    cz = (complex * )malloc(sizeof(complex)); *cz=*cx+(*cy);
+    push(S,(void*)cz);
+    goto * dequeue(C);
+_CSUB:
+    cy=(complex*)pop(S);cx=(complex*)pop(S);
+    cz = (complex * )malloc(sizeof(complex)); *cz=*cx-(*cy);
+    push(S,(void*)cz);
+    goto * dequeue(C);
+_CMUL:
+    cy=(complex*)pop(S);cx=(complex*)pop(S);
+    cz = (complex * )malloc(sizeof(complex)); *cz=(*cx)*(*cy);
+    push(S,(void*)cz);
+    goto * dequeue(C);
+_CDIV:
+    cy=(complex*)pop(S);cx=(complex*)pop(S);
+    cz = (complex * )malloc(sizeof(complex)); *cz=(*cx)/(*cy);
+    push(S,(void*)cz);
+    goto * dequeue(C);
+_CPOW:
+    cy=(complex*)pop(S);cx=(complex*)pop(S);
+    cz = (complex * )malloc(sizeof(complex)); *cz=cpow((*cx),(*cy));
+    push(S,(void*)cz);
+    goto * dequeue(C);
+_CNEG:
+    cx=(complex*)pop(S);cz=(complex*)malloc(sizeof(complex));*cz=-(*cx);
+    push(S, (void*)cz);
+    goto *dequeue(C);
+_ITOC:
+    cz=(complex*)malloc(sizeof(complex));
+    *cz=(double)(long)pop(S)+0.0*I;
+    push(S, (void*)cz);
+    goto *dequeue(C);
+_LTOC:
+    cz=(complex*)malloc(sizeof(complex));
+    *cz=mpz_get_d((mpz_ptr)pop(S))+0.0*I;
+    push(S, (void*)cz);
+    goto *dequeue(C);
+_RTOC:
+    cz=(complex*)malloc(sizeof(complex));
+    *cz=mpq_get_d((mpq_ptr)pop(S))+0.0*I;
+    push(S, (void*)cz);
+    goto *dequeue(C);
+_FTOC:
+    cz=(complex*)malloc(sizeof(complex));
+    *cz=*(double*)pop(S)+0.0*I;
+    push(S, (void*)cz);
+    goto *dequeue(C);
+_LFTOC:
+    cz=(complex*)malloc(sizeof(complex));
+    *cz=mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDA)+0.0*I;
+    push(S,(void*)cz);
+    goto *dequeue(C);
+_OTOC:
+    push(S, (void*)obj2c((object*)pop(S)));
+    goto *dequeue(C);
+_CTOO:
+    fy=pop(S);fx=pop(S);cz=(complex*)malloc(sizeof(complex));
+    *cz=(*fx)+(*fy)*I;
+    push(S,(void*)cz);
+    goto *dequeue(C);
+_CTOS:
+    push(S,(void*)objtype2symbol(OBJ_CMPLX,pop(S)));
+    goto *dequeue(C);
 //_SET_IADD:
 //_SET_ISUB:
 //_SET_IMUL:
