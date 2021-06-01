@@ -65,7 +65,7 @@ Vector *tosqs(Vector*code, const void** table) {
 void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash * G) {
     Symbol * sym,*sym1;
     long inst, ff, i, j, n, p, SSP=S->_sp;
-    Vector * fn, * keys, * t_exp, * f_exp, * code, * args, * cl, * ref, * Es, * l, *ll;
+    Vector * fn, * keys, * t_exp, * f_exp, * code, * args, * cl, * ref, * Es, * l, *ll, *lll;
     void ** g, * v;
     Funcpointer func;
     Hash * h;
@@ -1250,6 +1250,21 @@ _CTOO:
 _CTOS:
     push(S,(void*)objtype2symbol(OBJ_CMPLX,pop(S)));
     goto *dequeue(C);
+//
+//_VMAPREF:
+//    l=(Vector*)pop(S);
+//    n = l->_sp;
+//    i=0;
+//    lll=vector_init(3);
+//    while (TRUE) {
+//        ll=(Vector*)vector_ref(l,i);
+//        for(j=0;j<n;j++) {
+//            push(lll,(void*)vector_ref(ll,j));
+//        }
+//
+//    }
+//    _B:
+//_VMAP:
 //_SET_IADD:
 //_SET_ISUB:
 //_SET_IMUL:

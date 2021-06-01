@@ -66,7 +66,22 @@ enum CODE conv_op[16][16] = {{0, 0,    ITOL,    ITOR,    ITOF,   0,     ITOO   }
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//PATOO},
                         {0,   STOI, STOL, STOR, STOF, 0,     0,     STOO,  0,    0,    0,    0,   0,   0,   0,    0  },
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  }};//IOTOO}};
-
+/* 後で完成させること
+enum CODE add_op[][5] = {
+    {   IADD,   LiADD,  RiADD,  FADD,   LFiADD  },
+    {   LADDi,  LADD,   RlADD,  FADD,   LFlADD  },
+    {   RADDi,  RADDl,  RADD,   FADD,   LFrADD  },
+    {   FADD,   FADD,   FADD,   FADD,   LFfADD  },
+    {   LFADDi, LFADDl, LFADDr, LFADDf, LFADD   }
+};
+enum CODE sub_op[][5] = {
+    {   ISUB,   LiSUB,  RiSUB,  FSUB,   LFiSUB  },
+    {   LSUBi,  LSUB,   RlSUB,  FSUB,   LFlSUB  },
+    {   RADDi,  RADDl,  RADD,   FADD,   LFrADD  },
+    {   FADD,   FADD,   FADD,   FADD,   LFfADD  },
+    {   LFADDi, LFADDl, LFADDr, LFADDf, LFADD   }
+};
+*/
 enum CODE get_convert_op(obj_type from, obj_type to) {
     if (from<=to) return 0;
     return conv_op[from][to];
@@ -156,16 +171,6 @@ Vector * var_location(Symbol * varname, Vector * env) { // env: [[(sym00:type00)
     }
     return NULL;
 }
-/*
-typedef struct {
-    Vector      *code;              // intermediate code
-    //obj_type    type;               // object type of code
-    //Vector*     arg_type;           // if type is function, parameter type
-    //obj_type    function_r_type;    // if type is function, function return type
-    //int         dotted;             // 0: normal function 1: dotted fctunction
-    code_type * ct;
-} code_ret;
-*/
 
 code_ret*new_code(Vector*code, code_type * ct) {
     code_ret*r=(code_ret*)malloc(sizeof(code_ret));
@@ -199,6 +204,37 @@ void* create_zero(obj_type type) {
 
 //code_ret* codegen(ast*a,Vector*v,int tail);
 
+Vector *make_arg_list_type(ast *arg_list_ast) {//途中！　
+    // arg_list_astを受け取って、それぞれのargのCTを作り、vectorに入れて返す
+    if ((arg_list_ast->type != AST_ARG_LIST) && (arg_list_ast->type != AST_ARG_LIST_DOTS)) {
+        printf("SyntaxError:not argment list!\n");Throw(0);
+    }
+
+    int i;
+    ast * arg_ast_i;
+    Data *d;
+    Vector *args = vector_init(3), *v = vector_init(3);   // v必要？ 
+    for(i = 0; i < arg_list_ast->table->_sp; i ++ ) {
+        arg_ast_i=(ast*)vector_ref(arg_list_ast->table, i);// ast_print(a2,0);
+        if (arg_ast_i->type == AST_VAR) {
+            d=(Data*)malloc(sizeof(Data));
+            d->key=(Symbol*)vector_ref(arg_ast_i->table,0);
+            d->val=new_ct(arg_ast_i->o_type,OBJ_NONE,(void*)0,FALSE);
+            push(args,(void*)d);push(v,(void*)arg_ast_i->o_type);
+        } else if (arg_ast_i->type == AST_FCALL) {
+            // 関数プロトタイプの場合を記載すること
+        } else {printf("illegal argment!\n");}
+    } //for(i=0;i<args->_sp;i++) printf("%s\t",((Symbol*)vector_ref(args,i))->_table);printf("\n");
+    if (arg_list_ast->type==AST_ARG_LIST_DOTS) {
+        d=(Data*)malloc(sizeof(Data));
+        d->key = new_symbol("..",2);//printf("%s\n",d->key->_table);
+        d->val = OBJ_NONE;
+        push(args,(void*)d);
+    } //vector_print(v);
+    //push(env,(void*)args);//PR(1);
+    return args;
+}
+
 code_ret * codegen_vect(ast*vect_ast,Vector*env,int tail) {
     // AST_VECT [AST_expr_list [AST_v1,AST_v2,...]]
     //                          <0,0>  <0,1> ...
@@ -227,6 +263,7 @@ code_ret * codegen_vect(ast*vect_ast,Vector*env,int tail) {
 }
 
 code_ret *codegen_lit(ast*lit_ast,Vector*env,int tail) {
+    // リテラルタイプのastを処理し、コードを作る 
     tokentype lit_type=(tokentype)vector_ref(lit_ast->table,0);
     Symbol*str_symbol=(Symbol*)vector_ref(lit_ast->table,1);
     Vector*code = vector_init(3);
@@ -406,7 +443,7 @@ code_ret*codegen_sls(ast*sls_ast, Vector*env, int tail) {   // AST_SLS [AST_vect
 
 code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_type,AST_L_EXPR,AST_R_EXPR]
     obj_type r_type;
-    int i;
+    int i,op_code;
 
     Vector *code = vector_init(3);
     code_ret *code_r_left = codegen((ast*)vector_ref(_2op_ast->table,1),env,FALSE);   //左辺式をコンパイルする
@@ -461,10 +498,14 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
         r_type=type_left;
         if (type_right != OBJ_INT) push(code_right,(void*)conv_op[type_right][OBJ_INT]);
     } else if (type_left < type_right) {
-        push(code_left,(void*)conv_op[type_left][type_right]);
+        op_code = conv_op[type_left][type_right];
+        if (op_code ==0 ) {printf("SyntaxError:IllegalOpecode!\n");Throw(0);}
+        push(code_left,(void*)(long)op_code);
         r_type=type_right;
-    } else if (type_left>type_right) {
-        push(code_right,(void*)conv_op[type_right][type_left]);
+    } else if (type_left > type_right) {
+        op_code = conv_op[type_right][type_left];
+        if (op_code ==0 ) {printf("SyntaxError:IllegalOpecode!\n");Throw(0);}
+        push(code_right,(void*)(long)op_code);
         r_type=type_left;
     } else r_type=type_left;
     //
@@ -473,7 +514,9 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
         if (op2_1[i]==(int)(long)vector_ref(_2op_ast->table,0)) break;
     }
     if (i>=18) {printf("illegal 2oprand\n");return NULL;}
-    push(code,(void*)(long)op2_2[r_type][i]);
+    if ((op_code =op2_2[r_type][i])==0) {printf("SyntaxError:IllegalOpecode!\n");Throw(0);};
+    push(code,(void*)(long)op_code);
+    //
     if (op2_3[i] != 0) r_type=op2_3[i];
     // printf("ret_type:%d\n",ret_obj);
     return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
@@ -604,9 +647,9 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
 
 code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                        // AST_DCL [AST_EXPR_LIST [exp1,exp2...]]
                                                                                     //          <0>            <0,0>,<0,1>
-    int j;
+    int j,i;
     Vector *code = vector_init(3);                                                                   
-    ast *ast_j;
+    ast *ast_j, *ast_i;
     code_ret *code_s_right;
     code_type *ct;
     Symbol *s;
@@ -645,12 +688,13 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
             }
             push(code,(void*)GSET);push(code,(void*)s);
             push(code,(void*)DROP);
-        //} else if (a2->type==AST_FCALL) {   //  typeが関数呼出し≒関数宣言(所謂プロトタイプ宣言)の場合である
-        //    // a2:ASF_FCALL [AST_VAR[],AST_ARG_LIST[ast0,ast1,.....]]
-        //    //               <0>       <1>          <1,0>,<1,1>,...
-        //    for(i=0;i<((ast*)vector_ref(a2->table,1))->table->_sp;i++) {
-        //        a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,i);
-        //    }
+        } else if (ast_j->type==AST_FCALL) {   //  typeが関数呼出し≒関数宣言(所謂プロトタイプ宣言)の場合である
+            // ast_j:ASF_FCALL [AST_VAR[],AST_ARG_LIST[ast0,ast1,.....]]
+            //                  <0>       <1>          <1,0>,<1,1>,...
+            printf("途中です!!\n");Throw(0);
+            for(i=0;i<((ast*)vector_ref(ast_j->table,1))->table->_sp;i++) {
+                ast_i = (ast*)vector_ref(((ast*)vector_ref(ast_j->table,1))->table,i);  // ast_i:i番目のパラメータ
+            }
         } else {
             printf("Syntax error :decliation in ml_expr\n");
             Throw(0);
@@ -662,13 +706,15 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
 
 code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]
                                                                     //                           <0,0,0>,<0,0,1>,...   <1>
-    Vector *args=vector_init(3);
+    //Vector *args=vector_init(3);
     Vector *v=vector_init(3);
     ast *arg_list_ast = (ast*)vector_ref(lambda_ast->table,0);    //arg_list
     if ((arg_list_ast->type != AST_ARG_LIST) && (arg_list_ast->type != AST_ARG_LIST_DOTS)) {printf("SyntaxError:not argment list!\n");Throw(0);}
     int i;
-    ast * arg_ast_i;
-    Data *d;
+    //ast * arg_ast_i;
+    //Data *d;
+    Vector *args=make_arg_list_type(arg_list_ast);
+    /*
     for(i = 0; i < arg_list_ast->table->_sp; i ++ ) {
         arg_ast_i=(ast*)vector_ref(arg_list_ast->table, i);// ast_print(a2,0);
         if (arg_ast_i->type == AST_VAR) {
@@ -686,6 +732,7 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
         d->val = OBJ_NONE;
         push(args,(void*)d);
     } //vector_print(v);
+    */
     push(env,(void*)args);//PR(1);
     //
     Vector *code = vector_init(3);push(code,(void*)LDF);
@@ -935,392 +982,22 @@ code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list 
 }
 
 code_ret * codegen(ast * a, Vector * env, int tail) {
-    Vector * code = vector_init(10), *code1, *code2,*v,*v1,*v2,*v3,*a_arg_v,*d_arg_v,*pos,*_pos,*args,*v_expr_body;
-    code_ret* code_s,*code_s1;
-    //code_s->code=code;code_s->type=OBJ_NONE;
-    ast *a0,* a1,*a2,*a3,*ast_list;
-    int i,j,n,*tp,dcl_flg,m,dot,dot1,dot2; 
-    long int_num;
-    double fl_num,*fl_num_p;
-    mpz_ptr z; mpq_ptr q;
-    tokentype lit_type;
-    obj_type type1,type2,r_type,r_type1,r_type2;
-    Symbol*str_symbol,*s;
-    Data*d;
-    code_type *ct,*ct1,*ct2;
-    enum CODE opcode;
-    //ast_print(a,0);
     switch(a->type) {
-        case AST_ML:return codegen_ml(a,env,tail);    //AST_ML [AST_expr_list [AST_1,AST_2,...]]
-                        //                       <0,0> <0,1>
-            /*
-            dcl_flg = FALSE;
-            ast_list=(ast*)vector_ref(a->table,0);//ast_print(ast_list,0);
-            a_arg_v=vector_init(3);d_arg_v=vector_init(3);v_expr_body=vector_init(3);
-            for(i=0;i<ast_list->table->_sp;i++) {
-                a1=(ast*)vector_ref(ast_list->table,i);//ast_print(a1,0);
-                if (a1->type==AST_DCL) {
-                    dcl_flg=TRUE;
-                    for(j=0;j<((ast*)vector_ref(a1->table,0))->table->_sp;j++) {
-                        a2 = (ast*)vector_ref(((ast*)vector_ref(a1->table,0))->table,j);//ast_print(a2,0);
-                        if (a2->type==AST_VAR) {                                        // a2:AST_VAR [symbol_var_name_]
-                            a2->o_type=a1->o_type;
-                            v=vector_init(2);
-                            push(v,(void*)TOKEN_NONE);push(v,(void*)NULL);
-                                push(a_arg_v,new_ast(AST_LIT,a1->o_type,v));//printf("######\n<<<a_arg_v:%d>>>\n",j);ast_print(new_ast(AST_LIT,OBJ_NONE,v),0);                           // a_arg_v:actual arg list
-                            push(d_arg_v,(void*)a2);                                    // d_arg_v:dummy arg list
-                        } else if (a2->type==AST_SET &&                                 // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
-                                    ((ast*)vector_ref(a2->table,1))->type==AST_VAR) {   //                        <1>                 <2>
-                            push(a_arg_v,(void*)vector_ref(a2->table,2));               // a_arg_v:actual arg list
-                            //push(d_arg_v,(void*)vector_ref(a2->table,1));               // d_arg_v:dummy arg list
-                            a0=(ast*)vector_ref(a2->table,1);
-                            a0->o_type=a1->o_type;
-                            push(d_arg_v,(void*)a0);               // d_arg_v:dummy arg list
-                        } else if (a2->type==AST_SET &&                                 // a2: AST_SET [set_type, AST_FCALL [FUNC_NAME,ARG_LIST], expr_ast]
-                                    ((ast*)vector_ref(a2->table,1))->type==AST_FCALL) { //                        <1>        <1,0>,    <1,1>,       <2>
-                            // ...;function Fname;Fname(...)=...に変換する
-                            v=vector_init(2);push(v,(void*)TOKEN_NONE);push(v,(void*)NULL);
-                            push(a_arg_v,new_ast(AST_LIT,OBJ_UFUNC,v));
-                            //
-                            a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,0);  //関数名のASTを取り出して
-                            a3->o_type=OBJ_UFUNC;                                           //typeを関数に変更して             
-                            push(d_arg_v,a3);                                                //仮引数リストに登録
-                            push(v_expr_body,(void*)a2);    //body部にa2:Fname(...)=...のASTを挿入
-                            //コードを書く！
-                        } else {
-                            printf("Syntax error :decliation in ml_expr%d\n",a2->type);
-                            Throw(0);
-                        }
-                    }
-                } else {//printf("!!!\n");
-                    if (i==ast_list->table->_sp-1) {
-                        //code_s1= codegen(a1,env,tail);      
-                        //ct=code_s1->ct;
-                        //code=vector_append(code,code_s1->code);
-                        push(v_expr_body,(void*)a1);//ast_print(a1,0);
-                    } else {
-                        //code_s1 = codegen(a1,env,FALSE);
-                        //code = vector_append(code,code_s1->code);
-                        //push(code,(void*)DROP);//disassy(code,0);
-                        push(v_expr_body,(void*)a1);//ast_print(a1,0);
-                    }
-                }
-            }
-            if (dcl_flg==FALSE) {
-                //code_s=new_code(code,ct);
-                //return code_s;
-                for(i=0;i<v_expr_body->_sp-1;i++) {
-                    code_s=codegen((ast*)vector_ref(v_expr_body,i),env,FALSE);
-                    code=vector_append(code,code_s->code);push(code,(void*)DROP);
-                }
-                code_s=codegen((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1),env,tail);
-                code=vector_append(code,code_s->code);
-                return new_code(code,code_s->ct);
-            } else {
-                v1=vector_init(2);v2=vector_init(1);
-                push(v1,(void*)new_ast(AST_ARG_LIST,OBJ_NONE, d_arg_v));//printf("##########\n<<<v1>>>\n");ast_print(new_ast(AST_ARG_LIST,OBJ_NONE,d_arg_v),0);//dummy arg list
-                //push(v2,new_ast(AST_EXP_LIST,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v_expr_body));
-                push(v2,new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body));//printf("##########\n<<<v2>>>\n");ast_print(new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body),0);
-                //push(v1,(void*)new_ast(AST_ML,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v2));//ast_print(new_ast(AST_ML,v5),0) ;      // v3:[AST_EXP_LIST,AST_ML]
-                push(v1,(void*)new_ast(AST_ML,OBJ_NONE,v2));//ast_print(new_ast(AST_ML,OBJ_NONE,v2),0) ;      // v3:[AST_EXP_LIST,AST_ML]
-                //a1=new_ast(AST_LAMBDA,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v1);ast_print(a1,0);
-                a1=new_ast(AST_LAMBDA,OBJ_NONE,v1);//printf("########\n<<<a1>>>\n");ast_print(a1,0);//ここまでOK!
-                //
-                v3=vector_init(3);
-                push(v3,(void*)a1);
-                push(v3,(void*)new_ast(AST_EXP_LIST,OBJ_NONE,a_arg_v));//ast_print(new_ast(AST_EXP_LIST,OBJ_NONE,a_arg_v),0);   // actual arg list
-                a2=new_ast(AST_FCALL,a1->o_type,v3);//ast_print(a2,0);                   // AST_FCALL [AST_LAMBDA [AST_EXP_LIST [..],AST_ML [...]],AST_EXP_LIST [...]]
-                return codegen(a2,env,tail);
-            }
-        */
-        case AST_IF:    // AST_IF,[cond_expr,true_expr,false_expr]
-                //printf("if in!\n");
-                return codegen_if(a,env,tail);
-                /*
-                code_s1 = codegen(vector_ref(a -> table, 0),env,FALSE);
-                code=code_s1->code;                                             // make cond_code 
-                code_s1 = codegen(vector_ref(a->table,1),env,TRUE);             // make true_code
-                code1=code_s1->code;ct1=code_s1->ct;
-                code_s1 = codegen(vector_ref(a->table,2),env,TRUE);             // make false_code
-                code2=code_s1->code;ct2=code_s1->ct;
-                if (tail) push(code,(void*)TSEL); else push(code,(void*)SEL);   
-
-                if (ct1->type == ct2->type || ct1->type==OBJ_NONE || ct2->type==OBJ_NONE) { // 暫定処置
-                    if (tail) {push(code1,(void*)RTN);push(code2,(void*)RTN);}
-                    else {push(code1,(void*)JOIN);push(code2,(void*)JOIN);}
-                    push(code ,(void*)code1); push(code,(void*)code2); 
-                    if (ct1->type >= ct2->type) return new_code(code,ct1);      
-                    return new_code(code,ct2);
-                } else {
-                    if (ct1->type != OBJ_GEN)  {push(code1,(void*)conv_op[ct1->type][OBJ_GEN]);}
-                    if (ct2->type != OBJ_GEN)  {push(code2,(void*)conv_op[ct2->type][OBJ_GEN]);}
-
-                    if (tail) {push(code1,(void*)RTN);push(code2,(void*)RTN);}
-                    else {push(code1,(void*)JOIN);push(code2,(void*)JOIN);}
-                    push(code,(void*)code1);push(code,(void*)code2);
-                    return new_code(code, new_ct(OBJ_GEN,OBJ_GEN,(void*)0,FALSE));
-                }
-                */
-        case AST_SET:return codegen_set(a,env,tail);// AST_SET [set_type, AST_left_expr, AST_right_expr]
-                /*
-                switch(((ast*)vector_ref(a->table,1))->type) {
-                    case AST_VREF:  // AST_SET [set_type, AST_VREF [vect_expr,index] ], right_expr]
-                                    //          <0,0>               <1,0>     <1,1>    <2>
-                                    // -> right_code vect_name_code index_code VSET
-                        //right exprをcode化
-                        code_s=codegen(vector_ref(a->table,2),env,FALSE);
-                        code=code_s->code;ct=code_s->ct;;
-                        //left exprをcode化
-                        code_s=codegen(vector_ref(a->table,1),env,FALSE);
-                        code1=code_s->code;ct1=code_s->ct;
-                        //vector_set(code1,code1->_sp-1,(void*)VSET);
-                        i=(long)pop(code1);
-                        if ((i==REF || i==OREF) && ct->type != OBJ_GEN ) {
-                           push(code,(void*)conv_op[ct->type][OBJ_GEN]);
-                        } else if (i==SREF && ct->type != OBJ_SYM ) {
-                           //push(code,(void*)conv_op[ct->type][OBJ_SYM]);
-                            printf("SyntaxError:Must be Symbol!\n");Throw(0);
-                        }
-                        if (i==REF) {
-                            push(code1,(void*)VSET);
-                            return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
-                        } else if (i==SREF) {
-                            push(code1,(void*)SSET);
-                            return new_code(vector_append(code,code1),new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));
-                        } else {
-                            push(code1,(void*)OSET);
-                            return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
-                        }
-                    case AST_FCALL: // AST_SET [set_type,AST_FCALL [expr_name , expr_list],right_expr]
-                                    //          <0,0>              <1,0>        <1,1>      <2>
-                        a1=(ast*)vector_ref(((ast*)vector_ref(a->table,1))->table,0);                       //a1:expr name
-                        if (a1->type != AST_VAR) {printf("SyntaxError:Must be Function Name!\n");Throw(0);}                            
-                        s=(Symbol * )vector_ref(a1->table,0);                                            
-                           //dcl宣言式を作成する
-                        
-                        v1=vector_init(2);
-                        a0=(ast*)vector_ref(((ast*)vector_ref(a->table,1))->table,1);                        //a:expr_list
-                        push(v1,(void*)a0);                      //push expr_list
-                        push(v1,(void*)vector_ref(a->table,2)); //push righ expr
-                        a2=new_ast(AST_LAMBDA,((ast*)vector_ref(a->table,2))->o_type,v1);
-                        v2=vector_init(2);push(v2,(void*)(long)'=');
-                        push(v2,(void*)a1);push(v2,(void*)a2);//ast_print(new_ast(AST_SET,a2->o_type,v2),0);
-                        return codegen(new_ast(AST_SET,a2->o_type,v2),env,FALSE);
-                    case AST_VAR:   // AST_SET [set_type, AST_VAR [var_name], right_expr]
-                                    //          <0,0>             <1,0>       <2>
-                        code_s=codegen((ast*)vector_ref(a->table,2),env,FALSE);
-                        code=code_s->code;ct2=code_s->ct;
-                        //if (type2==OBJ_UFUNC) {v2=code_s->arg_type;r_type2=code_s->function_r_type;dot2=code_s->dotted;}
-                        s=(Symbol*)vector_ref(((ast*)vector_ref(a->table,1))->table,0);
-                        _pos=var_location(s,env);
-                        if (_pos) {
-                            pos=(Vector*)vector_ref(_pos,0);
-                            ct1=(code_type*)(long)vector_ref(_pos,1);   //ct1は変数名のコードタイプ
-                            if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
-                                ct1=ct2;
-                                //envに保存してある戻り型情報がない関数型変数のコードタイプをct2で置き換える
-                                i=(env->_sp)-(long)vector_ref(pos,0)-1;j=(long)vector_ref(pos,1);   //env内のポジションを計算して
-                                d=(Data*)malloc(sizeof(Data));d->key=s;d->val=ct1;                  //入れるべきデータを作って
-                                vector_set((Vector*)vector_ref(env,i),j,(void*)d);//printf("||changed||\n");env_print(env);                  //セットする
-                            } else if (ct1->type != ct2->type) {
-                                if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!%d %d\n",ct1->type,ct2->type);Throw(0);}
-                                push(code,(void*)conv_op[ct2->type][ct1->type]);
-                            }
-                            //
-                            if ((long)vector_ref(pos,0)== 0) {
-                                switch((long)vector_ref(pos,1)) {
-                                    case 0: push(code, (void*)SET00);break;
-                                    case 1: push(code, (void*)SET01);break;
-                                    case 2: push(code, (void*)SET02);break;
-                                    case 3: push(code, (void*)SET03);break;
-                                }
-                            } else if ((long)vector_ref(pos,0)== 1) {
-                                switch((long)vector_ref(pos,1)) {
-                                    case 0: push(code, (void*)SET10);break;
-                                    case 1: push(code, (void*)SET11);break;
-                                    case 2: push(code, (void*)SET12);break;
-                                    case 3: push(code, (void*)SET13);break;
-                                }
-                            } else {
-                                push(code,(void*)SET);push(code,(void*)pos);
-                            }
-                        } else {
-                            if ((ct1=get_gv(s))==NULL) {            //変数テーブルに名前がないなら
-                                //printf("SyntaxError:variable not defined!");return NULL;
-                                put_gv(s,ct2);ct1=ct2;              //新たにct2=右辺値のコードタイプで変数を作り左辺値のコードタイプは右辺値と同一
-                            } else if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
-                                ct1=ct2;put_gv(s,ct1);
-                                //if (ct2->type==OBJ_UFUNC) {gvt->type=OBJ_UFUNC;gvt->arg_type=v;gvt->functon_ret_type=r_type;put_gv(s,gvt);}
-                            }else if (ct1->type != ct2->type) { 
-                                if (conv_op[ct2->type][ct1->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
-                                push(code,(void*)conv_op[ct2->type][ct1->type]);
-                            }
-                            //
-                            push(code,(void*)GSET);push(code,(void*)s);
-                        }
-                        return new_code(code,ct1);
-                        //if (type1==OBJ_UFUNC) {
-                        //    if 
-                        //    code_s->function_r_type=r_type;code_s->arg_type=v;code_s->dotted=dot;
-                        //}
-                        //return code_s;
-                    default:printf("jhdjadjaw4yy87wfhwj\n");
-                }
-                */
-        case AST_LAMBDA:return codegen_lambda(a,env,tail);    // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]
-                            //                           <0,0,0>,<0,0,1>,...   <1>
-            /*
-            args=vector_init(3);
-            v=vector_init(3);
-            a1=(ast*)vector_ref(a->table,0);    //arg_list
-            if ((a1->type != AST_ARG_LIST) && (a1->type != AST_ARG_LIST_DOTS)) {printf("SyntaxError:not argment list!\n");Throw(0);}
-            for(i=0;i<a1->table->_sp;i++) {
-                a2=(ast*)vector_ref(a1->table,i);// ast_print(a2,0);
-                if (a2->type==AST_VAR) {
-                    d=(Data*)malloc(sizeof(Data));
-                    d->key=(Symbol*)vector_ref(a2->table,0);
-                    //d->val=(void*)a2->o_type;
-                    d->val=new_ct(a2->o_type,OBJ_NONE,(void*)0,FALSE);
-                    push(args,(void*)d);push(v,(void*)a2->o_type);
-                } else {printf("illegal argment!\n");}
-            } //for(i=0;i<args->_sp;i++) printf("%s\t",((Symbol*)vector_ref(args,i))->_table);printf("\n");
-            if (a1->type==AST_ARG_LIST_DOTS) {
-                d=(Data*)malloc(sizeof(Data));
-                    d->key=new_symbol("..",2);//printf("%s\n",d->key->_table);
-                    d->val=OBJ_NONE;
-                push(args,(void*)d);
-            } //vector_print(v);
-            push(env,(void*)args);//PR(1);
-            code_s=codegen((ast*)vector_ref(a->table,1),env,TRUE);//PR(2);
-            code1=code_s->code;ct1=code_s->ct;
-            push(code1,(void*)RTN);
-            push(code,(void*)LDF);push(code,(void*)code1);
-            pop(env);// !!don't forget!!!
-            code_s= new_code(code,new_ct(OBJ_UFUNC,ct1->type,v,0));//code_s->arg_type=v;code_s->function_r_type=type1;
-            if (a1->type==AST_ARG_LIST_DOTS) code_s->ct->dotted=1;
-            return code_s;
-            */
-        case AST_DCL:  return codegen_dcl(a,env,tail);
-        /* 
-                        // AST_DCL [AST_EXPR_LIST [exp1,exp2...]]
-                        //          <0>            <0,0>,<0,1>
-            a1=a;                                                               // a1->o_type:宣言された型
-            for(j=0;j<((ast*)vector_ref(a1->table,0))->table->_sp;j++) {        // declear内のexpr_listを順番に見ていき
-                a2 = (ast*)vector_ref(((ast*)vector_ref(a1->table,0))->table,j);// a2:宣言式のj番目の式
-                if (a2->type==AST_VAR) {                                        // int I,J,K;等初期代入がない場合
-                    if (get_gv(s=(Symbol*)vector_ref(a2->table,0))!=NULL) {printf("Warning!:DupricateDifinition!\n");}  //警告を出して続行
-                    // printf("!!!!\n");
-                    ct=new_ct(a1->o_type,OBJ_NONE,(void*)0,FALSE);              // 宣言された型でctを作り
-                    put_gv(s,ct);                                               // 型をgvに登録する
-                    push(code,(void*)LDC);push(code,create_zero(a1->o_type));   // 「0」で初期化しておく
-                    push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);// declear式は値を返さない;
-                } else if (a2->type==AST_SET &&                                 // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
-                            ((ast*)vector_ref(a2->table,1))->type==AST_VAR) {   //                        <1>                 <2>
-                    //変数名を取り出してSymbol*sに取っておき、定義済(GVにある)ならエラー
-                    s = (Symbol*)vector_ref(((ast*)vector_ref(a2->table,1))->table,0);
-                    if (get_gv(s) !=0) printf("Warning!:DupricateDifinition!\n");//警告を出して続行
-                    // 右辺式のコードを生成
-                    code_s = codegen((ast*)vector_ref(a2->table,2),env,FALSE);
-                    code=vector_append(code, (void*)code_s->code);ct=code_s->ct;
-                    // 変数名sに型を設定する
-                    // ここにおいて右辺値の型はct、dcl宣言された型は1->o_typeである
-                    if (a1->o_type==OBJ_UFUNC || a1->o_type==OBJ_PFUNC) {       //型宣言詞がfunctionの場合
-                        if (ct->type==OBJ_UFUNC || ct->type==OBJ_PFUNC) {       //右辺値もfunctionなら正常
-                            put_gv(s,ct);                                       //そのまま変数名に割り当てる
-                        }
-                        printf("SyntaxError:Must be Function!\n");              //そうえないならエラー
-                        return NULL;
-                    } else {                                                    //型宣言が関数タイプでないときは
-                            put_gv(s,new_ct(a1->o_type,OBJ_NONE,(void*)0,FALSE));   //宣言された型を変数名sに割り当てるが
-                            if (a1->o_type != ct->type) {                       //右辺値の型と宣言型が異なる場合には型変換命令を入れる
-                                push(code, (void*)conv_op[ct->type][a1->o_type]);
-                                ct->type=a1->o_type;                             //返す型は型返還後のもの、すなわち宣言型する
-                            }
-                    }
-                    push(code,(void*)GSET);push(code,(void*)s);
-                    push(code,(void*)DROP);
-                //} else if (a2->type==AST_FCALL) {   //  typeが関数呼出し≒関数宣言(所謂プロトタイプ宣言)の場合である
-                //    // a2:ASF_FCALL [AST_VAR[],AST_ARG_LIST[ast0,ast1,.....]]
-                //    //               <0>       <1>          <1,0>,<1,1>,...
-                //    for(i=0;i<((ast*)vector_ref(a2->table,1))->table->_sp;i++) {
-                //        a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,i);
-                //    }
-                } else {
-                    printf("Syntax error :decliation in ml_expr\n");
-                    return NULL;
-                }
-            }
-            pop(code);
-            return  new_code(code,ct);
-            */
-        case AST_FCALL: return codegen_fcall(a, env, tail);
-            /*            
-            a1=(ast*)vector_ref(a->table,1);    // parameter ast
-            n = a1->table->_sp;//PR(3);         // number of actual parameters
-            a2=(ast*)vector_ref(a->table,0);    // function ast
-            // 「..」だったら即APPLYに変換する
-            if (a1->type==AST_EXP_LIST_DOTS) {                      // if expr_list_dots -> apply
-                v1=vector_init(1+a1->table->_sp);
-                push(v1,(void*)vector_ref(a->table,0));
-                for(i=0;i<a1->table->_sp;i++) {
-                    push(v1,(void*)vector_ref(a1->table,i));
-                }
-                v2=vector_init(1);
-                push(v2,(void*)new_ast(AST_EXP_LIST_DOTS,((ast*)vector_ref(a1->table,a1->table->_sp-1))->o_type,v1));
-                return codegen(new_ast(AST_APPLY,((ast*)vector_ref(a1->table,a1->table->_sp-1))->o_type,v2),env,tail);     // AST_APPLY [AST_EXP_LIST [expr0,expr1,...]]
-            }
-            // 一般の場合
-            // function astのコード生成
-            code_s=codegen(a2,env,FALSE);code2=code_s->code;//PR(0);            
-            if (code_s->ct->type != OBJ_UFUNC) {printf("SyntaxError:Must be Function!\n");return NULL;}
-            r_type = code_s->ct->functon_ret_type;//PR(1);
-            v=code_s->ct->arg_type;//vector_print(v);PR(2);                 // list of dummy parameter type
-            if (r_type != OBJ_NONE) {
-                m = v->_sp;//PR(2);                       // number of dummy parameters
-                //n = a1->table->_sp;//PR(3);                 // number of actual parameters
-                if (!(dot=code_s->ct->dotted) && n != m) {printf("SyntaxError: Illegal parameter number!\n");return NULL;}
-                for(i=0;i<n;i++) {//PR(i);
-                    code_s = codegen((ast*)vector_ref(a1->table,i),env,FALSE);
-                    code1 = code_s->code;ct1=code_s->ct;type1=ct1->type;                            // ct1/type1:actual parameter type
-                    if (dot && i >= m-1) type2=OBJ_GEN ; else type2 = (int)(long)vector_ref(v,i);  // ct2/type2:dummy parameter type
-                    if ((type1 != type2 ) && (type1 != OBJ_NONE)) push(code1,(void*)conv_op[type1][type2]);
-                    code=vector_append(code,code1);
-                }
-                code = vector_append(code, code2);    // append Function name % expr_list
-                push(code, tail ? (void*)TCALL : (void*)CALL);
-                push(code, (void*)(long)n);
-                return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
-            } else { // r_typeが設定されていない≒詳細未定義の関数→再起関数の場合は型情報は後で（関数セット時に）入れる
-                     //                                           →高階関数の引数の場合は型はすべてgenとするしかない
-                     //                                            ※再起関数か高階関数の引数かを判定しなければならない!!!
-                //printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-                v=vector_init(3);
-                for(i=0;i<n;i++){
-                    code_s = codegen((ast*)vector_ref(a1->table,i),env,FALSE);
-                    code1 = code_s->code;ct1=code_s->ct;type1=ct1->type;                            // ct1/type1:actual parameter type
-                    //if (dot && i >= m-1) type2=OBJ_GEN ; else type2 = (int)(long)vector_ref(v,i);  // ct2/type2:dummy parameter type
-                    //if (type1 != type2) push(code1,(void*)conv_op[type1][type2]);
-                    push(v,(void*)type1);
-                    code=vector_append(code,code1);
-                }
-                code = vector_append(code, code2);    // append Function name % expr_list
-                push(code, tail ? (void*)TCALL : (void*)CALL);
-                push(code, (void*)(long)n);
-                return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
-
-            }
-       */ 
-        case AST_APPLY:return codegen_apply(a,env,tail);
-        case AST_2OP:  return codegen_2op (a, env, tail);
-        case AST_1OP:  return codegen_1op (a, env, tail); 
-        case AST_VREF: return codegen_vref(a, env, tail);
-        case AST_SLS:  return codegen_sls (a, env, tail);
-        case AST_VAR:  return codegen_var (a, env, tail);
-        case AST_LIT:  return codegen_lit (a, env, tail);
-        case AST_VECT: return codegen_vect(a, env, tail);
-        default:
-            printf("syntaxError:Unknown AST!\n");
-            Throw(0);
+        case AST_ML:    return  codegen_ml      (a, env, tail);
+        case AST_IF:    return  codegen_if      (a, env, tail);
+        case AST_SET:   return  codegen_set     (a, env, tail);
+        case AST_LAMBDA:return  codegen_lambda  (a, env, tail);
+        case AST_DCL:   return  codegen_dcl     (a, env, tail);
+        case AST_FCALL: return  codegen_fcall   (a, env, tail);
+        case AST_APPLY: return  codegen_apply   (a, env, tail);
+        case AST_2OP:   return  codegen_2op     (a, env, tail);
+        case AST_1OP:   return  codegen_1op     (a, env, tail); 
+        case AST_VREF:  return  codegen_vref    (a, env, tail);
+        case AST_SLS:   return  codegen_sls     (a, env, tail);
+        case AST_VAR:   return  codegen_var     (a, env, tail);
+        case AST_LIT:   return  codegen_lit     (a, env, tail);
+        case AST_VECT:  return  codegen_vect    (a, env, tail);
+        default: printf("syntaxError:Unknown AST!\n");Throw(0);
     } 
 }
 
@@ -1375,7 +1052,7 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
 int main(int argc, char*argv[]) {
     void* value;
     ast *a;
-    printf("PURE REPL Version 0.2.2 Copyright 2021.05.30 M.Taniguro\n");
+    printf("PURE REPL Version 0.2.3 Copyright 2021.06.01 M.Taniguro\n");
     Stream *S;
     int token_p,DEBUG=FALSE;
     Vector*env;
@@ -1398,6 +1075,7 @@ int main(int argc, char*argv[]) {
     make_primitive();    
     int i=1;
     CEXCEPTION_T e;
+    Symbol *underbar_sym=new_symbol("_",1);
     while (i<argc) {
         if (strcmp(argv[i],"-d")==0) {DEBUG=TRUE;i++;continue;}
         if (strcmp(argv[i],"-f")==0) {
@@ -1438,6 +1116,7 @@ int main(int argc, char*argv[]) {
                 }
                 value = eval(Stack,Env,code,Ret,EEnv,G);
                 printf("%s ok\n", objtype2str(type,value));
+                Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {
                 if (a==NULL) exit(0);
                 // tokenbuff->_cp=token_p;
