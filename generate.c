@@ -15,7 +15,7 @@ enum CODE op2_2[16][18] = {
                 {RADD, RSUB, RMUL, RDIV, RMOD, RPOW, 0,    0,    0,    0,   0,   RGT, RLT, REQ, RNEQ, RGEQ, RLEQ, 0},   // OBJ_RAT
                 {FADD, FSUB, FMUL, FDIV, FMOD, FPOW, 0,    0,    0,    0,   0,   FGT, FLT, FEQ, FNEQ, FGEQ, FLEQ, 0},   // OBJ_FLT
                 {LFADD,LFSUB,LFMUL,LFDIV,LFMOD,LFPOW,0,    0,    0,    0,   0,   LFGT,LFLT,LFEQ,LFNEQ,LFGEQ,LFLEQ,0},   // OBJ_LFLT
-                {CADD, CSUB, CMUL, CDIV, 0,    CPOW, 0,    0,    0,    0,   0,   0,   0,   0,   0,    0    ,0    ,0},   // OBJ_CMPLX
+                {CADD, CSUB, CMUL, CDIV, 0,    CPOW, 0,    0,    0,    0,   0,   0,   0,   CEQ, CNEQ, 0    ,0    ,0},   // OBJ_CMPLX
                 {OADD, OSUB, OMUL, ODIV, OMOD, OPOW, OPUSH,OBOR, OBAND,OSR, OSL, OGT, OLT, OEQ, ONEQ, OGEQ, OLEQ, 0},   // OBJ_GEN
                 {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_PFUNC
                 {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_UFUNC
@@ -840,6 +840,100 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
     }
 }
 
+code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list [AST_1,AST_2,...]]
+                //                       <0,0> <0,1>
+    int dcl_flg = FALSE;
+    ast *ast_list=(ast*)vector_ref(a->table,0);//ast_print(ast_list,0);
+    Vector *a_arg_v=vector_init(3);Vector *d_arg_v=vector_init(3);Vector *v_expr_body=vector_init(3);
+    int i,j;
+    Vector *v,*v1,*v2,*v3,*code=vector_init(3);
+    code_ret *code_s;
+    ast *a1,*a2,*a3,*a0;
+
+    for(i=0;i<ast_list->table->_sp;i++) {
+        a1=(ast*)vector_ref(ast_list->table,i);//ast_print(a1,0);
+        if (a1->type==AST_DCL) {
+        //
+        //
+        //    
+            dcl_flg=TRUE;
+            for(j=0;j<((ast*)vector_ref(a1->table,0))->table->_sp;j++) {
+                a2 = (ast*)vector_ref(((ast*)vector_ref(a1->table,0))->table,j);//ast_print(a2,0);
+                if (a2->type==AST_VAR) {                                        // a2:AST_VAR [symbol_var_name_]
+                    a2->o_type=a1->o_type;
+                    v=vector_init(2);
+                    push(v,(void*)TOKEN_NONE);push(v,(void*)NULL);
+                        push(a_arg_v,new_ast(AST_LIT,a1->o_type,v));//printf("######\n<<<a_arg_v:%d>>>\n",j);ast_print(new_ast(AST_LIT,OBJ_NONE,v),0);                           // a_arg_v:actual arg list
+                    push(d_arg_v,(void*)a2);                                    // d_arg_v:dummy arg list
+                } else if (a2->type==AST_SET &&                                 // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
+                            ((ast*)vector_ref(a2->table,1))->type==AST_VAR) {   //                        <1>                 <2>
+                    push(a_arg_v,(void*)vector_ref(a2->table,2));               // a_arg_v:actual arg list
+                    //push(d_arg_v,(void*)vector_ref(a2->table,1));               // d_arg_v:dummy arg list
+                    ast *a0=(ast*)vector_ref(a2->table,1);
+                    a0->o_type=a1->o_type;
+                    push(d_arg_v,(void*)a0);               // d_arg_v:dummy arg list
+                } else if (a2->type==AST_SET &&                                 // a2: AST_SET [set_type, AST_FCALL [FUNC_NAME,ARG_LIST], expr_ast]
+                            ((ast*)vector_ref(a2->table,1))->type==AST_FCALL) { //                        <1>        <1,0>,    <1,1>,       <2>
+                    // ...;function Fname;Fname(...)=...に変換する
+                    v=vector_init(2);push(v,(void*)TOKEN_NONE);push(v,(void*)NULL);
+                    push(a_arg_v,new_ast(AST_LIT,OBJ_UFUNC,v));
+                    //
+                    ast *a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,0);  //関数名のASTを取り出して
+                    a3->o_type=OBJ_UFUNC;                                           //typeを関数に変更して             
+                    push(d_arg_v,a3);                                                //仮引数リストに登録
+                    push(v_expr_body,(void*)a2);    //body部にa2:Fname(...)=...のASTを挿入
+                    //コードを書く！
+                } else {
+                    printf("Syntax error :decliation in ml_expr%d\n",a2->type);
+                    Throw(0);
+                }
+            }
+        } else {//printf("!!!\n");
+        //
+        //
+        //
+
+            if (i==ast_list->table->_sp-1) {
+                //code_s1= codegen(a1,env,tail);      
+                //ct=code_s1->ct;
+                //code=vector_append(code,code_s1->code);
+                push(v_expr_body,(void*)a1);//ast_print(a1,0);
+            } else {
+                //code_s1 = codegen(a1,env,FALSE);
+                //code = vector_append(code,code_s1->code);
+                //push(code,(void*)DROP);//disassy(code,0);
+                push(v_expr_body,(void*)a1);//ast_print(a1,0);
+            }
+        }
+    }
+    if (dcl_flg==FALSE) {
+        //code_s=new_code(code,ct);
+        //return code_s;
+        for(i=0;i<v_expr_body->_sp-1;i++) {
+            code_s=codegen((ast*)vector_ref(v_expr_body,i),env,FALSE);
+            code=vector_append(code,code_s->code);push(code,(void*)DROP);
+        }
+        code_s=codegen((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1),env,tail);
+        code=vector_append(code,code_s->code);
+        return new_code(code,code_s->ct);
+    } else {
+        v1=vector_init(2);v2=vector_init(1);
+        push(v1,(void*)new_ast(AST_ARG_LIST,OBJ_NONE, d_arg_v));//printf("##########\n<<<v1>>>\n");ast_print(new_ast(AST_ARG_LIST,OBJ_NONE,d_arg_v),0);//dummy arg list
+        //push(v2,new_ast(AST_EXP_LIST,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v_expr_body));
+        push(v2,new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body));//printf("##########\n<<<v2>>>\n");ast_print(new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body),0);
+        //push(v1,(void*)new_ast(AST_ML,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v2));//ast_print(new_ast(AST_ML,v5),0) ;      // v3:[AST_EXP_LIST,AST_ML]
+        push(v1,(void*)new_ast(AST_ML,OBJ_NONE,v2));//ast_print(new_ast(AST_ML,OBJ_NONE,v2),0) ;      // v3:[AST_EXP_LIST,AST_ML]
+        //a1=new_ast(AST_LAMBDA,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v1);ast_print(a1,0);
+        a1=new_ast(AST_LAMBDA,OBJ_NONE,v1);//printf("########\n<<<a1>>>\n");ast_print(a1,0);//ここまでOK!
+        //
+        v3=vector_init(3);
+        push(v3,(void*)a1);
+        push(v3,(void*)new_ast(AST_EXP_LIST,OBJ_NONE,a_arg_v));//ast_print(new_ast(AST_EXP_LIST,OBJ_NONE,a_arg_v),0);   // actual arg list
+        a2=new_ast(AST_FCALL,a1->o_type,v3);//ast_print(a2,0);                   // AST_FCALL [AST_LAMBDA [AST_EXP_LIST [..],AST_ML [...]],AST_EXP_LIST [...]]
+        return codegen(a2,env,tail);
+    }
+}
+
 code_ret * codegen(ast * a, Vector * env, int tail) {
     Vector * code = vector_init(10), *code1, *code2,*v,*v1,*v2,*v3,*a_arg_v,*d_arg_v,*pos,*_pos,*args,*v_expr_body;
     code_ret* code_s,*code_s1;
@@ -857,8 +951,9 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
     enum CODE opcode;
     //ast_print(a,0);
     switch(a->type) {
-        case AST_ML:    //AST_ML [AST_expr_list [AST_1,AST_2,...]]
+        case AST_ML:return codegen_ml(a,env,tail);    //AST_ML [AST_expr_list [AST_1,AST_2,...]]
                         //                       <0,0> <0,1>
+            /*
             dcl_flg = FALSE;
             ast_list=(ast*)vector_ref(a->table,0);//ast_print(ast_list,0);
             a_arg_v=vector_init(3);d_arg_v=vector_init(3);v_expr_body=vector_init(3);
@@ -937,6 +1032,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
                 a2=new_ast(AST_FCALL,a1->o_type,v3);//ast_print(a2,0);                   // AST_FCALL [AST_LAMBDA [AST_EXP_LIST [..],AST_ML [...]],AST_EXP_LIST [...]]
                 return codegen(a2,env,tail);
             }
+        */
         case AST_IF:    // AST_IF,[cond_expr,true_expr,false_expr]
                 //printf("if in!\n");
                 return codegen_if(a,env,tail);

@@ -383,6 +383,16 @@ object * objLSUB_i(mpz_ptr x, long y) {
     return o;
 }
 
+object * objiSUBL(long x, mpz_ptr y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_init(L);
+    if (y > 0) mpz_ui_sub(L, x, y);
+    else mpz_add_ui(L, y,-x);
+    o -> data.ptr = (void * )L;
+    o -> type = OBJ_LINT;
+    return o;
+}
 object * objLMUL(mpz_ptr x, mpz_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));
@@ -393,6 +403,15 @@ object * objLMUL(mpz_ptr x, mpz_ptr y) {
     return o;
 }
 
+object * objLMUL_i(mpz_ptr x, long y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_init(L);
+    mpz_mul_si(L, x, y);
+    o -> data.ptr = (void * )L;
+    o -> type = OBJ_LINT;
+    return o;
+}
 object * objLDIV(mpz_ptr x, mpz_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));
@@ -403,6 +422,15 @@ object * objLDIV(mpz_ptr x, mpz_ptr y) {
     return o;
 }
 
+object * objLDIV_i(mpz_ptr x, long y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_init(L);
+    mpz_tdiv_q_ui (L, x, y);
+    o -> data.ptr = (void * )L;
+    o -> type = OBJ_LINT;
+    return o;
+}
 object * objLMOD(mpz_ptr x, mpz_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));
@@ -542,6 +570,44 @@ object * objLFADD(mpfr_ptr x, mpfr_ptr y) {
     return o;
 }
 
+object *objLFADD_i(mpfr_ptr x, long y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(F);
+    mpfr_add_si(F, x, y, MPFR_RNDA);
+    o -> data.ptr = (void * )F;
+    o -> type = OBJ_LFLT;
+    return o;
+}
+
+object *objLFADD_L(mpfr_ptr x, mpz_ptr y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(F);
+    mpfr_add_z(F, x, y, MPFR_RNDA);
+    o -> data.ptr = (void * )F;
+    o -> type = OBJ_LFLT;
+    return o;
+}
+object *objLFADD_R(mpfr_ptr x, mpq_ptr y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(F);
+    mpfr_add_q(F, x, y, MPFR_RNDA);
+    o -> data.ptr = (void * )F;
+    o -> type = OBJ_LFLT;
+    return o;
+}
+object *objLFADD_f(mpfr_ptr x, double y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(F);
+    mpfr_add_d(F, x, y, MPFR_RNDA);
+    o -> data.ptr = (void * )F;
+    o -> type = OBJ_LFLT;
+    return o;
+}
+
 object * objLFMUL(mpfr_ptr x, mpfr_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
@@ -552,6 +618,42 @@ object * objLFMUL(mpfr_ptr x, mpfr_ptr y) {
     return o;
 }
 
+object *objLFMUL_i(mpfr_ptr x, long y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(F);
+    mpfr_mul_si(F, x, y, MPFR_RNDA);
+    o -> data.ptr = (void * )F;
+    o -> type = OBJ_LFLT;
+    return o;
+}
+object *objLFMUL_L(mpfr_ptr x, mpz_ptr y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(F);
+    mpfr_mul_z(F, x, y, MPFR_RNDA);
+    o -> data.ptr = (void * )F;
+    o -> type = OBJ_LFLT;
+    return o;
+}
+object *objLFMUL_R(mpfr_ptr x, mpq_ptr y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(F);
+    mpfr_mul_q(F, x, y, MPFR_RNDA);
+    o -> data.ptr = (void * )F;
+    o -> type = OBJ_LFLT;
+    return o;
+}
+object *objLFMULL_f(mpfr_ptr x, double y) {
+    object * o = (object*)malloc(sizeof(object));
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init(F);
+    mpfr_mul_d(F, x, y, MPFR_RNDA);
+    o -> data.ptr = (void * )F;
+    o -> type = OBJ_LFLT;
+    return o;
+}
 object * objLFSUB(mpfr_ptr x, mpfr_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
@@ -657,7 +759,8 @@ object * objadd(object * x, object * y) {
                 case OBJ_LINT:  return objLADD_i((mpz_ptr)y -> data.ptr, x->data.intg);
                 case OBJ_RAT:   return objRADD(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(itof(x -> data.intg), y -> data.flt);
-                case OBJ_LFLT:  return objLFADD(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
+                case OBJ_LFLT:  //return objLFADD(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
+                                return objLFADD_i((mpfr_ptr)y->data.ptr,x->data.intg);
                 case OBJ_CMPLX: return objCADD(itoc(x->data.intg), (complex*)x->data.ptr);
                 default:break;
             }
@@ -667,7 +770,8 @@ object * objadd(object * x, object * y) {
                 case OBJ_LINT:  return objLADD((mpz_ptr)x -> data.ptr, (mpz_ptr)y -> data.ptr);
                 case OBJ_RAT:   return objRADD(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
-                case OBJ_LFLT:  return objLFADD(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
+                case OBJ_LFLT:  //return objLFADD(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
+                                return objLFADD_L((mpfr_ptr)y->data.ptr, (mpz_ptr)x->data.ptr);
                 case OBJ_CMPLX: return objCADD(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
                 default:break;
             }
@@ -677,7 +781,8 @@ object * objadd(object * x, object * y) {
                 case OBJ_LINT:  return objRADD((mpq_ptr)x -> data.ptr, litor((mpz_ptr)y -> data.ptr));
                 case OBJ_RAT:   return objRADD((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFADD(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
-                case OBJ_LFLT:  return objLFADD(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
+                case OBJ_LFLT:  //return objLFADD(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
+                                return objLFADD_R((mpfr_ptr)y->data.ptr, (mpq_ptr)x->data.ptr);
                 case OBJ_CMPLX: return objCADD(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
                 default:break;
             }
@@ -687,16 +792,17 @@ object * objadd(object * x, object * y) {
                 case OBJ_LINT:  return objFADD(x -> data.flt, litof((mpz_ptr)y -> data.ptr));
                 case OBJ_RAT:   return objFADD(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFADD(x -> data.flt, y -> data.flt);
-                case OBJ_LFLT:  return objLFADD(ftolf(x -> data.flt), (mpfr_ptr)y -> data.ptr);
+                case OBJ_LFLT:  //return objLFADD(ftolf(x -> data.flt), (mpfr_ptr)y -> data.ptr);
+                                return objLFADD_f((mpfr_ptr)y->data.ptr, x->data.flt);
                 case OBJ_CMPLX: return objCADD(ftoc(x->data.flt), (complex*)x->data.ptr);
                 default:break;
             }
         case OBJ_LFLT:
             switch(type_y) {
-                case OBJ_INT:   return objLFADD((mpfr_ptr)x -> data.ptr, itolf(y -> data.intg));
-                case OBJ_LINT:  return objLFADD((mpfr_ptr)x -> data.ptr, litolf((mpz_ptr)y -> data.ptr));
-                case OBJ_RAT:   return objLFADD((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
-                case OBJ_FLT:   return objLFADD((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
+                case OBJ_INT:   return objLFADD_i((mpfr_ptr)x -> data.ptr, y -> data.intg);
+                case OBJ_LINT:  return objLFADD_L((mpfr_ptr)x -> data.ptr, (mpz_ptr)y -> data.ptr);
+                case OBJ_RAT:   return objLFADD_R((mpfr_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
+                case OBJ_FLT:   return objLFADD_f((mpfr_ptr)x -> data.ptr, y -> data.flt);
                 case OBJ_LFLT:  return objLFADD((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
                 case OBJ_CMPLX: return objCADD(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
                 default:break;
@@ -732,7 +838,7 @@ object * objsub(object * x, object * y) {
         case OBJ_INT:
             switch(type_y) {
                 case OBJ_INT:   return objISUB(x -> data.intg, y -> data.intg);
-                case OBJ_LINT:  return objLSUB(itol(x -> data.intg), (mpz_ptr)y -> data.ptr);
+                case OBJ_LINT:  return objiSUBL(x -> data.intg, (mpz_ptr)y -> data.ptr);
                 case OBJ_RAT:   return objRSUB(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFSUB(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
@@ -1243,6 +1349,9 @@ int objcmp(object * x, object * y) {
                 case OBJ_LFLT:  return objLFCMP(ftolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
                 default:return -2;
             }
+        case OBJ_CMPLX:
+            if (type_y==OBJ_CMPLX && *((complex *)x->data.ptr) == *((complex *)y->data.ptr)) return 0;
+            return -2;
         case OBJ_LFLT:
             switch(type_y) {
                 case OBJ_INT:   return objLFCMP((mpfr_ptr)x -> data.ptr, itolf(y -> data.intg));
