@@ -1250,21 +1250,31 @@ _CTOO:
 _CTOS:
     push(S,(void*)objtype2symbol(OBJ_CMPLX,pop(S)));
     goto *dequeue(C);
-//
-//_VMAPREF:
-//    l=(Vector*)pop(S);
-//    n = l->_sp;
-//    i=0;
-//    lll=vector_init(3);
-//    while (TRUE) {
-//        ll=(Vector*)vector_ref(l,i);
-//        for(j=0;j<n;j++) {
-//            push(lll,(void*)vector_ref(ll,j));
-//        }
-//
-//    }
-//    _B:
-//_VMAP:
+
+_VMAP:  // S:[...,v0,v1,...,vn,fn] C:[vmap n ...]
+    n=(long)pop(C);
+    fn=(Vector*)pop(S);
+    ll=vector_init(3);
+    push(R, (void * )C);
+    push(EE, (void * )E);
+    i=0;
+    while (TRUE) {
+        l=vector_init(3);
+        for (j=S->_sp-1;j>S->_sp-n;j--) {
+            if (i >= ((Vector*)vector_ref(S,j))->_sp)  goto loopend; 
+            push(l,vector_ref((Vector*)vector_ref(S,j),i));
+        }
+        E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
+        //E = (Vector * )vector_ref(fn, 2); push(E,l);
+        C = vector_copy1((Vector * )vector_ref(fn, 1));
+        push(ll,eval(S,E,C,R,EE,G));
+        i++;
+    }
+    loopend:
+    E=(Vector*)pop(EE);C=(Vector*)pop(R);
+    push(S,(void*)ll);
+    goto *dequeue(C);
+
 //_SET_IADD:
 //_SET_ISUB:
 //_SET_IMUL:
@@ -1272,8 +1282,6 @@ _CTOS:
 //_SET_IMOD:
 //_SET_IBOR:
 //_SET_IBAND:
-
-}
 
 /*
    Vector * vector_make(void * L[], int N) {
@@ -1285,3 +1293,4 @@ _CTOS:
    return V;
    }
    */
+}

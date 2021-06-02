@@ -49,9 +49,9 @@ void*p_close(Vector*v) {
 void *p_gets(Vector*v) {
     char buff[4096];
     //if (fgets(buff,4095,(FILE*)vector_ref(v,0))==NULL) return NULL;
-    fgets(buff,4095,(FILE*)vector_ref(v,0));
+    if (fgets(buff,4095,(FILE*)vector_ref(v,0))==NULL) {printf("RuntimeError:Canot Fgets\n");Throw(3);}
     long n=strlen(buff);
-    Symbol*s=new_symbol(buff,n+1);
+    Symbol*s=new_symbol(buff,n);
     //object*o=(object*)malloc(sizeof(object));
     //o->type=OBJ_SYM;
     //o->data.ptr=s;
@@ -126,6 +126,7 @@ void *p_lflog(Vector *v)    {
 }
 void *p_lflog1p(Vector *v)  {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log1p(F,F,MPFR_RNDA);return (void*)F;}
 void *p_lfexp(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_exp(F,F,MPFR_RNDA);return (void*)F;}
+//
 
 
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
@@ -135,7 +136,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_labs, p_rabs, p_lfabs, p_cabs, p_lsqrt, p_lfsqrt, p_csqrt,
                                  p_lfsin, p_lfcos, p_lftan,p_lfasin, p_lfacos, p_lfatan,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
-                                 p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp,NULL};
+                                 p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "open", "close", "gets", "getc", "sin", "cos", "tan", 
                                 "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",

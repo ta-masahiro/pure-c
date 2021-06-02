@@ -232,7 +232,10 @@ Vector *make_arg_list_type(ast *arg_list_ast) {//途中！　
         push(args,(void*)d);
     } //vector_print(v);
     //push(env,(void*)args);//PR(1);
-    return args;
+    Vector *retvect=vector_init(3);
+    push(retvect,(void*)args);push(retvect,(void*)v);
+    //return args;
+    return retvect;
 }
 
 code_ret * codegen_vect(ast*vect_ast,Vector*env,int tail) {
@@ -707,13 +710,15 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
 code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]
                                                                     //                           <0,0,0>,<0,0,1>,...   <1>
     //Vector *args=vector_init(3);
-    Vector *v=vector_init(3);
+    //Vector *v=vector_init(3);
     ast *arg_list_ast = (ast*)vector_ref(lambda_ast->table,0);    //arg_list
     if ((arg_list_ast->type != AST_ARG_LIST) && (arg_list_ast->type != AST_ARG_LIST_DOTS)) {printf("SyntaxError:not argment list!\n");Throw(0);}
     int i;
     //ast * arg_ast_i;
     //Data *d;
-    Vector *args=make_arg_list_type(arg_list_ast);
+    Vector *d_args=make_arg_list_type(arg_list_ast);
+    Vector *args=(Vector*)vector_ref(d_args,0);
+    Vector *v=(Vector*)vector_ref(d_args,1);
     /*
     for(i = 0; i < arg_list_ast->table->_sp; i ++ ) {
         arg_ast_i=(ast*)vector_ref(arg_list_ast->table, i);// ast_print(a2,0);
@@ -1052,7 +1057,6 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
 int main(int argc, char*argv[]) {
     void* value;
     ast *a;
-    printf("PURE REPL Version 0.2.3 Copyright 2021.06.01 M.Taniguro\n");
     Stream *S;
     int token_p,DEBUG=FALSE;
     Vector*env;
@@ -1090,6 +1094,7 @@ int main(int argc, char*argv[]) {
         //    }
         //}
     }
+    if (fp==stdin) printf("PURE REPL Version 0.2.3 Copyright 2021.06.01 M.Taniguro\n");
     //DEBUG=TRUE;
     S = new_stream(fp);
     tokenbuff=vector_init(100);

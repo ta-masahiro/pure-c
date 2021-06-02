@@ -903,7 +903,7 @@ object * objmul(object * x, object * y) {
     int type_x = x -> type;
     int type_y = y -> type;
     long i,n;
-    Vector*v; Symbol* s;
+    Vector*v,*v1; Symbol* s,*s1;
 
     switch(type_x) {
         case OBJ_INT:
@@ -963,27 +963,29 @@ object * objmul(object * x, object * y) {
             }
         case OBJ_VECT:
             switch (type_y) {
-                case OBJ_INT:break;
+                case OBJ_INT:  n=y->data.intg;break;
                 case OBJ_LINT: n=litoi((mpz_ptr)y->data.ptr);break;
                 case OBJ_RAT:  n=rtoi((mpq_ptr)y->data.ptr);break;
                 case OBJ_FLT:  n=ftoi((double)y->data.flt);break;
                 case OBJ_LFLT: n=lftoi((mpfr_ptr)y->data.ptr);break;
                 default:printf("runtime error illegal mul op\n");Throw(3);
             }
-            v=(Vector*)x->data.ptr;
-            for(i=0;i<n;i++) v=vector_append(v,v);
+            v1=(Vector*)x->data.ptr;
+            v=vector_copy0(v1);
+            for(i=1;i<n;i++) v=vector_append(v,v1);// memcpyで書き直すこと
             return newVECT(v); 
         case OBJ_SYM:
             switch (type_y) {
-                case OBJ_INT:break;
+                case OBJ_INT:  n=y->data.intg;break;
                 case OBJ_LINT: n=litoi((mpz_ptr)y->data.ptr);break;
                 case OBJ_RAT:  n=rtoi((mpq_ptr)y->data.ptr);break;
                 case OBJ_FLT:  n=ftoi((double)y->data.flt);break;
                 case OBJ_LFLT: n=lftoi((mpfr_ptr)y->data.ptr);break;
                 default:printf("Runtime error illegal mul op\n");Throw(3);
             }
-            s=(Symbol*)x->data.ptr;
-            for(i=0;i<n;i++) s=symbol_append(s,s);
+            s1=(Symbol*)x->data.ptr;
+            s=symbol_cpy(s1);
+            for(i=1;i<n;i++) s=symbol_append(s,s1);// memcpyで書き直すこと
             return newSTR(s); 
         default:printf("Runtime Error Illegal mul op\n");Throw(3);
     }
