@@ -634,8 +634,10 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
             code_s_param = codegen((ast*)vector_ref(param_ast->table, i),env,FALSE);
             code_param = code_s_param->code; ct_param = code_s_param->ct; type_param = ct_param->type; // ct1/type1:actual parameter type
             if (doted && i >= m-1) type_dummy=OBJ_GEN ; else type_dummy = (int)(long)vector_ref(v,i);  // ct2/type2:dummy parameter type
-            if ((type_param != type_dummy ) && (type_param != OBJ_NONE)) push(code_param,(void*)conv_op[type_param][type_dummy]);
-            //if ((type_param != type_dummy ) && (type_dummy != OBJ_NONE)) push(code_param,(void*)conv_op[type_param][type_dummy]);
+            if ((type_param != type_dummy ) && (type_param != OBJ_NONE)) {
+                if (conv_op[type_param][type_dummy]==0) {printf("SyntaxError:IllegalArgmentType!\n");Throw(0);}
+                push(code_param,(void*)conv_op[type_param][type_dummy]);
+            }
             code=vector_append(code,code_param);
         }
 
@@ -700,9 +702,10 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
             if (dcl_ast->o_type==OBJ_UFUNC || dcl_ast->o_type==OBJ_PFUNC) {         //型宣言詞がfunctionの場合
                 if (ct->type==OBJ_UFUNC || ct->type==OBJ_PFUNC) {                   //右辺値もfunctionなら正常
                     put_gv(s,ct);                                                   //そのまま変数名に割り当てる
+                } else {
+                    printf("SyntaxError:Must be Function!\n");                          //そうえないならエラー
+                    Throw(0) ;
                 }
-                printf("SyntaxError:Must be Function!\n");                          //そうえないならエラー
-                Throw(0) ;
             } else {                                                                //型宣言が関数タイプでないときは
                     put_gv(s,new_ct(dcl_ast->o_type,OBJ_NONE,(void*)0,FALSE));      //宣言された型を変数名sに割り当てるが
                     if (dcl_ast->o_type != ct->type) {                              //右辺値の型と宣言型が異なる場合には型変換命令を入れる

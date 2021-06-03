@@ -780,7 +780,7 @@ object *objCSUB(complex *x, complex *y) {
 object *objCMUL(complex *x, complex *y) {
     object * o = (object*)malloc(sizeof(object) );
     complex * c=(complex*)malloc(sizeof(complex));
-    *c=(*x)-(*y);
+    *c=(*x)*(*y);
     o->type=OBJ_CMPLX;o->data.ptr=(void*)c;
     return o;
 }

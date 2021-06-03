@@ -86,7 +86,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_ODIV,  &&_OEQ,  &&_OLEQ, &&_ITOO, &&_OPR , &&_ODEC, &&_OINC, &&_IADD, &&_ISUB, &&_IMUL, &&_IDIV, &&_IEQ,  &&_ILEQ, &&_IDEC, \
             &&_IINC,  &&_LTOO, &&_FTOO, &&_IJTOO,&&_SPR , &&_LDIV, &&_OLT,  &&_LT,   &&_ILT , &&_GT,   &&_IGT,  &&_OGT,  &&_GEQ,  &&_IGEQ, \
             &&_OGEQ,  &&_NEG,  &&_INEG, &&_ONEG, &&_BNOT, &&_APL,  &&_TAPL, &&_FEQ,  &&_FLEQ, &&_FGEQ, &&_FLT,  &&_FGT,  &&_LEQ,  &&_LLEQ, \
-            &&_LGEQ,  &&_LLT,  &&_LGT,  &&_RADD, &&_RSUB, &&_RMUL, &&_RDIV, &&_REQ,  &&_RLEQ, &&_RGEQ, &&_RLT,  &&_RGT,  &&_ITOR, &&_ITOF, \
+            &&_LGEQ,  &&_LLT,  &&_LGT,  &&_RADD, &&_RSUB, &&_RMUL, &&_RDIV, &&_REQ,  &&_RLEQ, &&_RGEQ, &&_RLT,  &&_RGT,  &&_ITOR, &&_OTOF, \
             &&_LTOR,  &&_LTOF, &&_RTOF, &&_RTOO, &&_LTOI, &&_RTOI, &&_RTOL, &&_FTOI, &&_FTOL, &&_FTOR, &&_LNEG, &&_RNEG, &&_FNEG, &&_LINC, \
             &&_LDEC,  &&_NEQ,  &&_INEQ, &&_LNEQ, &&_RNEQ, &&_FNEQ, &&_ONEQ, &&_OTOI, &&_OTOL, &&_OTOR, &&_VTOO, &&_STOO, &&_IPOW, &&_LPOW, \
             &&_RPOW,  &&_FPOW, &&_OPOW, &&_IMOD, &&_LMOD, &&_RMOD, &&_FMOD, &&_OMOD ,&&_IBOR, &&_LBOR, &&_OBOR, &&_IBNOT,&&_LBNOT,&&_OBNOT,\
