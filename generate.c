@@ -210,7 +210,7 @@ Vector *make_arg_list_type(ast *arg_list_ast) {//途中！　
         printf("SyntaxError:not argment list!\n");Throw(0);
     }
 
-    int i;
+    int i, dotted;
     ast * arg_ast_i;
     Data *d;
     Vector *args = vector_init(3), *v = vector_init(3);   // v必要？ 
@@ -219,21 +219,40 @@ Vector *make_arg_list_type(ast *arg_list_ast) {//途中！　
         if (arg_ast_i->type == AST_VAR) {
             d=(Data*)malloc(sizeof(Data));
             d->key=(Symbol*)vector_ref(arg_ast_i->table,0);
-            d->val=new_ct(arg_ast_i->o_type,OBJ_NONE,(void*)0,FALSE);
+            //
+            //if (arg_ast_i->o_type==OBJ_UFUNC ) {
+            //    d->val=new_ct(arg_ast_i->o_type,OBJ_GEN,(void*)0,TRUE);
+            //} else {
+                d->val=new_ct(arg_ast_i->o_type,OBJ_NONE,(void*)0,FALSE);
+            //}
             push(args,(void*)d);push(v,(void*)arg_ast_i->o_type);
         } else if (arg_ast_i->type == AST_FCALL) {
             // 関数プロトタイプの場合を記載すること
+            // AST_FCALL [AST_NAME,[AST_EXP_LIST [AST,AST,...]]]
+            //            <0>       <1>           <1,1>...
+            ast *f_arg=(ast*)vector_ref(arg_ast_i->table,1);
+            Vector *d_args=make_arg_list_type(f_arg);
+            Vector *_args=(Vector*)vector_ref(d_args,0);
+            Vector *_v=(Vector*)vector_ref(d_args,1);
+            if (strcmp(((Data*)vector_ref(_args,_args->_sp-1))->key->_table,"..")==0) dotted=TRUE; else dotted=FALSE;
+
+            d=(Data*)malloc(sizeof(Data));
+            ast *fname=(ast*)vector_ref(arg_ast_i->table,0);
+            if (fname->type != AST_VAR) {printf("SyntaxError:MustBeFunctionName!\n");Throw(0);}
+            d->key=(Symbol*)vector_ref(fname->table,0);
+            d->val=new_ct(OBJ_UFUNC, arg_ast_i->o_type,_v,dotted);
+            push(args,(void*)d);push(v,(void*)OBJ_UFUNC);
         } else {printf("illegal argment!\n");}
     } //for(i=0;i<args->_sp;i++) printf("%s\t",((Symbol*)vector_ref(args,i))->_table);printf("\n");
     if (arg_list_ast->type==AST_ARG_LIST_DOTS) {
         d=(Data*)malloc(sizeof(Data));
         d->key = new_symbol("..",2);//printf("%s\n",d->key->_table);
-        d->val = OBJ_NONE;
+        d->val = new_ct(OBJ_NONE,OBJ_NONE,(void*)0,FALSE);
         push(args,(void*)d);
     } //vector_print(v);
     //push(env,(void*)args);//PR(1);
     Vector *retvect=vector_init(3);
-    push(retvect,(void*)args);push(retvect,(void*)v);
+    push(retvect,(void*)args);push(retvect,(void*)v);   //argsはsymbolとctのペア、vはctのみ
     //return args;
     return retvect;
 }
@@ -371,6 +390,7 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
                 case 1: push(code, (void * )LD01); break; 
                 case 2: push(code, (void * )LD02); break; 
                 case 3: push(code, (void * )LD03); break; 
+                default:push(code,(void*)LD);push(code,(void*)pos);
             }
         } else if ((long)vector_ref(pos, 0) == 1) {
             switch((long)vector_ref(pos, 1)) {
@@ -378,6 +398,7 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
                 case 1: push(code, (void * )LD11); break; 
                 case 2: push(code, (void * )LD12); break; 
                 case 3: push(code, (void * )LD13); break; 
+                default:push(code,(void*)LD);push(code,(void*)pos);
             }
         } else{
             push(code,(void*)LD);push(code,(void*)pos);//disassy(code,0,stdout);
@@ -739,6 +760,7 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
     } //vector_print(v);
     */
     push(env,(void*)args);//PR(1);
+    env_print(env);
     //
     Vector *code = vector_init(3);push(code,(void*)LDF);
     code_ret *code_s=codegen((ast*)vector_ref(lambda_ast->table,1),env,TRUE);//PR(2);
@@ -857,6 +879,7 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                         case 1: push(code, (void*)SET01);break;
                         case 2: push(code, (void*)SET02);break;
                         case 3: push(code, (void*)SET03);break;
+                        default:push(code,(void*)SET);push(code,(void*)pos);
                     }
                 } else if ((long)vector_ref(pos,0)== 1) {
                     switch((long)vector_ref(pos,1)) {
@@ -864,6 +887,7 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                         case 1: push(code, (void*)SET11);break;
                         case 2: push(code, (void*)SET12);break;
                         case 3: push(code, (void*)SET13);break;
+                        default:push(code,(void*)SET);push(code,(void*)pos);
                     }
                 } else {
                     push(code,(void*)SET);push(code,(void*)pos);

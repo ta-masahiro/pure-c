@@ -38,6 +38,7 @@ double  rtof(mpq_ptr Q) ;
 mpfr_ptr rtolf(mpq_ptr Q) ;
 long    ftoi(double d) ;
 mpz_ptr ftoli(double d) ;
+mpq_ptr ftor(double d);
 mpfr_ptr ftolf(double f) ;
 long    lftoi(mpfr_ptr F) ;
 //

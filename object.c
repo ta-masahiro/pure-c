@@ -99,9 +99,16 @@ complex *rtoc(mpq_ptr Q) {
 long ftoi(double d) {return (long)d;}
 
 mpz_ptr ftoli(double d) {
-    mpz_ptr L=(mpz_ptr)malloc(sizeof(mpz_ptr));
+    mpz_ptr L=(mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init_set_d(L, d);
     return L;
+}
+
+mpq_ptr ftor(double d) {
+    mpq_ptr Q=(mpq_ptr)malloc(sizeof(MP_RAT));
+    mpq_init(Q);
+    mpq_set_d(Q,d);
+    return Q;
 }
 
 mpfr_ptr ftolf(double f) {
@@ -118,14 +125,27 @@ complex *ftoc(double f) {
 
 long lftoi(mpfr_ptr F) {
     if (F==NULL) none_error();
-    return mpfr_get_si(F,MPFR_RNDA);}
-/*
-   mpz_ptr lftol(mpfr_ptr F) {
+    return mpfr_get_si(F,MPFR_RNDA);
+}
+
+mpz_ptr lftol(mpfr_ptr F) {
    mpz_ptr L=(mpz_ptr)malloc(sizeof(MP_INT));
-   mpfr_get_z(L,F);
+   mpz_init(L);
+   mpfr_get_z(L,F,MPFR_RNDA);
    return L;
-   }
-   */
+}
+double lftof(mpfr_ptr F) {
+    if (F==NULL) none_error();
+    return mpfr_get_d(F,MPFR_RNDA);
+}
+
+mpq_ptr lftor(mpfr_ptr F) {
+   mpq_ptr Q=(mpq_ptr)malloc(sizeof(MP_RAT));
+   mpq_init(Q);
+   mpfr_get_q(Q,F);
+   return Q;
+}
+
 complex *lftoc(mpfr_ptr F) {
     if (F==NULL) none_error();
     complex *c = (complex*)malloc(sizeof(complex));
@@ -240,40 +260,77 @@ object*newOBJ(obj_type t, void* v) {
 
 long obj2int(object*o) {
     if (o==NULL) none_error();
-    if (o->type != OBJ_INT) {printf("RuntimeErroe:Must be integer!\n");Throw(3);}
-    return o->data.intg;
+    switch(o->type) {
+        case OBJ_INT:  return o->data.intg;
+        case OBJ_LINT: return litoi((mpz_ptr)o->data.ptr);
+        case OBJ_RAT:  return rtoi((mpq_ptr)o->data.ptr); 
+        case OBJ_FLT:  return ftoi(o->data.flt);
+        case OBJ_LFLT: return lftoi((mpfr_ptr)o->data.ptr);
+    }
+    printf("RuntimeErroe:CanotConverToInteger!\n");Throw(3);
 }
 
  mpz_ptr obj2long(object*o) {
     if (o==NULL) none_error();
-    if (o->type != OBJ_LINT) {printf("RuntimeErroe:Must be LongInteger!\n");Throw(3);}
-    return (mpz_ptr)o->data.ptr;
+    switch(o->type) {
+        case OBJ_INT:  return itol(o->data.intg);
+        case OBJ_LINT: return (mpz_ptr)o->data.ptr;
+        case OBJ_RAT:  return rtoli((mpq_ptr)o->data.ptr); 
+        case OBJ_FLT:  return ftoli(o->data.flt);
+        case OBJ_LFLT: return lftol((mpfr_ptr)o->data.ptr);
+    }
+    printf("RuntimeErroe:CanotConverToLONGInteger!\n");Throw(3);
 }
 
  mpq_ptr obj2rat(object*o) {
     if (o==NULL) none_error();
-    if (o->type != OBJ_RAT) {printf("RuntimeErroe:Must be Rational!\n");Throw(3);}
-    return (mpq_ptr)o->data.ptr;
+    switch(o->type) {
+        case OBJ_INT:  return itor(o->data.intg);
+        case OBJ_LINT: return litor((mpz_ptr)o->data.ptr);
+        case OBJ_RAT:  return (mpq_ptr)o->data.ptr; 
+        case OBJ_FLT:  return ftor(o->data.flt);
+        case OBJ_LFLT: return lftor((mpfr_ptr)o->data.ptr);
+    }
+    printf("RuntimeErroe:CanotConverToRational!\n");Throw(3);
 }
 
  double obj2flt(object*o) {
     if (o==NULL) none_error();
-    if (o->type != OBJ_FLT) {printf("RuntimeErroe:Must be Float!\n");Throw(3);}
-    return o->data.flt;
+    switch(o->type) {
+        case OBJ_INT:  return itof(o->data.intg);
+        case OBJ_LINT: return litof((mpz_ptr)o->data.ptr);
+        case OBJ_RAT:  return rtof((mpq_ptr)o->data.ptr); 
+        case OBJ_FLT:  return o->data.flt;
+        case OBJ_LFLT: return lftof((mpfr_ptr)o->data.ptr);
+    }
+    printf("RuntimeErroe:CanotConverToFloat!\n");Throw(3);
 }
 
  mpfr_ptr obj2lflt(object*o) {
     if (o==NULL) none_error();
-    if (o->type != OBJ_LFLT) {printf("RuntimeErroe:Must be LFloat!\n");Throw(3);}
-    return (mpfr_ptr)o->data.ptr;
+    switch(o->type) {
+        case OBJ_INT:  return itolf(o->data.intg);
+        case OBJ_LINT: return litolf((mpz_ptr)o->data.ptr);
+        case OBJ_RAT:  return rtolf((mpq_ptr)o->data.ptr); 
+        case OBJ_FLT:  return ftolf(o->data.flt);
+        case OBJ_LFLT: return (mpfr_ptr)o->data.ptr;
+    }
+    printf("RuntimeErroe:CanotConverToLFloat!\n");Throw(3);
  }
 
 complex *obj2c(object *o) {
     if (o==NULL) none_error();
-    if (o->type != OBJ_CMPLX) {printf("RuntimeErroe:Must be Complex!\n");Throw(3);}
-    return (complex*)o->data.ptr;
-
+    switch(o->type) {
+        case OBJ_INT:  return itoc(o->data.flt);
+        case OBJ_LINT: return litoc((mpz_ptr)o->data.ptr);
+        case OBJ_RAT:  return rtoc((mpq_ptr)o->data.ptr); 
+        case OBJ_FLT:  return ftoc(o->data.flt);
+        case OBJ_LFLT: return lftoc((mpfr_ptr)o->data.ptr);
+        case OBJ_CMPLX:return (complex*)o->data.ptr;
+    }
+    printf("RuntimeErroe:CanotConverToComplex!\n");Throw(3);
 }
+
 
 object * objIADD(long x, long y) {
     long z;
