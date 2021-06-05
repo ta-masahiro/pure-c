@@ -26,6 +26,8 @@ enum CODE { STOP,  LDC,  LD,   ADD,  CALL, RTN,  SEL,  JOIN, LDF,  SET,  LEQ,  L
             LTOLF, RTOLF,FTOLF,OTOLF,LFTOI,LFTOL,LFTOR,LFTOF,LFTOO,CADD, CSUB, CMUL, CDIV, CPOW, \
             CNEG,  LFTOS,ITOC, LTOC, RTOC, FTOC, LFTOC,CTOO, OTOC, CTOS, CEQ,  CNEQ    };
 
+enum FUNCTION_ID { FUNC_SYS,FUNC_PRIM,FUNC_USER};
+
 extern int op_size[];
 extern char*code_name[];
 void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash * G);

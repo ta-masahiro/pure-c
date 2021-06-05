@@ -357,47 +357,25 @@ token * is_CHR(Stream*S,tokenstate s, char* buff) {
     }
 }
 
-//token type definition 
-#define t_ADDSET  '+'*256+'=' // += 
-#define t_SUBSET  '-'*256+'=' // -= 
-#define t_MULSET  '*'*256+'=' // *= 
-#define t_DIVSET  '/'*256+'=' // /= 
-#define t_MODSET  '%'*256+'='
-#define t_ANDSET  '&'*256+'='
-#define t_ORSET   '|'*256+'='
-#define t_XORSET  '^'*256+'='
-
-#define t_DPLUS   '+'*256+'+' 
-#define t_DMINUS  '-'*256+'-'
-#define t_DAST    '*'*256+'*'
-#define t_DSLA    '/'*256+'/'
-#define t_DPAR    '%'*256+'%'
-#define t_LAND    '&'*256+'&'
-#define t_LOR     '|'*256+'|'
-#define t_LXOR    '^'*256+'^'
-#define t_DRAR    '>'*256+'>'
-#define t_DLAR    '<'*256+'<'
-#define t_DEXC    '!'*256+'!'
-#define MRAR      '-'*256 +'>'
-// #define MLAR    '<'*256 +'-'
-
-#define NEQ     '!'*256+'='
-#define LE      '<'*256+'='
-#define EEQ     '='*256+'='
-#define GE      '>'*256+'='
-
-#define DDOT    '.'*256+'.'
 
 token * is_DEL(Stream*S, tokenstate s, char* buff) {
     //  区切詞 (= 記号)かどうか調べてtokenに入れて返す
     //  記号でないならNULLを返す
     //  tokentypは記号のコードそのものとする
-    char c=get_char(S),cc;
+    char c=get_char(S),cc,ccc;
     switch(c) {
         case '+':case '-':case '*': case '/':case '%':case '&':case '|':case '^':case '!': case '<':case '=':case '>':
             cc=get_char(S);
             if (cc == c || cc == '=' || ( c == '-' && cc == '>') || (c=='<' && cc=='-')) {
                 *(buff ++ ) = c; *(buff ++ ) = cc;
+                if ((c=='>' && cc=='>') || (c=='<' && cc=='<')) {
+                    ccc=get_char(S);
+                    if (ccc=='=') {
+                        *(buff ++) =ccc;
+                        return new_token(c*65536+cc*256+ccc,new_symbol(STR_BUFF, buff-STR_BUFF),(void*)0,S);
+                    }
+                    unget_char(S);
+                }
                 return new_token(c*256+cc, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0,S);
             } else { 
                 unget_char(S); 

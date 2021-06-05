@@ -33,6 +33,36 @@ typedef struct {
     } value; 
 } token;
 
+//token type definition 
+#define t_ADDSET    '+'*256+'='     // += 
+#define t_SUBSET    '-'*256+'='     // -= 
+#define t_MULSET    '*'*256+'='     // *= 
+#define t_DIVSET    '/'*256+'='     // /= 
+#define t_MODSET    '%'*256+'='     // %=
+#define t_ANDSET    '&'*256+'='     // &=
+#define t_ORSET     '|'*256+'='     // |=
+#define t_XORSET    '^'*256+'='
+
+#define t_DPLUS     '+'*256+'+' 
+#define t_DMINUS    '-'*256+'-'
+#define t_DAST      '*'*256+'*'
+#define t_DSLA      '/'*256+'/'
+#define t_DPAR      '%'*256+'%'
+#define t_LAND      '&'*256+'&'
+#define t_LOR       '|'*256+'|'
+#define t_LXOR      '^'*256+'^'
+#define t_DRAR      '>'*256+'>'
+#define t_DLAR      '<'*256+'<'
+#define t_DEXC      '!'*256+'!'
+#define t_MRAR      '-'*256 +'>'
+#define t_MLAR      '<'*256 +'-'
+#define t_NEQ       '!'*256+'='
+#define t_LE        '<'*256+'='
+#define t_EEQ       '='*256+'='
+#define t_GE        '>'*256+'='
+#define t_DRARSET   '>'*65536+'>'*245+'='
+#define t_DLARSET   '<'*65536+'<'*256+'='
+#define t_DDOT      '.'*256+'.'
 typedef enum {
     AST_NONE,       // 0:AST_NONE,[]
     AST_ML,         // 1:AST_ML,[ast_list] 

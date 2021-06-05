@@ -58,8 +58,8 @@ enum CODE conv_op[16][16] = {{0, 0,    ITOL,    ITOR,    ITOF,   0,     ITOO   }
                         {0,   LFTOI,LFTOL,LFTOR,LFTOF,0,     LFTOC, LFTOO, 0,    0,    0,    0,   0,   0,   LFTOS,0  },
                         {0,   0,    0,    0,    0,    0,     0,     CTOO,  0,    0,    0,    0,   0,   0,   CTOS, 0  },
                         {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, OTOC,  0,     0,    0,    0,    OTOV,0,   0,   OTOS, 0  },
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//PFTOO},
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//UFTOO},
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,   -1,    0,    0,   0,   0,   0,    0  },//PFTOO},
+                        {0,   0,    0,    0,    0,    0,     0,     0,    -1,    0,    0,    0,   0,   0,   0,    0  },//UFTOO},
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//CNTOO},
                         {0,   0,    0,    0,    0,    0,     0,     VTOO,  0,    0,    0,    0,   0,   0,   VTOS, 0  },
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,    0,    0,    0,   0,   0,   0,    0  },//DTOO} ,
@@ -184,6 +184,7 @@ void* create_zero(obj_type type) {
     mpq_ptr q;
     mpfr_ptr lf;
     Vector*cl;
+    complex *c;
     double* d;
     switch(type) {
         case OBJ_NONE:
@@ -192,12 +193,13 @@ void* create_zero(obj_type type) {
         case OBJ_RAT: q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_init(q); return (void*)q;
         case OBJ_FLT: d = (double*)malloc(sizeof(double));*d=0; return (void*)d;
         case OBJ_LFLT:lf = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set_si(lf,0,MPFR_RNDA); return (void*)lf;
+        case OBJ_CMPLX: c=(complex*)malloc(sizeof(complex));*c=0;return (void*)c;
         case OBJ_GEN: return newINT(0);
         case OBJ_SYM: return (void*)new_symbol("",0);
         case OBJ_VECT:return (void*)vector_init(0);
         case OBJ_UFUNC:
             cl = vector_init(4);
-            push(cl, (void * )"CL"); push(cl, (void * )0); push(cl, (void * )0);
+            push(cl, (void * )FUNC_USER); push(cl, (void * )0); push(cl, (void * )0);
             return cl;
     }
 }
@@ -308,7 +310,9 @@ code_ret *codegen_lit(ast*lit_ast,Vector*env,int tail) {
             return new_code(code,new_ct(OBJ_LINT,OBJ_NONE,(void*)0,FALSE));
         case TOKEN_RAT:
             q = (mpq_ptr)malloc(sizeof(MP_RAT));
-            mpq_init(q);mpq_set_str(q,str_symbol->_table,10);mpq_canonicalize(q);
+            mpq_init(q);
+            if (mpq_set_str(q,str_symbol->_table,10) !=0 || mpz_sgn(mpq_denref(q))==0) {printf("SyntaxError:IllegalRationalNumber!\n");Throw(1);}
+            mpq_canonicalize(q);
             push(code,(void*)q);
             return new_code(code,new_ct(OBJ_RAT,OBJ_NONE,(void*)0,FALSE));
         case TOKEN_STR:
@@ -596,7 +600,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
     // ... macro function ...
     Vector *v1,*v2;
     ast *param_ast = (ast*)vector_ref(fcall_ast->table,1);          // parameter ast
-    int i, n = param_ast->table->_sp, m;                                  // number of actual parameters
+    int i, n = param_ast->table->_sp, m, t_op;                                  // number of actual parameters
     ast *function_ast = (ast*)vector_ref(fcall_ast->table,0);       // function ast
     // 「..」だったら即APPLYに変換する
     if (param_ast->type==AST_EXP_LIST_DOTS) {                      // if expr_list_dots -> apply
@@ -635,8 +639,8 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
             code_param = code_s_param->code; ct_param = code_s_param->ct; type_param = ct_param->type; // ct1/type1:actual parameter type
             if (doted && i >= m-1) type_dummy=OBJ_GEN ; else type_dummy = (int)(long)vector_ref(v,i);  // ct2/type2:dummy parameter type
             if ((type_param != type_dummy ) && (type_param != OBJ_NONE)) {
-                if (conv_op[type_param][type_dummy]==0) {printf("SyntaxError:IllegalArgmentType!\n");Throw(0);}
-                push(code_param,(void*)conv_op[type_param][type_dummy]);
+                if ((t_op=conv_op[type_param][type_dummy])==0) {printf("SyntaxError:IllegalArgmentType!\n");Throw(0);}
+                if (t_op != -1) push(code_param,(void*)conv_op[type_param][type_dummy]);
             }
             code=vector_append(code,code_param);
         }
@@ -743,27 +747,8 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
     Vector *d_args=make_arg_list_type(arg_list_ast);
     Vector *args=(Vector*)vector_ref(d_args,0);
     Vector *v=(Vector*)vector_ref(d_args,1);
-    /*
-    for(i = 0; i < arg_list_ast->table->_sp; i ++ ) {
-        arg_ast_i=(ast*)vector_ref(arg_list_ast->table, i);// ast_print(a2,0);
-        if (arg_ast_i->type == AST_VAR) {
-            d=(Data*)malloc(sizeof(Data));
-            d->key=(Symbol*)vector_ref(arg_ast_i->table,0);
-            d->val=new_ct(arg_ast_i->o_type,OBJ_NONE,(void*)0,FALSE);
-            push(args,(void*)d);push(v,(void*)arg_ast_i->o_type);
-        } else if (arg_ast_i->type == AST_FCALL) {
-            // 関数プロトタイプの場合を記載すること
-        } else {printf("illegal argment!\n");}
-    } //for(i=0;i<args->_sp;i++) printf("%s\t",((Symbol*)vector_ref(args,i))->_table);printf("\n");
-    if (arg_list_ast->type==AST_ARG_LIST_DOTS) {
-        d=(Data*)malloc(sizeof(Data));
-        d->key = new_symbol("..",2);//printf("%s\n",d->key->_table);
-        d->val = OBJ_NONE;
-        push(args,(void*)d);
-    } //vector_print(v);
-    */
     push(env,(void*)args);//PR(1);
-    env_print(env);
+    //env_print(env);
     //
     Vector *code = vector_init(3);push(code,(void*)LDF);
     code_ret *code_s=codegen((ast*)vector_ref(lambda_ast->table,1),env,TRUE);//PR(2);
@@ -806,12 +791,23 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
 }
 
 code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_type, AST_left_expr, AST_right_expr]
+                                                                //          <0>       <1>            <2>
+    // case of '+=' '-=' '*=' '/=' '%=' '|=' '&='
     code_ret *code_s;
-    Vector *code, *code1;
+    Vector *code, *code1, *v, *vv;
     code_type *ct, *ct1;
     ast *a1 ;
     Symbol *s;
-    int i,j;
+    int i,j,_2op;
+    // 演算代入の場合は2項演算命令と代入命令のastを作る
+    if ((long)vector_ref(set_ast->table,0) != '=') {
+        _2op=(((long)vector_ref(set_ast->table,0)) >> 8);
+        vv=vector_init(3);push(vv,(void*)(long)'=');
+        v=vector_init(3);push(v,(void*)(long)_2op);push(v,(void*)vector_ref(set_ast->table,1));push(v,(void*)vector_ref(set_ast->table,2));
+        push(vv,(void*)vector_ref(set_ast->table,1));push(vv,(void*)new_ast(AST_2OP,OBJ_NONE,v));
+        return codegen_set(new_ast(AST_SET,OBJ_NONE,vv),env,tail);
+    }
+    // 通常の代入の場合
     switch(((ast*)vector_ref(set_ast->table,1))->type) {
         case AST_VREF:  // AST_SET [set_type, AST_VREF [vect_expr,index] ], right_expr]
                         //          <0,0>               <1,0>     <1,1>    <2>
@@ -1121,7 +1117,7 @@ int main(int argc, char*argv[]) {
         //    }
         //}
     }
-    if (fp==stdin) printf("PURE REPL Version 0.2.3 Copyright 2021.06.01 M.Taniguro\n");
+    if (fp==stdin) printf("PURE REPL Version 0.2.4 Copyright 2021.06.03 M.Taniguro\n");
     //DEBUG=TRUE;
     S = new_stream(fp);
     tokenbuff=vector_init(100);
@@ -1133,6 +1129,7 @@ int main(int argc, char*argv[]) {
         //token_p=tokenbuff->_cp;
         //token_print(tokenbuff);
         Try {
+            if (fp==stdin) putchar('>');
             if ((a=is_expr(S)) && get_token(S)->type==';') {
                 if (DEBUG) ast_print(a,0);
                 code_s = codegen(a,env,FALSE);//PR(121);

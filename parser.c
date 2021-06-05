@@ -661,7 +661,7 @@ ast * is_arg_list(Stream * S) {
         return NULL;
     }
 
-    int set_op[]={'=','*'*256+'=','/'*256+'=','%'*256+'=','+'*256+'=','-'*256+'=',0};
+    int set_op[]={'=','*'*256+'=','/'*256+'=','%'*256+'=','+'*256+'=','-'*256+'=', '|'*256+'=',0};
 
     ast * is_set_expr(Stream * S) {
         // set_expr : expr_0 [=|+=|-=|*=|/=] expr
@@ -671,7 +671,10 @@ ast * is_arg_list(Stream * S) {
         int token_p = tokenbuff->_cp;
         //if ((a1 = is_expr_0(S)) && (t=*is_in(set_op, (void*)get_token(S)->type)) && (a2 = is_expr(S))) {
         if ((a1=is_expr_0(S)) &&
-                ((t=get_token(S)->type)=='=' || t=='+'*256+'=' || t=='-'*256+'=' || t=='*'*256+'=' || t=='/'*256+'=')&&
+                ((t=get_token(S)->type)=='=' || t=='+'*256+'=' || t=='-'*256+'=' || t=='*'*256+'=' || 
+                                                t=='/'*256+'=' || t=='%'*256+'=' || t=='|'*256+'=' || 
+                                                t=='&'*256+'=' || t=='>'*65536+'>'*256+'=' || t== '<'*65536+'<'*256+'=') &&
+                //( ((t=get_token(S)->type) & 255) == '=' ) && 
                 (a2=is_expr(S))) {
             v=vector_init(3);
             push(v,(void*)t); push(v,(void*)a1); push(v,(void*)a2);

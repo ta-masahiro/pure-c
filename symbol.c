@@ -17,13 +17,13 @@ int symbol_eq(Symbol*s1,Symbol*s2) {
 }
 
 Symbol* symbol_cat(Symbol*s1,Symbol*s2) {
-        unsigned long s3_size=s1->_size+s2->_size;
-        char*s=(char*)malloc(s3_size*sizeof(char));
-        memcpy(s,s1,s1->_size-1);memcpy(s+s1->_size-1,s2,s2->_size);
-        Symbol*sym=(Symbol*)malloc(sizeof(Symbol));
-        sym->_size=s3_size;
-        sym->_table=s;
-        return sym;
+    unsigned long s3_size=s1->_size+s2->_size;
+    char*s=(char*)malloc(s3_size*sizeof(char));
+    memcpy(s,s1,s1->_size-1);memcpy(s+s1->_size-1,s2,s2->_size);
+    Symbol*sym=(Symbol*)malloc(sizeof(Symbol));
+    sym->_size=s3_size;
+    sym->_table=s;
+    return sym;
 }
 
 Symbol * symbol_append(Symbol *s1,Symbol *s2) {
@@ -32,7 +32,6 @@ Symbol * symbol_append(Symbol *s1,Symbol *s2) {
     Symbol *s=(Symbol*)malloc(sizeof(Symbol));
     s->_size=(s1->_size+s2->_size);s->_table=sd;
     return s;
-
 }
 
 Symbol*symbol_cpy(Symbol*s) {
@@ -51,6 +50,7 @@ Symbol*symbol_cpy_n(Symbol*s,long start,long size) {
     sym->_size=size;sym->_table=st;
     return sym;
 }
+
 Symbol* symbol_ref(Symbol*s,unsigned long pos) {
     Symbol*r=(Symbol*)malloc(sizeof(Symbol));
     char* table=(char*)malloc(2*sizeof(char));
@@ -58,6 +58,7 @@ Symbol* symbol_ref(Symbol*s,unsigned long pos) {
     r->_size=1;r->_table=table;
     return r;
 }
+
 Symbol*symbol_set(Symbol*t,unsigned long pos,Symbol*s) {
     memcpy(t->_table+pos,s->_table,s->_size);
     return t;

@@ -127,7 +127,8 @@ void *p_lflog(Vector *v)    {
 void *p_lflog1p(Vector *v)  {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log1p(F,F,MPFR_RNDA);return (void*)F;}
 void *p_lfexp(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_exp(F,F,MPFR_RNDA);return (void*)F;}
 //
-
+void *p_osin(Vector *v) {return (void*)objsin((object*)vector_ref(v,0));}
+void *p_osqrt(Vector *v) {return (void*)objsqrt((object*)vector_ref(v,0));}
 
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_open, p_close, p_gets, p_getc, p_sin, p_cos, p_tan, 
@@ -136,15 +137,15 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_labs, p_rabs, p_lfabs, p_cabs, p_lsqrt, p_lfsqrt, p_csqrt,
                                  p_lfsin, p_lfcos, p_lftan,p_lfasin, p_lfacos, p_lfatan,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
-                                 p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, NULL};
+                                 p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_osin, p_osqrt,NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
-                                "print", "open", "close", "gets", "getc", "sin", "cos", "tan", 
-                                "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
+                                "print", "open", "close", "gets", "getc", "fsin", "fcos", "ftan", 
+                                "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
                                 "log10", "logE", "log", "exp", "iabs", "fabs", "isqrt", "fsqrt",
                                 "labs", "rabs", "flabs", "cabs", "lsqrt", "lfsqrt","csqrt",
                                 "lfsin","lfcos", "lftan","lfasin","lfacos","lfatan",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
-                                "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", NULL};
+                                "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "sin", "sqrt", NULL};
 int primitive_function_arglisti[][3] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT},                                      // set_prec
@@ -197,7 +198,9 @@ int primitive_function_arglisti[][3] = {//{OBJ_GEN},                            
                                 {OBJ_LFLT},                                      // lflogE
                                 {OBJ_LFLT, OBJ_LFLT},                            // lflog
                                 {OBJ_LFLT},                                      // lflog1p
-                                {OBJ_LFLT}                                       // lfexp
+                                {OBJ_LFLT},                                      // lfexp
+                                {OBJ_GEN },                               // sin
+                                {OBJ_GEN}                               // sqrt
                                 };
 
 int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        // print
@@ -253,6 +256,8 @@ int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        /
                                 {OBJ_LFLT, 2, FALSE},                        // lflog
                                 {OBJ_LFLT, 1, FALSE},                        // lflog1p
                                 {OBJ_LFLT, 1, FALSE},                        // lfexp
+                                {OBJ_GEN,  1, FALSE},                         // sin
+                                {OBJ_GEN,  1, FALSE}                         // sqrt
                                  };
 
 void * make_primitive() {
@@ -277,7 +282,10 @@ void * make_primitive() {
         //push(vv,(void*)primitive_func[i]);push(vv,(void*)ct);
         s=primitive_function_name[i];long n=strlen(s);
         Hash_put(PRIMITIVE_FUNC,new_symbol(s,n),(void*)ct);
-        Hash_put(G,new_symbol(s,n),(void*)primitive_func[i]);
+        vv=vector_init(3);
+        push(vv,(void*)FUNC_PRIM);push(vv,(void*)primitive_func[i]);
+        //Hash_put(G,new_symbol(s,n),(void*)primitive_func[i]);
+        Hash_put(G,new_symbol(s,n),(void*)vv);
         i++;
     }
 }

@@ -397,23 +397,26 @@ _ODIV:
     goto * dequeue(C);
 _DIV:
 _IDIV:
-    p = (long)pop(S);
+    if ((p = (long)pop(S))==0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);};
     push(S, (void * )((long)pop(S) / p));
     goto * dequeue(C);
 _FDIV:
-    fy=(double*)pop(S);fx=(double*)pop(S);
+    if(*(fy=(double*)pop(S))==0.0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
+    fx=(double*)pop(S);
     fz = (double * )malloc(sizeof(double)); *fz=*fx/(*fy);
     push(S,(void*)fz);
     goto * dequeue(C);
 _LDIV:
-    y = (mpz_ptr)pop(S); x = (mpz_ptr)pop(S);
+    if (mpz_sgn(y = (mpz_ptr)pop(S))) {printf("RuntimeError:ZeroDivision!\n");Throw(3);} 
+    x = (mpz_ptr)pop(S);
     z = (mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(z);
     mpz_div(z,x,y);
     push(S, (void * )z);
     goto * dequeue(C);
 _RDIV:
-    qy = (mpq_ptr)pop(S); qx = (mpq_ptr)pop(S);
+    if (mpq_sgn(qy = (mpq_ptr)pop(S))) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
+    qx = (mpq_ptr)pop(S);
     qz = (mpq_ptr)malloc(sizeof(MP_RAT));
     mpq_init(qz);
     mpq_div(qz,qx,qy);
@@ -571,10 +574,10 @@ _OBNOT:
 _CALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
-    //if (strcmp((char * )vector_ref(fn, 0), "CL") != 0 ) printf("not CL\n");
     l = vector_init(n);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , n * (sizeof(void * )) );
     l ->_sp = n; S ->_sp = S ->_sp - n;  // vector_print(l);
+    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     push(R, (void * )C);
     push(EE, (void * )E);
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
@@ -584,10 +587,10 @@ _CALL:
 _TCALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
-    //if (strcmp((char * )vector_ref(fn, 0), "CL") != 0 ) printf("not CL\n");
     l = vector_init(n);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , n * (sizeof(void * )) );
     l ->_sp = n; S ->_sp = S ->_sp - n;  // vector_print(l);
+    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);
@@ -620,10 +623,12 @@ _TAPL:
     goto * dequeue(C);
 _PCALL: // primitive function call
     n = (long)dequeue(C);
-    func = (Funcpointer)pop(S);
+    fn = (Vector*)pop(S);
     l = vector_init(n);
     memcpy(l->_table, (S->_table) + (S->_sp - n) , n * (sizeof(void * )));
     l->_sp = n; S->_sp = S->_sp - n;  // vector_print(l);
+__PCALL_S:   
+    func=(Funcpointer)vector_ref(fn,1); 
     push(S, func(l));
     goto * dequeue(C);
 _RTN:
@@ -651,7 +656,7 @@ _JOIN:
 _LDF:
     code = (Vector * )dequeue(C);
     cl = vector_init(4);
-    push(cl, (void * )"CL"); push(cl, (void * )code); push(cl, (void * )E);
+    push(cl, (void * )FUNC_USER); push(cl, (void * )code); push(cl, (void * )E);
     push(S, (void * )cl);
     goto * dequeue(C);
 _VEC:
@@ -1075,7 +1080,8 @@ _LFMUL:
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFDIV:
-    lfy=(mpfr_ptr)pop(S);lfx=(mpfr_ptr)pop(S);
+    if (mpfr_sgn(lfy=(mpfr_ptr)pop(S))) {printf("RuntimeError:ZeroDivision!\n");Throw(3);};
+    lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
     mpfr_div(lfz,lfx,lfy,MPFR_RNDA);
@@ -1192,7 +1198,8 @@ _CMUL:
     push(S,(void*)cz);
     goto * dequeue(C);
 _CDIV:
-    cy=(complex*)pop(S);cx=(complex*)pop(S);
+    if (*(cy=(complex*)pop(S)) == 0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);};
+    cx=(complex*)pop(S);
     cz = (complex * )malloc(sizeof(complex)); *cz=(*cx)/(*cy);
     push(S,(void*)cz);
     goto * dequeue(C);
