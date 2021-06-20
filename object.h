@@ -133,5 +133,16 @@ void objset(object*o,long pos,object*val);
 void*symbol2objtype(Symbol*s,obj_type t);
 void objpush(object*o,object*v);
 object * objslice(object*o,long i,long j);
-object *objsin(object *x);
+object * objsin(object *x);
+object * objcos(object *x);
+object * objtan(object *x);
+object * objasin(object *x);
+object * objacos(object *x);
+object * objatan(object *x);
+object * objsinh(object *x);
+object * objcosh(object *x);
+object * objtanh(object *x);
+object * objasinh(object *x);
+object * objacosh(object *x);
+object * objatanh(object *x);
 #endif

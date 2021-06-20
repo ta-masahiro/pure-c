@@ -1608,7 +1608,7 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_LINT:  return mpz_get_str(NULL, 10, (mpz_ptr)value);
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);
         case OBJ_FLT:   sprintf(buf,"%.16g",*(double*)value); return buf;
-        case OBJ_CMPLX: sprintf(buf,"%g%+gI",creal(*(complex*)value),cimag(*(complex*)value)); return buf;
+        case OBJ_CMPLX: sprintf(buf,"%.16g%+.16gI",creal(*(complex*)value),cimag(*(complex*)value)); return buf;
         case OBJ_LFLT:  //mpfr_sprintf(buf,"%.Rg", (mpfr_ptr)value);return buf;
                         mpfr_sprintf(buf,set_lf_format((mpfr_ptr)value),(mpfr_ptr)value);return buf;
         case OBJ_GEN:   return objtostr((object*)value);
@@ -1757,18 +1757,6 @@ object * objslice(object* o,long start,long end) {
         Throw(3);
     }
 }
-
-object *objtan(object *x) {
-    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
-    switch(x->type) {
-        case OBJ_INT:  return newFLT(tan(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_tan(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_tan(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_FLT:  return newFLT(tan(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_tan(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_CMPLX:*c=ctan(*(complex*)x->data.ptr);return newCMPLX(c);
-    }
-}
 object *objsin(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
@@ -1789,6 +1777,116 @@ object *objcos(object *x) {
         case OBJ_FLT:  return newFLT(cos(x->data.flt));
         case OBJ_LFLT: mpfr_init(F);mpfr_cos(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
         case OBJ_CMPLX:*c=ccos(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objtan(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(tan(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_tan(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_tan(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(tan(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_tan(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=ctan(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objasin(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(asin(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_asin(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_asin(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(asin(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_asin(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=casin(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objacos(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(acos(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_acos(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_acos(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(acos(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_acos(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=cacos(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objatan(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(atan(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_atan(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_atan(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(atan(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_atan(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=catan(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objsinh(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(sinh(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_sinh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_sinh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(sinh(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_sinh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=csinh(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objcosh(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(cosh(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_cosh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_cosh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(cosh(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_cosh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=ccosh(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objtanh(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(tanh(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_tanh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_tanh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(tanh(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_tanh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=ctanh(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objasinh(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(asinh(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_asinh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_asinh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(asinh(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_asinh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=casinh(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objacosh(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(acosh(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_acosh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_acosh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(acosh(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_acosh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=cacosh(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objatanh(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(atanh(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_atanh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_atanh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(atanh(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_atanh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=catanh(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
 /*

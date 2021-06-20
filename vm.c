@@ -407,7 +407,8 @@ _FDIV:
     push(S,(void*)fz);
     goto * dequeue(C);
 _LDIV:
-    if (mpz_sgn(y = (mpz_ptr)pop(S))) {printf("RuntimeError:ZeroDivision!\n");Throw(3);} 
+    y = (mpz_ptr)pop(S); 
+    if (mpz_sgn(y)==0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);} 
     x = (mpz_ptr)pop(S);
     z = (mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(z);
@@ -415,7 +416,8 @@ _LDIV:
     push(S, (void * )z);
     goto * dequeue(C);
 _RDIV:
-    if (mpq_sgn(qy = (mpq_ptr)pop(S))) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
+    qy = (mpq_ptr)pop(S);
+    if (mpq_sgn(qy)==0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
     qx = (mpq_ptr)pop(S);
     qz = (mpq_ptr)malloc(sizeof(MP_RAT));
     mpq_init(qz);
@@ -849,6 +851,7 @@ _RPOW:
     goto *dequeue(C);
 _FPOW:
     fy=pop(S);fx=pop(S);
+    fz=(double*)malloc(sizeof(double));
     *fz=pow((*fx),(*fy));
     push(S,fz);
     goto *dequeue(C);
@@ -1080,7 +1083,8 @@ _LFMUL:
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFDIV:
-    if (mpfr_sgn(lfy=(mpfr_ptr)pop(S))) {printf("RuntimeError:ZeroDivision!\n");Throw(3);};
+    lfy=(mpfr_ptr)pop(S);
+    if (mpfr_sgn(lfy)==0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);};
     lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);

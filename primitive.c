@@ -23,11 +23,19 @@ void*p_print(Vector*v) {
     fputs("\n",stdout);
     return NULL;
 }
-//void*p_printf(Vector*v) {
-//    printf(((Symbol*)vector_ref(v,0))->_table,(object*)vector_ref(v,1)); 
-//    printf("\n");
-//    return NULL;
-//}
+void*p_printf(Vector*v) {
+    object *o=(object*)vector_ref(v,1);
+    char *s =((Symbol*)vector_ref(v,0))->_table;
+    switch(o->type) {
+        case OBJ_INT:   printf(s,(long)o->data.intg);break;
+        case OBJ_LINT:  mpfr_printf(s,(mpz_ptr)o->data.ptr);break;
+        case OBJ_RAT:   mpfr_printf(s,(mpq_ptr)o->data.ptr);break; 
+        case OBJ_FLT:   printf(s,(double)o->data.flt);break;
+        case OBJ_LFLT:  mpfr_printf(s,(mpfr_ptr)o->data.ptr);break;
+        case OBJ_CMPLX: printf(s,*(complex*)o->data.ptr);break;
+    }
+    return NULL;
+}
 void *p_open(Vector*v) {
     FILE *f;
     Symbol*path=vector_ref(v,0);
@@ -71,18 +79,18 @@ void * p_getc(Vector*v) {
     return (void*)s;    
 }
 // 数学関数
-void *p_sin(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = sin  (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_cos(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = cos  (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_tan(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = tan  (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_asin(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = asin (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_acos(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = acos (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_atan(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = atan (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_sinh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = sinh (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_cosh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = cosh (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_tanh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = tanh (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_asinh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = asinh(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_acosh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = acosh(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_atanh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = atanh(*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fsin(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = sin  (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fcos(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = cos  (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_ftan(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = tan  (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fasin(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = asin (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_facos(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = acos (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fatan(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = atan (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fsinh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = sinh (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fcosh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = cosh (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_ftanh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = tanh (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fasinh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = asinh(*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_facosh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = acosh(*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fatanh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = atanh(*(double*)vector_ref(v,0)); return (void*)f;}
 void *p_log10(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = log10(*(double*)vector_ref(v,0)); return (void*)f;}
 void *p_logE(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = log  (*(double*)vector_ref(v,0)); return (void*)f;}
 void *p_log1p(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = log1p(*(double*)vector_ref(v,0)); return (void*)f;}
@@ -127,30 +135,48 @@ void *p_lflog(Vector *v)    {
 void *p_lflog1p(Vector *v)  {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log1p(F,F,MPFR_RNDA);return (void*)F;}
 void *p_lfexp(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_exp(F,F,MPFR_RNDA);return (void*)F;}
 //
-void *p_osin(Vector *v) {return (void*)objsin((object*)vector_ref(v,0));}
+void *p_oabs(Vector *v) {return (void*)objabs((object*)vector_ref(v,0));}
 void *p_osqrt(Vector *v) {return (void*)objsqrt((object*)vector_ref(v,0));}
+//
+void *p_osin(Vector *v) {return (void*)objsin((object*)vector_ref(v,0));}
+void *p_ocos(Vector *v) {return (void*)objcos((object*)vector_ref(v,0));}
+void *p_otan(Vector *v) {return (void*)objtan((object*)vector_ref(v,0));}
+void *p_oasin(Vector *v) {return (void*)objasin((object*)vector_ref(v,0));}
+void *p_oacos(Vector *v) {return (void*)objacos((object*)vector_ref(v,0));}
+void *p_oatan(Vector *v) {return (void*)objatan((object*)vector_ref(v,0));}
+void *p_osinh(Vector *v) {return (void*)objsinh((object*)vector_ref(v,0));}
+void *p_ocosh(Vector *v) {return (void*)objcosh((object*)vector_ref(v,0));}
+void *p_otanh(Vector *v) {return (void*)objtanh((object*)vector_ref(v,0));}
+void *p_oasinh(Vector *v) {return (void*)objasinh((object*)vector_ref(v,0));}
+void *p_oacosh(Vector *v) {return (void*)objacosh((object*)vector_ref(v,0));}
+void *p_oatanh(Vector *v) {return (void*)objatanh((object*)vector_ref(v,0));}
 
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
-                                 p_print, p_open, p_close, p_gets, p_getc, p_sin, p_cos, p_tan, 
-                                 p_asin, p_acos, p_atan, p_sinh, p_cosh, p_tanh, p_asinh, p_acosh, p_atanh,
+                                 p_print, p_printf, p_open, p_close, p_gets, p_getc, p_fsin, p_fcos, p_ftan, 
+                                 p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,
                                  p_log10, p_logE, p_log, p_exp, p_iabs, p_fabs, p_isqrt, p_fsqrt,
                                  p_labs, p_rabs, p_lfabs, p_cabs, p_lsqrt, p_lfsqrt, p_csqrt,
                                  p_lfsin, p_lfcos, p_lftan,p_lfasin, p_lfacos, p_lfatan,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
-                                 p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_osin, p_osqrt,NULL};
+                                 p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
+                                 p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
+                                 NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
-                                "print", "open", "close", "gets", "getc", "fsin", "fcos", "ftan", 
+                                "print", "printf", "open", "close", "gets", "getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
                                 "log10", "logE", "log", "exp", "iabs", "fabs", "isqrt", "fsqrt",
                                 "labs", "rabs", "flabs", "cabs", "lsqrt", "lfsqrt","csqrt",
                                 "lfsin","lfcos", "lftan","lfasin","lfacos","lfatan",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
-                                "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "sin", "sqrt", NULL};
+                                "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
+                                "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
+                                NULL};
 int primitive_function_arglisti[][3] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT},                                      // set_prec
                                 {OBJ_NONE},                                     // get_prec
                                 {OBJ_GEN},                                      // print
+                                {OBJ_SYM,OBJ_GEN},                              // printf
                                 {OBJ_SYM,OBJ_SYM},                              // open
                                 {OBJ_IO},                                       // close
                                 {OBJ_IO},                                       // gets
@@ -199,8 +225,20 @@ int primitive_function_arglisti[][3] = {//{OBJ_GEN},                            
                                 {OBJ_LFLT, OBJ_LFLT},                            // lflog
                                 {OBJ_LFLT},                                      // lflog1p
                                 {OBJ_LFLT},                                      // lfexp
-                                {OBJ_GEN },                               // sin
-                                {OBJ_GEN}                               // sqrt
+                                {OBJ_GEN },                                      // abs
+                                {OBJ_GEN},                                        // sqrt
+                                {OBJ_GEN},                                       // sin
+                                {OBJ_GEN},//cos
+                                {OBJ_GEN},//tan
+                                {OBJ_GEN},//asin
+                                {OBJ_GEN},//acos
+                                {OBJ_GEN},//atan
+                                {OBJ_GEN},//sinh
+                                {OBJ_GEN},//cosh
+                                {OBJ_GEN},//tanh
+                                {OBJ_GEN},//asinh
+                                {OBJ_GEN},//acosh
+                                {OBJ_GEN}//atanh
                                 };
 
 int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        // print
@@ -208,6 +246,7 @@ int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        /
                                 {OBJ_NONE,1, FALSE},
                                 {OBJ_INT, 0, FALSE},
                                 {OBJ_NONE,1, TRUE},
+                                {OBJ_NONE,2, FALSE},                        // printf
                                 {OBJ_IO,  2, FALSE},                        // open
                                 {OBJ_NONE,1, FALSE},                        // close
                                 {OBJ_SYM, 1, FALSE},                        // gets
@@ -256,8 +295,20 @@ int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        /
                                 {OBJ_LFLT, 2, FALSE},                        // lflog
                                 {OBJ_LFLT, 1, FALSE},                        // lflog1p
                                 {OBJ_LFLT, 1, FALSE},                        // lfexp
-                                {OBJ_GEN,  1, FALSE},                         // sin
-                                {OBJ_GEN,  1, FALSE}                         // sqrt
+                                {OBJ_GEN,  1, FALSE},                        // abs
+                                {OBJ_GEN,  1, FALSE},                         // sqrt
+                                {OBJ_GEN,  1, FALSE}, // sin
+                                {OBJ_GEN,  1, FALSE}, // cos
+                                {OBJ_GEN,  1, FALSE}, // tan
+                                {OBJ_GEN,  1, FALSE}, // asin
+                                {OBJ_GEN,  1, FALSE}, // acos
+                                {OBJ_GEN,  1, FALSE}, // atan
+                                {OBJ_GEN,  1, FALSE}, // sinh
+                                {OBJ_GEN,  1, FALSE}, // cosh
+                                {OBJ_GEN,  1, FALSE}, // tanh
+                                {OBJ_GEN,  1, FALSE}, // asinh
+                                {OBJ_GEN,  1, FALSE}, // acosh
+                                {OBJ_GEN,  1, FALSE}, // atanh
                                  };
 
 void * make_primitive() {
