@@ -292,6 +292,87 @@ ast * is_expr_list(Stream * S) {
 
 ast*is_arg_list(Stream*S);
 
+ast * is_expr_0(Stream *S) {    // expr_0以降が形式上左辺式に使える
+    // exp_0        : APPLY '(' expr_list ')'
+    //              | factor '(' arg_list '..' ')'
+    //              | fator  '(' arg_list ')'
+    //              | factor '(' expr_list '..' ')'
+    //              | factor '(' expr_list ')'
+    //              | factor '(' ')'
+    //              | factor '[' expr_list ']'
+    //              | factor '[' pair_list ']'
+    ast * a1, * a2;
+    token*t;
+    tokentype t1,t2;
+    int token_p = tokenbuff -> _cp,i;
+    Vector*v,*v1;
+    // applyの処理
+    if ((t=get_token(S))->type==TOKEN_SYM && strcmp(t->source->_table,"apply")==0) {
+        if ((get_token(S)->type =='(') && (a1=is_expr_list(S)) && get_token(S)->type==')') {
+            v=vector_init(1);push(v,(void*)a1);
+            return new_ast(AST_APPLY,OBJ_UFUNC,v);
+        }
+        printf("Syntax error in apply\n");
+        Throw(1);
+    }
+    unget_token(S);
+    // 
+    if (a1 = is_factor(S)) {
+        //t1 = get_token(S)->type;
+        while (TRUE) {
+            t1 = get_token(S)->type;
+            if (t1 !='(' && t1 != '[') {
+                unget_token(S);
+                return a1;
+            } // factorの後に'('または'['が続く場合
+            t2 = get_token(S) -> type;
+            if (t1=='(' && t2 == ')'){
+                v = vector_init(2);
+                push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
+                a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
+                continue;
+            }
+            unget_token(S);
+            if ((a2 = is_pair_list(S)) || (a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
+            //if ((a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
+                t2 = get_token(S) ->type;
+                if ((t1=='(' && t2 == ')') || (t1 == '[' && t2==']')) {
+                    v = vector_init(2);
+                    push(v, (void * )a1); push(v, (void * )a2);
+                    if (t1=='(') {
+                        a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
+                        continue;
+                    } else if (a2->type==AST_PAIR_LIST) {a1= new_ast(AST_SLS,OBJ_NONE,v);continue;}
+                    a1= new_ast(AST_VREF,OBJ_UFUNC, v);continue;
+                } else if (t1=='(' && t2=='.'*256+'.' && get_token(S)->type==')') {
+                    v = vector_init(2);
+                    //push(v, (void * )a1);//expr_list a2の先頭にa1を入れたものをvとすること！！
+                    //for(i=0;i<a2->table->_sp;i++) {
+                    //    push(v, (void*)vector_ref(a2->table,i));
+                    //}
+                    //v1=vector_init(1);push(v1,new_ast(AST_EXP_LIST,v));
+                    //return new_ast(AST_APPLY, v1);
+                    a2->type=AST_EXP_LIST_DOTS;
+                    push(v, (void * )a1); push(v, (void * )a2);
+                    a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
+                    continue;
+                }
+            //} else { //空引数のfunction call 
+            //    t2 = get_token(S) -> type;
+            //    if (t1=='(' && t2 == ')'){
+            //        v = vector_init(2);
+            //        push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
+            //        return new_ast(AST_FCALL,OBJ_UFUNC, v);
+            //    }
+            }
+            printf("syntax error in function call/vector\n");
+            Throw(1);
+        }
+    }
+    tokenbuff -> _cp = token_p;
+    return NULL;
+}
+/*
 ast * is_expr_0(Stream *S) {
     // exp_0        : APPLY '(' expr_list ')'
     //              | factor '(' arg_list '..' ')'
@@ -366,6 +447,7 @@ ast * is_expr_0(Stream *S) {
     tokenbuff -> _cp = token_p;
     return NULL;
 }
+*/
 #define max(a,b) (a ? a >= b: b)
 
 ast * is_expr_1(Stream *S) {
@@ -381,7 +463,7 @@ ast * is_expr_1(Stream *S) {
             unget_token(S);
             return a1;
         }
-        if (a2=is_expr_1(S)) {
+        if (a2=is_expr_1(S)) {  // 累乗は右結合演算子なので再起で回すと簡単
             v=vector_init(3);
             push(v,(void*)(long)op);push(v,(void*)a1);push(v,(void*)a2);
             return new_ast(AST_2OP,max(a1->o_type,a2->o_type),v);
@@ -573,220 +655,254 @@ ast * is_arg_list(Stream * S) {
     return NULL;
 }
 
-    ast * is_lambda_expr(Stream *S) {
-        // lambda_expr  : lambda ( expr_list ..) expr
-        //              | lambda ( expr_list ) expr
-        //              | lambda ( ) expr
-        ast * a1, * a2;
-        token*t,*t1 ;
-        Vector * v;
-        int token_p = tokenbuff->_cp;
+ast * is_lambda_expr(Stream *S) {
+    // lambda_expr  : lambda ( expr_list ..) expr
+    //              | lambda ( expr_list ) expr
+    //              | lambda ( ) expr
+    ast * a1, * a2;
+    token*t,*t1 ;
+    Vector * v;
+    int token_p = tokenbuff->_cp;
 
-        t=get_token(S);
-        if ((t->type)==TOKEN_SYM && strcmp("lambda",t->source->_table)==0) {
-            if ((get_token(S)->type)=='(') {
-                //if (a1=is_expr_list(S)) {
-                if (a1=is_arg_list(S)) {                    // check arg_list
-                    if ((t1=get_token(S))->type==')'){
-                        if (a2=is_expr(S)) {
-                            v=vector_init(2);
-                            push(v,(void*)a1);push(v,(void*)a2);
-                            return new_ast(AST_LAMBDA,a2->o_type,v);
-                        }
-                    } else if (t1->type=='.'*256+'.' && get_token(S)->type==')') {
-                        //a1->type=AST_EXP_LIST_DOTS;
-                        a1->type=AST_ARG_LIST_DOTS;
-                        if (a2=is_expr(S)) {
-                            v=vector_init(2);
-                            push(v,(void*)a1);push(v,(void*)a2);
-                            return new_ast(AST_LAMBDA,a2->o_type,v);
-                        }
-                    }
-                } else if (get_token(S)->type==')') {                               //引数がない場合
+    t=get_token(S);
+    if ((t->type)==TOKEN_SYM && strcmp("lambda",t->source->_table)==0) {
+        if ((get_token(S)->type)=='(') {
+            //if (a1=is_expr_list(S)) {
+            if (a1=is_arg_list(S)) {                    // check arg_list
+                if ((t1=get_token(S))->type==')'){
                     if (a2=is_expr(S)) {
                         v=vector_init(2);
-                        a1=new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1));           //空のarg_listを作る
                         push(v,(void*)a1);push(v,(void*)a2);
-                        return new_ast(AST_LAMBDA,OBJ_UFUNC,v);
+                        return new_ast(AST_LAMBDA,a2->o_type,v);
+                    }
+                } else if (t1->type=='.'*256+'.' && get_token(S)->type==')') {
+                    //a1->type=AST_EXP_LIST_DOTS;
+                    a1->type=AST_ARG_LIST_DOTS;
+                    if (a2=is_expr(S)) {
+                        v=vector_init(2);
+                        push(v,(void*)a1);push(v,(void*)a2);
+                        return new_ast(AST_LAMBDA,a2->o_type,v);
                     }
                 }
+            } else if (get_token(S)->type==')') {                               //引数がない場合
+                if (a2=is_expr(S)) {
+                    v=vector_init(2);
+                    a1=new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1));           //空のarg_listを作る
+                    push(v,(void*)a1);push(v,(void*)a2);
+                    return new_ast(AST_LAMBDA,OBJ_UFUNC,v);
+                }
             }
-            printf("Syntax error in lambda\n");
-            Throw(1);
         }
-        tokenbuff->_cp=token_p;
-        return NULL;
+        printf("Syntax error in lambda\n");
+        Throw(1);
     }
+    tokenbuff->_cp=token_p;
+    return NULL;
+}
 
-    ast*is_if_expr(Stream*S) {
-        // if_expr  : if expr : expr : expr
-        ast*a1,*a2,*a3;
-        token*t;
-        Vector*v;
-        int token_p=tokenbuff->_cp;
+ast*is_if_expr(Stream*S) {
+    // if_expr  : if expr : expr : expr
+    ast*a1,*a2,*a3;
+    token*t;
+    Vector*v;
+    int token_p=tokenbuff->_cp;
 
-        t=get_token(S);
-        if (t->type==TOKEN_SYM && strcmp("if",t->source->_table)==0) {
-            if (a1=is_expr(S)) {
-                if (get_token(S)->type==':' ) {
-                    if (a2=is_expr(S)) {
-                        if (get_token(S)->type==':') {
-                            if (a3=is_expr(S)) {
-                                v=vector_init(3);
-                                //if (a2->o_type != a3->o_type) {printf("Syntax error :IFtype\n");return NULL;}
-                                push(v,(void*)a1);push(v,(void*)a2);push(v,(void*)a3);
-                                return new_ast(AST_IF,a2->o_type,v);
-                            } else {
-                                printf("Syntax error! must be FALSE expression\n");
-                                Throw(1);
-                            }
+    t=get_token(S);
+    if (t->type==TOKEN_SYM && strcmp("if",t->source->_table)==0) {
+        if (a1=is_expr(S)) {
+            if (get_token(S)->type==':' ) {
+                if (a2=is_expr(S)) {
+                    if (get_token(S)->type==':') {
+                        if (a3=is_expr(S)) {
+                            v=vector_init(3);
+                            //if (a2->o_type != a3->o_type) {printf("Syntax error :IFtype\n");return NULL;}
+                            push(v,(void*)a1);push(v,(void*)a2);push(v,(void*)a3);
+                            return new_ast(AST_IF,a2->o_type,v);
                         } else {
-                            printf("Syntax error! Must be ':'\n");
+                            printf("Syntax error! must be FALSE expression\n");
                             Throw(1);
                         }
                     } else {
-                        printf("Syntax error! must be TRUE expression\n");
+                        printf("Syntax error! Must be ':'\n");
                         Throw(1);
                     }
                 } else {
-                    printf("Syntax error! Must be ':'\n");
+                    printf("Syntax error! must be TRUE expression\n");
                     Throw(1);
                 }
             } else {
-                printf("Syntax error! Must be cond expression!\n");
+                printf("Syntax error! Must be ':'\n");
+                Throw(1);
+            }
+        } else {
+            printf("Syntax error! Must be cond expression!\n");
+            Throw(1);
+        }
+    }
+    tokenbuff->_cp=token_p;
+    return NULL;
+}
+
+ast*is_while_expr(Stream*S) {
+    // while_expr  : while expr : expr
+    ast*a1,*a2,*a3;
+    token*t;
+    Vector*v;
+    int token_p=tokenbuff->_cp;
+
+    t=get_token(S);
+    if (t->type==TOKEN_SYM && strcmp("while",t->source->_table)==0) {
+        if (a1=is_expr(S)) {
+            if (get_token(S)->type==':' ) {
+                if (a2=is_expr(S)) {
+                        v=vector_init(3);
+                        //if (a2->o_type != a3->o_type) {printf("Syntax error :IFtype\n");return NULL;}
+                        push(v,(void*)a1);push(v,(void*)a2);
+                        return new_ast(AST_WHILE,a2->o_type,v);
+                } else {
+                    printf("Syntax error! must be expression\n");
+                    Throw(1);
+                }
+            } else {
+                printf("Syntax error! Must be ':'\n");
+                Throw(1);
+            }
+        } else {
+            printf("Syntax error! Must be cond expression!\n");
+            Throw(1);
+        }
+    }
+    tokenbuff->_cp=token_p;
+    return NULL;
+}
+
+int set_op[]={'=','*'*256+'=','/'*256+'=','%'*256+'=','+'*256+'=','-'*256+'=', '|'*256+'=',0};
+
+ast * is_set_expr(Stream * S) {
+    // set_expr : expr_0 [=|+=|-=|*=|/=] expr
+    ast* a1,*a2;
+    tokentype  t;
+    Vector*v;
+    int token_p = tokenbuff->_cp;
+    //if ((a1 = is_expr_0(S)) && (t=*is_in(set_op, (void*)get_token(S)->type)) && (a2 = is_expr(S))) {
+    if ((a1=is_expr_0(S)) &&
+            ((t=get_token(S)->type)=='=' || t=='+'*256+'=' || t=='-'*256+'=' || t=='*'*256+'=' || 
+                                            t=='/'*256+'=' || t=='%'*256+'=' || t=='|'*256+'=' || 
+                                            t=='&'*256+'=' || t=='>'*65536+'>'*256+'=' || t== '<'*65536+'<'*256+'=') &&
+            //( ((t=get_token(S)->type) & 255) == '=' ) && 
+            (a2=is_expr(S))) {
+        v=vector_init(3);
+        push(v,(void*)t); push(v,(void*)a1); push(v,(void*)a2);
+        return new_ast(AST_SET,a1->o_type,v);
+    }
+    tokenbuff->_cp=token_p;
+    return NULL;
+}
+
+ast * is_dcl_expr(Stream*S) {
+    int i;
+    ast*a;
+    token*t;
+    Vector*v;
+    int token_p=tokenbuff->_cp;
+
+    t=get_token(S);
+    //if (t->type==TOKEN_SYM && strcmp("var",t->source->_table)==0) {
+    if (t->type==TOKEN_SYM && (i=string_isin(t->source->_table,dcl_string))!=-1) {
+        if (a=is_expr_list(S)) {
+            v=vector_init(1);
+            push(v,(void*)a);
+            return new_ast(AST_DCL,i,v);
+        }
+    } //printf("!!!\n");
+    tokenbuff->_cp=token_p;
+    return NULL;
+}
+
+ast * is_expr(Stream *S) {
+    ast * a;
+    if (get_token(S) == NULL) return NULL;  // tokenがない場合
+    unget_token(S);
+    if (a = is_dcl_expr(S)) return a;
+    if (a = is_set_expr(S)) return a;
+    if (a = is_if_expr(S)) return a;
+    if (a = is_lambda_expr(S)) return a;
+    if (a =is_while_expr(S)) return a;
+    //if (a = is_expr_6(S)) return a;
+    if (a = is_expr_2n(S,14)) return a;
+    /* ||
+       is_dcl_expr(p)      ||
+       is_while_expr(p)    ||
+       is_and_or_expr(p)   ||
+       return NULL;*/
+    //if (get_token(S) == NULL) return NULL;  // tokenがない場合
+    printf("SyntaxErroor:Not a exprssion!\n");
+    Throw(1);
+}
+
+ast *  is_ml_expr(Stream * S ) {
+    ast * a;
+    token * t;
+    int token_p = tokenbuff ->_cp;
+    Vector*v;
+    if (get_token(S) -> type == '{') {
+        if ( a = is_ml_expr_list(S) ) {
+            if (get_token(S) -> type == '}') {
+                v=vector_init(1);
+                push(v,(void*)a);
+                return new_ast(AST_ML, a->o_type,v);
+            }
+        }
+    }
+    tokenbuff -> _cp = token_p;
+    return NULL;
+}
+ast * is_ml_expr_list(Stream * S) {
+    // expr_list    : expr ',' expr_list
+    //              | expr
+    ast * a1, * a2;
+    token * t1, * t2;
+    Vector * v;
+    int token_p = tokenbuff ->_cp;
+
+    if (a1 = is_expr(S)) {
+        v=vector_init(3);
+        while (TRUE) {
+            if ((t1 = get_token(S)) ->type != ';') {
+                unget_token(S);
+                push(v,(void*)a1);
+                return new_ast(AST_EXP_LIST,a1->o_type,v);
+            }
+            push(v,(void*)a1);
+            if (a1 = is_expr(S)) {
+                ;
+            } else {
+                printf("Syntax error in ml_expr_list\n");
                 Throw(1);
             }
         }
-        tokenbuff->_cp=token_p;
-        return NULL;
     }
+    tokenbuff -> _cp = token_p;
+    return NULL;
+}
+/*
+   int main(int argc, char argv[]) {
+   ast *a;
+   Stream *S=new_stream(stdin);
+   int token_p;
+   tokenbuff=vector_init(100);
 
-    int set_op[]={'=','*'*256+'=','/'*256+'=','%'*256+'=','+'*256+'=','-'*256+'=', '|'*256+'=',0};
+   while (TRUE) {
+//token_p=tokenbuff->_cp;
+//token_print(tokenbuff);
+if ((a=is_expr(S)) && get_token(S)->type==';') ast_print(a,0);
+else {
+printf("Not expression!\n");
+// tokenbuff->_cp=token_p;
+//drop_token(S);
+}
+tokenbuff->_cp=0;tokenbuff->_sp=0;
+}
 
-    ast * is_set_expr(Stream * S) {
-        // set_expr : expr_0 [=|+=|-=|*=|/=] expr
-        ast* a1,*a2;
-        tokentype  t;
-        Vector*v;
-        int token_p = tokenbuff->_cp;
-        //if ((a1 = is_expr_0(S)) && (t=*is_in(set_op, (void*)get_token(S)->type)) && (a2 = is_expr(S))) {
-        if ((a1=is_expr_0(S)) &&
-                ((t=get_token(S)->type)=='=' || t=='+'*256+'=' || t=='-'*256+'=' || t=='*'*256+'=' || 
-                                                t=='/'*256+'=' || t=='%'*256+'=' || t=='|'*256+'=' || 
-                                                t=='&'*256+'=' || t=='>'*65536+'>'*256+'=' || t== '<'*65536+'<'*256+'=') &&
-                //( ((t=get_token(S)->type) & 255) == '=' ) && 
-                (a2=is_expr(S))) {
-            v=vector_init(3);
-            push(v,(void*)t); push(v,(void*)a1); push(v,(void*)a2);
-            return new_ast(AST_SET,a1->o_type,v);
-        }
-        tokenbuff->_cp=token_p;
-        return NULL;
-    }
-
-    ast * is_dcl_expr(Stream*S) {
-        int i;
-        ast*a;
-        token*t;
-        Vector*v;
-        int token_p=tokenbuff->_cp;
-
-        t=get_token(S);
-        //if (t->type==TOKEN_SYM && strcmp("var",t->source->_table)==0) {
-        if (t->type==TOKEN_SYM && (i=string_isin(t->source->_table,dcl_string))!=-1) {
-            if (a=is_expr_list(S)) {
-                v=vector_init(1);
-                push(v,(void*)a);
-                return new_ast(AST_DCL,i,v);
-            }
-        } //printf("!!!\n");
-        tokenbuff->_cp=token_p;
-        return NULL;
-    }
-
-    ast * is_expr(Stream *S) {
-        ast * a;
-        if (get_token(S) == NULL) return NULL;  // tokenがない場合
-        unget_token(S);
-        if (a = is_dcl_expr(S)) return a;
-        if (a = is_set_expr(S)) return a;
-        if (a = is_if_expr(S)) return a;
-        if (a = is_lambda_expr(S)) return a;
-        //if (a = is_expr_6(S)) return a;
-        if (a = is_expr_2n(S,14)) return a;
-        /* ||
-           is_dcl_expr(p)      ||
-           is_while_expr(p)    ||
-           is_and_or_expr(p)   ||
-           return NULL;*/
-        //if (get_token(S) == NULL) return NULL;  // tokenがない場合
-        printf("SyntaxErroor:Not a exprssion!\n");
-        Throw(1);
-    }
-
-    ast *  is_ml_expr(Stream * S ) {
-        ast * a;
-        token * t;
-        int token_p = tokenbuff ->_cp;
-        Vector*v;
-        if (get_token(S) -> type == '{') {
-            if ( a = is_ml_expr_list(S) ) {
-                if (get_token(S) -> type == '}') {
-                    v=vector_init(1);
-                    push(v,(void*)a);
-                    return new_ast(AST_ML, a->o_type,v);
-                }
-            }
-        }
-        tokenbuff -> _cp = token_p;
-        return NULL;
-    }
-    ast * is_ml_expr_list(Stream * S) {
-        // expr_list    : expr ',' expr_list
-        //              | expr
-        ast * a1, * a2;
-        token * t1, * t2;
-        Vector * v;
-        int token_p = tokenbuff ->_cp;
-
-        if (a1 = is_expr(S)) {
-            v=vector_init(3);
-            while (TRUE) {
-                if ((t1 = get_token(S)) ->type != ';') {
-                    unget_token(S);
-                    push(v,(void*)a1);
-                    return new_ast(AST_EXP_LIST,a1->o_type,v);
-                }
-                push(v,(void*)a1);
-                if (a1 = is_expr(S)) {
-                    ;
-                } else {
-                    printf("Syntax error in ml_expr_list\n");
-                    Throw(1);
-                }
-            }
-        }
-        tokenbuff -> _cp = token_p;
-        return NULL;
-    }
-    /*
-       int main(int argc, char argv[]) {
-       ast *a;
-       Stream *S=new_stream(stdin);
-       int token_p;
-       tokenbuff=vector_init(100);
-
-       while (TRUE) {
-    //token_p=tokenbuff->_cp;
-    //token_print(tokenbuff);
-    if ((a=is_expr(S)) && get_token(S)->type==';') ast_print(a,0);
-    else {
-    printf("Not expression!\n");
-    // tokenbuff->_cp=token_p;
-    //drop_token(S);
-    }
-    tokenbuff->_cp=0;tokenbuff->_sp=0;
-    }
-
-    }
-    */
+}
+*/

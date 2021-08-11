@@ -3,6 +3,7 @@
 
 void disassy(Vector*v,int i,FILE*fp);
 */
+#include <time.h>
 #include "generate.h"
 
 int op2_1[] = {'+', '-', '*', '/', '%', '*'*256+'*','<'*256+'-','|','&', '>'*256+'>', '<'*256+'<', '>', '<', '='*256+'=', '!'*256+'=', '>'*256+'=', '<'*256+'=',0};
@@ -321,12 +322,18 @@ code_ret *codegen_lit(ast*lit_ast,Vector*env,int tail) {
         case TOKEN_FLT: 
             fl_num_p=(double*)malloc(sizeof(double));
             sscanf(str_symbol->_table,"%lf",fl_num_p);
-            push(code,(void*)fl_num_p);
+            push(code,(void*)*((long*)fl_num_p));
             return new_code(code,new_ct(OBJ_FLT,OBJ_NONE,(void*)0,FALSE));
+        //case TOKEN_FLT:
+        //    fl_num_p=(double*)malloc(sizeof(double));
+        //    sscanf(str_symbol->_table,"%lf",fl_num_p);
+        //    push(code,(void*)fl_num_p);
+        //    return new_code(code,new_ct(OBJ_FLT,OBJ_NONE,(void*)0,FALSE));
         case TOKEN_EFLT:
             fl_num_p=(double*)malloc(sizeof(double));
             sscanf(str_symbol->_table,"%le",fl_num_p);
-            push(code,(void*)fl_num_p);
+            //push(code,(void*)fl_num_p);
+            push(code,(void*)*((long*)fl_num_p));
             return new_code(code,new_ct(OBJ_FLT,OBJ_NONE,(void*)0,FALSE));
         case TOKEN_LEFLT:
             //char**testbuf=(char**)malloc(1024*sizeof(char));
@@ -735,7 +742,9 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
                 push(code,(void*)LDC);push(code,create_zero(OBJ_UFUNC));                // 「0」で初期化しておく
                 push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
                 //ct=new_ct(ct->functon_ret_type,OBJ_NONE,(void*)0,FALSE);
-
+                //
+                // !!!!! fcall_astの[2]番目をlambda式に落とすコードを書くこと !!!!!
+                //
             }else {
                 printf("SyntaxError:IllegalDecleartype!\n");
                 Throw(1);
@@ -794,8 +803,22 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
     return code_s;
 }
 
+code_ret * codegen_while(ast *while_ast, Vector *env, int tail){
+    code_ret *code_s = codegen(vector_ref(while_ast->table, 0), env, FALSE);
+    if (code_s->ct->type != OBJ_INT ) {printf("SyntaxError:Must be Cond code!\n");Throw(0);}
+    Vector * code = code_s->code; long n = vector_length(code);
+    //
+    code_s = codegen(vector_ref(while_ast->table, 1), env, FALSE);
+    Vector *loop_code =code_s->code;
+    push(loop_code, (void*)DROP); push(loop_code, (void*)JOIN);
+    //
+    push(code, (void*)WHILE); push(code, (void*)n); push(code, (void*)loop_code);
+    //
+    return new_code(code, new_ct(OBJ_NONE, OBJ_NONE, (void*)0, FALSE));
+}
+
 code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[cond_expr,true_expr,false_expr]
-                                                                    //printf("if in!\n");
+
     code_ret *code_s1 = codegen(vector_ref(a -> table, 0),env,FALSE);
     Vector *code=code_s1->code;                                             // make cond_code 
     code_s1 = codegen(vector_ref(a->table,1),env,TRUE);             // make true_code
@@ -1056,6 +1079,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
         case AST_VAR:   return  codegen_var     (a, env, tail);
         case AST_LIT:   return  codegen_lit     (a, env, tail);
         case AST_VECT:  return  codegen_vect    (a, env, tail);
+        case AST_WHILE: return  codegen_while   (a, env, tail);
         default: printf("syntaxError:Unknown AST!\n");Throw(0);
     } 
 }
@@ -1089,11 +1113,15 @@ void disassy(Vector * code, int indent, FILE*fp) {
             case LDG:   case GSET: 
                 s = ((Symbol * )dequeue(code)) -> _table;
                 fprintf(fp,"%s\t%s\n", code_name[c], s);
-                break;   
+                break;
+            case WHILE:
+                fprintf(fp,"%s\t%ld\n", code_name[c], (long)dequeue(code));
+                disassy((Vector*)dequeue(code), indent, fp);
+                break;
             default:
-                if (op_size[c] == 0) printf("%s\n", code_name[c]);
-                else if (op_size[c] == 1) printf("%s\t%ld\n", code_name[c], (long)dequeue(code)); 
-                else printf("Unknkown Command %s\n", (char * )c); 
+                if (op_size[c] == 0) fprintf(fp, "%s\n", code_name[c]);
+                else if (op_size[c] == 1) fprintf(fp, "%s\t%ld\n", code_name[c], (long)dequeue(code)); 
+                else fprintf(fp, "Unknkown Command %s\n", (char * )c); 
         }
     }
     indent--;
@@ -1128,6 +1156,8 @@ int main(int argc, char*argv[]) {
     Vector * EEnv = vector_init(50); 
     G = Hash_init(128); // must be 2^n 
     GLOBAL_VAR=Hash_init(128);
+    //
+    clock_t s1_time,s2_time,e_time;
     //if (argc<=1) S=new_stream(stdin);
     FILE*fp=stdin;
     make_primitive();    
@@ -1148,7 +1178,7 @@ int main(int argc, char*argv[]) {
         //    }
         //}
     }
-    if (fp==stdin) printf("PURE REPL Version 0.2.4 Copyright 2021.06.03 M.Taniguro\n");
+    if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");
     //DEBUG=TRUE;
     S = new_stream(fp);
     tokenbuff=vector_init(100);
@@ -1163,6 +1193,7 @@ int main(int argc, char*argv[]) {
             if (fp==stdin) putchar('>');
             if ((a=is_expr(S)) && get_token(S)->type==';') {
                 if (DEBUG) ast_print(a,0);
+                s1_time = clock();
                 code_s = codegen(a,env,FALSE);//PR(121);
                 code=code_s->code;push(code,(void*)STOP);//PR(122);
                 ct=code_s->ct;type=ct->type;
@@ -1174,7 +1205,10 @@ int main(int argc, char*argv[]) {
                     }
                     disassy(code,0,stdout);
                 }
+                s2_time = clock();
                 value = eval(Stack,Env,code,Ret,EEnv,G);
+                e_time = clock();
+                printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)1000*(s2_time-s1_time)/CLOCKS_PER_SEC,(double)1000*(e_time-s2_time)/CLOCKS_PER_SEC);
                 printf("%s ok\n", objtype2str(type,value));
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {

@@ -1,6 +1,8 @@
 #include "vm.h"
 //typedef void*(*Funcpointer)(Vector*);
 
+void disassy(Vector * code, int indent, FILE*fp);
+
 char * code_name[] = 
     {"STOP",  "LDC",  "LD",   "ADD",  "CALL", "RTN",  "SEL",  "JOIN", "LDF",  "SET",  "LEQ",  "LDG",  "GSET", "SUB",
      "DEC",   "TCALL","TSEL", "DROP", "EQ",   "INC",  "MUL",  "DIV",  "VEC",  "REF",  "VSET", "HASH", "LDH",  "HSET",
@@ -19,7 +21,7 @@ char * code_name[] =
      "LD02",  "LD03", "LD10", "LD11", "LD12", "LD13", "SET00","SET01","SET02","SET03","SET10","SET11","SET12","SET13",
      "LFADD", "LFSUB","LFMUL","LFDIV","LFMOD","LFPOW","LFGT", "LFLT", "LFEQ", "LFNEQ","LFGEQ","LFLEQ","LFNEG","ITOLF",
      "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","CADD", "CSUB", "CMUL", "CDIV", "CPOW",
-     "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS"  "CEQ",  "CNEQ", "$$$" };
+     "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE", "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -39,7 +41,7 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0 };
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    0};
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -52,6 +54,9 @@ Vector *tosqs(Vector*code, const void** table) {
         } else if (op == SEL || op == TSEL) {
             vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table));
             vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table));
+        } else if (op == WHILE) {
+            vector_set(C, (C->_cp)++, dequeue(code));
+            vector_set(C, (C->_cp)++, (void*)tosqs(dequeue(code),table));
         } else {
             (code->_cp)+=op_size[op];
             (C->_cp)+=op_size[op];
@@ -76,8 +81,10 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
     enum CODE op;
     Vector *C = vector_copy0(Code),*ssp=vector_init(200);
     double* fx,*fy,*fz;
+    double xx,yy,zz;
     object*o;
     char*ch;
+    long LOOP_COUNTER = 0;
     static const void * table[] = {
             &&_STOP,  &&_LDC,  &&_LD,   &&_ADD,  &&_CALL, &&_RTN,  &&_SEL,  &&_JOIN, &&_LDF,  &&_SET,  &&_LEQ,  &&_LDG,  &&_GSET, &&_SUB,  \
             &&_DEC,   &&_TCALL,&&_TSEL, &&_DROP, &&_EQ,   &&_INC,  &&_MUL,  &&_DIV,  &&_VEC,  &&_REF,  &&_VSET, &&_HASH, &&_LDH,  &&_HSET, \
@@ -96,7 +103,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LD02,  &&_LD03, &&_LD10, &&_LD11, &&_LD12, &&_LD13, &&_SET00,&&_SET01,&&_SET02,&&_SET03,&&_SET10,&&_SET11,&&_SET12,&&_SET13,\
             &&_LFADD, &&_LFSUB,&&_LFMUL,&&_LFDIV,&&_LFMOD,&&_LFPOW,&&_LFGT, &&_LFLT, &&_LFEQ, &&_LFNEQ,&&_LFGEQ,&&_LFLEQ,&&_LFNEG,&&_ITOLF,\
             &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO,&&_CADD, &&_CSUB, &&_CMUL, &&_CDIV ,&&_CPOW, \
-            &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ   };
+            &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE   };
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -197,10 +204,15 @@ _ADD:
 _IADD:
     push(S, (void * )((long)pop(S) + (long)pop(S)));
     goto * dequeue(C);
+//_FADD:
+//    fx=(double*)pop(S);fy=(double*)pop(S);
+//    fz = (double * )malloc(sizeof(double)); *fz=*fx+(*fy);
+//    push(S,(void*)fz);
+//    goto * dequeue(C);
 _FADD:
-    fx=(double*)pop(S);fy=(double*)pop(S);
-    fz = (double * )malloc(sizeof(double)); *fz=*fx+(*fy);
-    push(S,(void*)fz);
+    i = (long)pop(S);j=(long)pop(S);
+    zz = *(double*)(&i) + *(double*)(&j);
+    push(S, (void*)(*(long*)(&zz)));
     goto * dequeue(C);
 _LADD:
     y = (mpz_ptr)pop(S); x = (mpz_ptr)pop(S);
@@ -233,9 +245,11 @@ _ITOR:
     push(S,(void*)qz);
     goto * dequeue(C);    
 _ITOF:
-    fz = (double*)malloc(sizeof(double));
-    *fz=(double)((long)pop(S));
-    push(S, (void * )fz);
+    //fz = (double*)malloc(sizeof(double));
+    //*fz=(double)((long)pop(S));
+    //push(S, (void * )fz);
+    zz=(double)(long)pop(S);
+    push(S, (void*)*(long*)&zz);
     goto * dequeue(C);
 _ITOO:
     push(S,(void*)newINT((long)pop(S)));
@@ -250,9 +264,10 @@ _LTOR:
     push(S,(void*)qz);
     goto * dequeue(C);    
 _LTOF:
-    fz = (double*)malloc(sizeof(double));
-    *fz=mpz_get_d((mpz_ptr)pop(S));
-    push(S, (void * )fz);
+    //fz = (double*)malloc(sizeof(double));
+    //*fz=mpz_get_d((mpz_ptr)pop(S));
+    zz=mpz_get_d((mpz_ptr)pop(S));
+    push(S, (void * )*(long*)&zz);
     goto * dequeue(C);
 _LTOO:
     push(S,(void*)newLINT((mpz_ptr)pop(S)));
@@ -270,32 +285,44 @@ _RTOL:
     push(S,(void*)z);
     goto*dequeue(C);
 _RTOF:
-    fz=(double*)malloc(sizeof(double));
-    *fz=mpq_get_d((mpq_ptr)pop(S));
-    push(S,(void*)fz);
+    //fz=(double*)malloc(sizeof(double));
+    //*fz=mpq_get_d((mpq_ptr)pop(S));
+    zz=mpq_get_d((mpq_ptr)pop(S));
+    push(S,(void*)*(long*)&zz);
     goto * dequeue(C);
 _RTOO:
     push(S,(void*)newRAT((mpq_ptr)pop(S)));
     goto * dequeue(C);
+//_FTOI:
+//    fz=(double*)pop(S);
+//    push(S,(void*)(long)(*fz));
+//    goto * dequeue(C);
 _FTOI:
-    fz=(double*)pop(S);
-    push(S,(void*)(long)(*fz));
+    i = (long)pop(S);push(S, (void*)(long)*(double*)(&i));
     goto * dequeue(C);
+//_FTOL:
+//    fz=(double*)pop(S);
+//    mpz_init_set_d(z,*fz);
+//    push(S,z);
+//    goto * dequeue(C);
 _FTOL:
-    fz=(double*)pop(S);
-    mpz_init_set_d(z,*fz);
+    i = (long)pop(S);
+    z = (mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_init_set_d(z,*(double*)(&i));
     push(S,z);
     goto * dequeue(C);
 _FTOR:
-    fz=(double*)pop(S);
+    //fz=(double*)pop(S);
+    i = (long)pop(S);
     qz=(mpq_ptr)malloc(sizeof(MP_RAT));
-    mpq_init(qz);mpq_set_d(qz,*fz);
-    mpq_init(qz);
-    mpq_set_d(qz,*fz);
+    //mpq_init(qz);mpq_set_d(qz,*fz);
+    mpq_init(qz);mpq_set_d(qz,*(double*)(&i));
     push(S,(void*)qz);
     goto * dequeue(C);
 _FTOO:
-    push(S,(void*)newFLT(*(double*)pop(S)));
+    //push(S,(void*)newFLT(*(double*)pop(S)));
+    i = (long)pop(S);
+    push(S,(void*)newFLT(*(double*)(&i)));
     goto*dequeue(C);
 _OTOI:
     push(S,(void*)obj2int((object*)pop(S)));
@@ -307,9 +334,11 @@ _OTOR:
     push(S,(void*)obj2rat((object*)pop(S)));
     goto*dequeue(C);
 _OTOF:
-    fz=(double*)malloc(sizeof(double));
-    *fz=obj2flt((object*)pop(S));
-    push(S,(void*)fz);
+    //fz=(double*)malloc(sizeof(double));
+    //*fz=obj2flt((object*)pop(S));
+    //push(S,(void*)fz);
+    zz=obj2flt((object*)pop(S));
+    push(S, (void*)*((long*)(&zz)));
     goto*dequeue(C);
 _IJTOO://rational number
     push(S,(void*)newRAT_i((long)pop(S),(long)pop(S)));
@@ -323,9 +352,12 @@ _ISUB:
     push(S, (void * )((long)pop(S) - i));
     goto * dequeue(C);
 _FSUB:
-    fy=(double*)pop(S);fx=(double*)pop(S);
-    fz = (double * )malloc(sizeof(double)); *fz=*fx-(*fy);
-    push(S,(void*)fz);
+    //fy=(double*)pop(S);fx=(double*)pop(S);
+    //fz = (double * )malloc(sizeof(double)); *fz=*fx-(*fy);
+    //push(S,(void*)fz);
+    i = (long)pop(S);j=(long)pop(S);
+    zz = *(double*)(&j) - *(double*)(&i);
+    push(S, (void*)(*(long*)(&zz)));
     goto * dequeue(C);
 _LSUB:
     y = (mpz_ptr)(S->_table[--(S->_sp)]); x = (mpz_ptr)(S->_table[(S->_sp)-1]);
@@ -373,9 +405,12 @@ _IMUL:
     push(S, (void * )((long)pop(S) * (long)pop(S)));
     goto * dequeue(C);
 _FMUL:
-    fx=(double*)pop(S);fy=(double*)pop(S);
-    fz = (double * )malloc(sizeof(double)); *fz=*fx*(*fy);
-    push(S,(void*)fz);
+    //fx=(double*)pop(S);fy=(double*)pop(S);
+    //fz = (double * )malloc(sizeof(double)); *fz=*fx*(*fy);
+    //push(S,(void*)fz);
+    i = (long)pop(S);j=(long)pop(S);
+    zz = *(double*)(&j) * (*(double*)(&i));
+    push(S, (void*)(*(long*)(&zz)));
     goto * dequeue(C);
 _LMUL:
     y = (mpz_ptr)pop(S); x = (mpz_ptr)pop(S);
@@ -401,10 +436,13 @@ _IDIV:
     push(S, (void * )((long)pop(S) / p));
     goto * dequeue(C);
 _FDIV:
-    if(*(fy=(double*)pop(S))==0.0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
-    fx=(double*)pop(S);
-    fz = (double * )malloc(sizeof(double)); *fz=*fx/(*fy);
-    push(S,(void*)fz);
+    //if(*(fy=(double*)pop(S))==0.0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
+    //fx=(double*)pop(S);
+    //fz = (double * )malloc(sizeof(double)); *fz=*fx/(*fy);
+    //push(S,(void*)fz);
+    i = (long)pop(S);j=(long)pop(S);if (i==0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
+    zz = *(double*)(&j) / (*(double*)(&i));
+    push(S, (void*)(*(long*)(&zz)));
     goto * dequeue(C);
 _LDIV:
     y = (mpz_ptr)pop(S); 
@@ -568,7 +606,7 @@ _IBNOT:
     goto * dequeue(C);
 _LBNOT:
     z=(mpz_ptr)malloc(sizeof(MP_INT));
-    mpz_com(z,z);
+    mpz_com(z, (mpz_ptr)pop(S));
     push(S,(void*)z);
     goto*dequeue(C);
 _OBNOT:
@@ -850,10 +888,13 @@ _RPOW:
     push(S,(void*)qz);
     goto *dequeue(C);
 _FPOW:
-    fy=pop(S);fx=pop(S);
-    fz=(double*)malloc(sizeof(double));
-    *fz=pow((*fx),(*fy));
-    push(S,fz);
+    //fy=pop(S);fx=pop(S);
+    //fz=(double*)malloc(sizeof(double));
+    //*fz=pow((*fx),(*fy));
+    //push(S,fz);
+    i = (long)pop(S);j=(long)pop(S);//if (i==0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
+    zz = pow(*(double*)(&j), *(double*)(&i));
+    push(S, (void*)(*(long*)(&zz)));
     goto *dequeue(C);
 _OPOW:
     o=(object*)pop(S);
@@ -883,10 +924,13 @@ _RMOD:
     push(S,(void*)qz);
     goto*dequeue(C);
 _FMOD:
-    fy=(double*)pop(S);fx=(double*)pop(S);
-    fz=(double*)malloc(sizeof(double));
-    (*fz)=(*fx)-(*fy)*(double)(long)((*fx)/(*fy));
-    push(S,(void*)fz);
+    //fy=(double*)pop(S);fx=(double*)pop(S);
+    //fz=(double*)malloc(sizeof(double));
+    //(*fz)=(*fx)-(*fy)*(double)(long)((*fx)/(*fy));
+    i = (long)pop(S);j=(long)pop(S);if (i==0) {printf("RuntimeError:ZeroDivision!\n");Throw(3);}
+    zz = fmod(*(double*)(&j), *(double*)(&i));
+    push(S, (void*)(*(long*)(&zz)));
+    //push(S,(void*)fz);
     goto*dequeue(C);
 _OMOD:
     o=(object*)pop(S);
@@ -1176,9 +1220,10 @@ _LFTOR:
     push(S,(void*)qz);
     goto *dequeue(C);
 _LFTOF:
-    fx=(double*)malloc(sizeof(double));
-    *fx=mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDA);
-    push(S,(void*)fx);
+    //fx=(double*)malloc(sizeof(double));
+    //*fx=mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDA);
+    zz = mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDA);
+    push(S,(void*)*(long*)&zz);
     goto *dequeue(C);
 _LFTOO:
     push(S,(void*)newLFLT((mpfr_ptr)pop(S)));
@@ -1261,7 +1306,34 @@ _CTOO:
 _CTOS:
     push(S,(void*)objtype2symbol(OBJ_CMPLX,pop(S)));
     goto *dequeue(C);
-
+_WHILE:
+    n = (long)dequeue(C); 
+    v = dequeue(C);
+    p = (long)pop(S);
+    if (p) {
+        C->_cp = C->_cp-n-3;// !!!
+        push(R,(void*)C);//vector_print(C);
+        C=(Vector*)v; C->_cp=0;//vector_print(C);
+    } else {
+        push(S, (void*)0);
+    }
+    goto *dequeue(C);
+/*    
+_LOOP_SET:
+    LOOP_COUNTER = (long)dequeue(C);
+    goto *dequeue(C);
+_LOOP:
+    v = dequeue(C);
+    if (LOOP_COUNTER) {
+        push(S,(void*)0);
+        goto *dequeue(C);
+    }
+    LOOP_COUNTER--;
+    C->_cp = C->_cp-1;
+    push(R, (void*)C);
+    C = (Vector*)v;C->_cp=0;
+    goto *dequeue(C);
+*/
 _VMAP:  // S:[...,v0,v1,...,vn,fn] C:[vmap n ...]
     n=(long)pop(C);
     fn=(Vector*)pop(S);

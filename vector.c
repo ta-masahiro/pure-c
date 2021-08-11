@@ -18,6 +18,7 @@ extern void * pop(Vector * s);
 extern void * dequeue(Vector * s);
 extern void * vector_ref(Vector * v, int index);
 extern void vector_set(Vector * v, int index, void ** val);
+extern int vector_length(Vector *v) ;
 
 Vector * vector_copy1(Vector * v) {
     Vector * s = (Vector * )malloc(sizeof(Vector)); 

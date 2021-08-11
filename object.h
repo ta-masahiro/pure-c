@@ -145,4 +145,6 @@ object * objtanh(object *x);
 object * objasinh(object *x);
 object * objacosh(object *x);
 object * objatanh(object *x);
+object * objgamma(object*x);
+object * objlgamma(object*x);
 #endif

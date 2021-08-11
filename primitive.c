@@ -79,7 +79,30 @@ void * p_getc(Vector*v) {
     return (void*)s;    
 }
 // 数学関数
-void *p_fsin(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = sin  (*(double*)vector_ref(v,0)); return (void*)f;}
+//void *p_fsin(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = sin  (*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_fsin(Vector *v)      {long l = (long)vector_ref(v,0);double f =   sin(*(double*)&l); return (void*)*(long*)&f;}
+void *p_fcos(Vector *v)      {long l = (long)vector_ref(v,0);double f =   cos(*(double*)&l); return (void*)*(long*)&f;}
+void *p_ftan(Vector *v)      {long l = (long)vector_ref(v,0);double f =   tan(*(double*)&l); return (void*)*(long*)&f;}
+void *p_fasin(Vector *v)     {long l = (long)vector_ref(v,0);double f =  asin(*(double*)&l); return (void*)*(long*)&f;}
+void *p_facos(Vector *v)     {long l = (long)vector_ref(v,0);double f =  acos(*(double*)&l); return (void*)*(long*)&f;}
+void *p_fatan(Vector *v)     {long l = (long)vector_ref(v,0);double f =  atan(*(double*)&l); return (void*)*(long*)&f;}
+void *p_fsinh(Vector *v)     {long l = (long)vector_ref(v,0);double f =  sinh(*(double*)&l); return (void*)*(long*)&f;}
+void *p_fcosh(Vector *v)     {long l = (long)vector_ref(v,0);double f =  cosh(*(double*)&l); return (void*)*(long*)&f;}
+void *p_ftanh(Vector *v)     {long l = (long)vector_ref(v,0);double f =  tanh(*(double*)&l); return (void*)*(long*)&f;}
+void *p_fasinh(Vector *v)    {long l = (long)vector_ref(v,0);double f = asinh(*(double*)&l); return (void*)*(long*)&f;}
+void *p_facosh(Vector *v)    {long l = (long)vector_ref(v,0);double f = acosh(*(double*)&l); return (void*)*(long*)&f;}
+void *p_fatanh(Vector *v)    {long l = (long)vector_ref(v,0);double f = atanh(*(double*)&l); return (void*)*(long*)&f;}
+//
+void *p_log10(Vector *v)    {long l = (long)vector_ref(v,0);double f = log10(*(double*)&l); return (void*)*(long*)&f;}
+void *p_logE(Vector *v)    {long l = (long)vector_ref(v,0);double f = log(*(double*)&l); return (void*)*(long*)&f;}
+void *p_log1p(Vector *v)    {long l = (long)vector_ref(v,0);double f = log1p(*(double*)&l); return (void*)*(long*)&f;}
+void *p_log(Vector *v)    {long l = (long)vector_ref(v,0),ll = (long)vector_ref(v,1);double f = log(*(double*)&ll)/log(*(double*)&l); return (void*)*(long*)&f;}
+void *p_exp(Vector *v)    {long l = (long)vector_ref(v,0);double f = exp(*(double*)&l); return (void*)*(long*)&f;}
+void *p_iabs(Vector *v)     {return (void*)labs((long)vector_ref(v,0));}
+void *p_fabs(Vector *v)    {long l = (long)vector_ref(v,0);double f = fabs(*(double*)&l); return (void*)*(long*)&f;}
+void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
+void *p_fsqrt(Vector *v)    {long l = (long)vector_ref(v,0);double f = sqrt(*(double*)&l); return (void*)*(long*)&f;}
+/*
 void *p_fcos(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = cos  (*(double*)vector_ref(v,0)); return (void*)f;}
 void *p_ftan(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = tan  (*(double*)vector_ref(v,0)); return (void*)f;}
 void *p_fasin(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = asin (*(double*)vector_ref(v,0)); return (void*)f;}
@@ -100,6 +123,7 @@ void *p_iabs(Vector *v)     {return (void*)labs((long)vector_ref(v,0));}
 void *p_fabs(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = fabs(*(double*)vector_ref(v,0)); return (void*)f;}
 void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
 void *p_fsqrt(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = sqrt(*(double*)vector_ref(v,0)); return (void*)f;}
+*/
 //
 void *p_labs(Vector *v)     {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_abs(L,L);return (void*)L;}
 void *p_rabs(Vector *v)     {mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_set(Q,(mpq_ptr)vector_ref(v,0));mpq_abs(Q,Q);return (void*)Q;}
@@ -150,6 +174,14 @@ void *p_otanh(Vector *v) {return (void*)objtanh((object*)vector_ref(v,0));}
 void *p_oasinh(Vector *v) {return (void*)objasinh((object*)vector_ref(v,0));}
 void *p_oacosh(Vector *v) {return (void*)objacosh((object*)vector_ref(v,0));}
 void *p_oatanh(Vector *v) {return (void*)objatanh((object*)vector_ref(v,0));}
+//void *p_osqrt(Vector *v) {return (void*)objsqrt((object *)vector_ref(v,0));}
+
+void *p_fgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = tgamma(*(double*)&l); return (void*)*(long*)&f;}
+void *p_flgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = lgamma(*(double*)&l); return (void*)*(long*)&f;}
+//void *p_fgamma(Vector *v) {double *f = (double*)malloc(sizeof(double));*f = tgamma(*(double*)vector_ref(v,0)); return (void*)f;}
+//void *p_flgamma(Vector *v) {double *f = (double*)malloc(sizeof(double));*f = lgamma(*(double*)vector_ref(v,0)); return (void*)f;}
+void *p_ogamma(Vector *v) {return (void*)objgamma((object*)vector_ref(v,0));}
+void *p_olgamma(Vector *v) {return (void*)objlgamma((object*)vector_ref(v,0));}
 
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_getc, p_fsin, p_fcos, p_ftan, 
@@ -160,7 +192,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
-                                 NULL};
+                                 p_fgamma, p_flgamma,p_ogamma, p_olgamma,NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -170,7 +202,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
-                                NULL};
+                                "fgamma", "flgamma", "gamma", "lgamma",NULL};
 int primitive_function_arglisti[][3] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT},                                      // set_prec
@@ -238,7 +270,12 @@ int primitive_function_arglisti[][3] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},//tanh
                                 {OBJ_GEN},//asinh
                                 {OBJ_GEN},//acosh
-                                {OBJ_GEN}//atanh
+                                {OBJ_GEN},//atanh
+                                //{OBJ_GEN} //sqrt
+                                {OBJ_FLT},//fgamma
+                                {OBJ_FLT},//flgamma
+                                {OBJ_GEN},//ogamma
+                                {OBJ_GEN}//olgamma
                                 };
 
 int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        // print
@@ -309,6 +346,11 @@ int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        /
                                 {OBJ_GEN,  1, FALSE}, // asinh
                                 {OBJ_GEN,  1, FALSE}, // acosh
                                 {OBJ_GEN,  1, FALSE}, // atanh
+                                //{OBJ_GEN,  1, FALSE}  // sqrt
+                                {OBJ_FLT,  1, FALSE}, // fgamma 
+                                {OBJ_FLT,  1, FALSE}, // flgamma 
+                                {OBJ_GEN,  1, FALSE}, // ogamma 
+                                {OBJ_GEN,  1, FALSE} // olgamma 
                                  };
 
 void * make_primitive() {
@@ -321,8 +363,11 @@ void * make_primitive() {
 
     PRIMITIVE_FUNC = Hash_init(128);
     Symbol *char_I=new_symbol("I",1);
+    Symbol *char_NONE = new_symbol("None",4);
     Hash_put(G,char_I,(void*)c);
+    Hash_put(G,char_NONE,(void*)0);
     Hash_put(GLOBAL_VAR,char_I,new_ct(OBJ_CMPLX,OBJ_NONE,(void*)0,FALSE));
+    Hash_put(GLOBAL_VAR,char_NONE,new_ct(OBJ_NONE,OBJ_NONE,(void*)0,FALSE));
     while (primitive_func[i] != NULL) {
         v=vector_init(3);
         for (j=0;j<primitive_function_ct[i][1];j++) {

@@ -1579,7 +1579,7 @@ char*objtostr(object* o) {
     if (o==NULL) return "None";
     switch(o->type) {
         case OBJ_INT:return objtype2str(OBJ_INT,(void*)(o->data.intg));
-        case OBJ_FLT:return objtype2str(OBJ_FLT,(void*)(&(o->data.flt)));
+        case OBJ_FLT:return objtype2str(OBJ_FLT,(void*)*(long*)(&(o->data.flt)));
         default:     return objtype2str(o->type,(void*)(o->data.ptr));
     }
 }
@@ -1601,13 +1601,15 @@ char * objtype2str(obj_type type, void* value) {
     char *str,*buf = (char*)malloc(buf_size*sizeof(char)); 
     mp_exp_t e;
     int i,n;
-    if (type != OBJ_INT && value==NULL) return "None";
+    long lval;
+    if ((type != OBJ_INT && type != OBJ_FLT) && value == NULL) return "None";
     switch(type){
         case OBJ_NONE:  return "None";
         case OBJ_INT:   sprintf(buf, "%ld", (long)value); return buf;
         case OBJ_LINT:  return mpz_get_str(NULL, 10, (mpz_ptr)value);
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);
-        case OBJ_FLT:   sprintf(buf,"%.16g",*(double*)value); return buf;
+        //case OBJ_FLT:   sprintf(buf,"%.16g",*(double*)value); return buf;
+        case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.16g",*(double*)(&lval)); return buf;
         case OBJ_CMPLX: sprintf(buf,"%.16g%+.16gI",creal(*(complex*)value),cimag(*(complex*)value)); return buf;
         case OBJ_LFLT:  //mpfr_sprintf(buf,"%.Rg", (mpfr_ptr)value);return buf;
                         mpfr_sprintf(buf,set_lf_format((mpfr_ptr)value),(mpfr_ptr)value);return buf;
@@ -1680,7 +1682,7 @@ void*symbol2objtype(Symbol*s,obj_type t){
 
 object * objcpy(object * s) {
     if (s==NULL) none_error();
-    mpz_ptr L; mpq_ptr Q; mpfr_ptr F;// Vector * v; Symbol * sym;
+    mpz_ptr L; mpq_ptr Q; mpfr_ptr F;complex *c;// Vector * v; Symbol * sym;
     object * t = (object * )malloc(sizeof(object));
     int type = (t -> type = s -> type);
     switch(type) {
@@ -1689,6 +1691,7 @@ object * objcpy(object * s) {
         case OBJ_RAT: Q=(mpq_ptr)malloc(sizeof(MP_RAT));  mpq_init(Q); mpq_set(Q, (mpq_ptr)s ->data.ptr); t -> data.ptr = (void * )Q; return t;
         case OBJ_LFLT: F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));
                        mpfr_init_set(F, (mpfr_ptr)s ->data.ptr,MPFR_RNDA); t -> data.ptr = (void * )F; return t;
+        case OBJ_CMPLX: c=(complex *)malloc(sizeof(complex));*c=*(complex *)s->data.ptr;t->data.ptr=c;t->type=OBJ_CMPLX;return t;
         case OBJ_VECT:t->data.ptr=(void*)vector_copy0((Vector*)t->data.ptr);t->type=OBJ_VECT;return t;
         case OBJ_SYM: t->data.ptr=(void*)symbol_cpy((Symbol*)t->data.ptr);t->type=OBJ_SYM;return t;
         default:printf("RntimeError:Illegal copy Method!\n");Throw(3);
@@ -1755,6 +1758,17 @@ object * objslice(object* o,long start,long end) {
     }else {
         printf("RntimeError:Illegal push Method!\n");
         Throw(3);
+    }
+}
+object *objlogE(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(log(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_log(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_log(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(log(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_log(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=clog(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
 object *objsin(object *x) {
@@ -1887,6 +1901,31 @@ object *objatanh(object *x) {
         case OBJ_FLT:  return newFLT(atanh(x->data.flt));
         case OBJ_LFLT: mpfr_init(F);mpfr_atanh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
         case OBJ_CMPLX:*c=catanh(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+
+object *objgamma(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(tgamma(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_gamma(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_gamma(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(tgamma(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_gamma(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        //case OBJ_CMPLX:*c=catanh(*(complex*)x->data.ptr);return newCMPLX(c);
+        default:printf("RntimeError:Illegal argument!\n");Throw(3);
+    }
+}
+object *objlgamma(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(lgamma(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_lngamma(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_lngamma(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(lgamma(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_lngamma(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        //case OBJ_CMPLX:*c=catanh(*(complex*)x->data.ptr);return newCMPLX(c);
+        default:printf("RntimeError:Illegal argument!\n");Throw(3);
     }
 }
 /*
