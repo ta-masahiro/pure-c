@@ -1,10 +1,11 @@
 PROGRAM := vm-test
-OBJS := hash.o vector.o read.o vm.o object.o symbol.o
+OBJS := hash.o vector.o read.o vm.o object.o symbol.o CException.o
+
 
 CC := gcc
 #FLAGS := -g -O0
 FLAGS := -O3
-LDLIBS :=  -lgc -lgmp -lm
+LDLIBS :=  -lgc -lgmp  -lmpfr -lm
 
 $(PROGRAM): $(OBJS)
 	$(CC) -o $(PROGRAM) $(FLAGS) $^ $(LDLIBS)

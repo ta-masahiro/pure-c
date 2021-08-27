@@ -776,6 +776,39 @@ ast*is_while_expr(Stream*S) {
     return NULL;
 }
 
+ast*is_loop_expr(Stream*S) {
+    // loop_expr  : loop expr : expr
+    ast*a1,*a2,*a3;
+    token*t;
+    Vector*v;
+    int token_p=tokenbuff->_cp;
+
+    t=get_token(S);
+    if (t->type==TOKEN_SYM && strcmp("loop",t->source->_table)==0) {
+        if (a1=is_expr(S)) {
+            if (get_token(S)->type==':' ) {
+                if (a2=is_expr(S)) {
+                        v=vector_init(3);
+                        //if (a2->o_type != a3->o_type) {printf("Syntax error :IFtype\n");return NULL;}
+                        push(v,(void*)a1);push(v,(void*)a2);
+                        return new_ast(AST_LOOP,a2->o_type,v);
+                } else {
+                    printf("Syntax error! must be expression\n");
+                    Throw(1);
+                }
+            } else {
+                printf("Syntax error! Must be ':'\n");
+                Throw(1);
+            }
+        } else {
+            printf("Syntax error! Must be cond expression!\n");
+            Throw(1);
+        }
+    }
+    tokenbuff->_cp=token_p;
+    return NULL;
+}
+
 int set_op[]={'=','*'*256+'=','/'*256+'=','%'*256+'=','+'*256+'=','-'*256+'=', '|'*256+'=',0};
 
 ast * is_set_expr(Stream * S) {
@@ -827,7 +860,8 @@ ast * is_expr(Stream *S) {
     if (a = is_set_expr(S)) return a;
     if (a = is_if_expr(S)) return a;
     if (a = is_lambda_expr(S)) return a;
-    if (a =is_while_expr(S)) return a;
+    if (a = is_while_expr(S)) return a;
+    if (a = is_loop_expr(S)) return a;
     //if (a = is_expr_6(S)) return a;
     if (a = is_expr_2n(S,14)) return a;
     /* ||

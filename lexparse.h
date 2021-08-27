@@ -90,6 +90,7 @@ typedef enum {
     AST_ARG_LIST_DOTS,
     AST_PAIR,       //24:AST_PAIR,[car_ast,cdrast]
     AST_PAIR_LIST,  //25:AST_PAIR_LIST,[pair_ast,pair_ast,...]
+    AST_LOOP        //26:AST_LOOP,[count_ast,ast]
 } ast_type; 
 
 

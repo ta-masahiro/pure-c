@@ -1,6 +1,7 @@
 #include "vm.h"
+//#include "fast_memcpy.h"
+//#define memcpy fast_memcpy
 //typedef void*(*Funcpointer)(Vector*);
-
 void disassy(Vector * code, int indent, FILE*fp);
 
 char * code_name[] = 
@@ -21,7 +22,8 @@ char * code_name[] =
      "LD02",  "LD03", "LD10", "LD11", "LD12", "LD13", "SET00","SET01","SET02","SET03","SET10","SET11","SET12","SET13",
      "LFADD", "LFSUB","LFMUL","LFDIV","LFMOD","LFPOW","LFGT", "LFLT", "LFEQ", "LFNEQ","LFGEQ","LFLEQ","LFNEG","ITOLF",
      "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","CADD", "CSUB", "CMUL", "CDIV", "CPOW",
-     "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE", "$$$" };
+     "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE", "LOOP_SET",
+     "LOOP", "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -41,7 +43,8 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    0};
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
+        1,    0};
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -49,7 +52,7 @@ Vector *tosqs(Vector*code, const void** table) {
     while (code->_cp < code->_sp) {
         op=(enum CODE)dequeue(code); //printf("%d ",op);
         vector_set(C, (C->_cp)++, (void*)table[op]); //printf("%ld\n",(long)table[op]);
-        if (op == LDF || op== LDP ) {
+        if (op == LDF || op== LDP || op == LOOP) {
             vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table));
         } else if (op == SEL || op == TSEL) {
             vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table));
@@ -103,7 +106,8 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LD02,  &&_LD03, &&_LD10, &&_LD11, &&_LD12, &&_LD13, &&_SET00,&&_SET01,&&_SET02,&&_SET03,&&_SET10,&&_SET11,&&_SET12,&&_SET13,\
             &&_LFADD, &&_LFSUB,&&_LFMUL,&&_LFDIV,&&_LFMOD,&&_LFPOW,&&_LFGT, &&_LFLT, &&_LFEQ, &&_LFNEQ,&&_LFGEQ,&&_LFLEQ,&&_LFNEG,&&_ITOLF,\
             &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO,&&_CADD, &&_CSUB, &&_CMUL, &&_CDIV ,&&_CPOW, \
-            &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE   };
+            &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE,&&_LOOP_SET,\
+            &&_LOOP   };
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -785,7 +789,9 @@ _DROP:
     pop(S);
     goto * dequeue(C);
 _FPR:
-    printf("%f\n", *(double*)(S->_table[(S->_sp) - 1]));
+    //printf("%f\n", *(double*)(S->_table[(S->_sp) - 1]));
+    i = (long)(S->_table[(S->_sp) - 1]);
+    printf("%f\n", *(double*)&i);
     goto * dequeue(C);
 _LPR:
     gmp_printf("%Zd\n", (mpz_ptr)(S->_table[(S->_sp) -1]));
@@ -1197,8 +1203,9 @@ _RTOLF:
     goto *dequeue(C);
 _FTOLF:
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    fz=(double*)pop(S);
-    mpfr_init_set_d(lfz,*fz,MPFR_RNDA);
+    //fz=(double*)pop(S);
+    i = (long)pop(S);
+    mpfr_init_set_d(lfz,*(double*)&i, MPFR_RNDA);
     push(S, (void*)lfz);
     goto *dequeue(C);
 _OTOLF:
@@ -1318,9 +1325,8 @@ _WHILE:
         push(S, (void*)0);
     }
     goto *dequeue(C);
-/*    
 _LOOP_SET:
-    LOOP_COUNTER = (long)dequeue(C);
+    LOOP_COUNTER = (long)dequeue(S);
     goto *dequeue(C);
 _LOOP:
     v = dequeue(C);
@@ -1333,7 +1339,6 @@ _LOOP:
     push(R, (void*)C);
     C = (Vector*)v;C->_cp=0;
     goto *dequeue(C);
-*/
 _VMAP:  // S:[...,v0,v1,...,vn,fn] C:[vmap n ...]
     n=(long)pop(C);
     fn=(Vector*)pop(S);
@@ -1358,8 +1363,16 @@ _VMAP:  // S:[...,v0,v1,...,vn,fn] C:[vmap n ...]
     push(S,(void*)ll);
     goto *dequeue(C);
 
-//_SET_IADD:
-//_SET_ISUB:
+_SET_LADD00:
+    l =vector_ref(E, E->_sp-1);
+    mpz_add((mpz_ptr)(l->_table[0]),(mpz_ptr)(l->_table[0]),(mpz_ptr)pop(S));
+    push(S,(void*)(l->_table[0]));
+    goto *dequeue(C);
+_SET_ISUB00:
+    l=vector_ref(E, E->_sp-1);
+    v = (void*)((long)(l->_table[0]) -(long)pop(S));
+    l->_table[0] = v;push(S,(void*)v);
+    goto *dequeue(C);
 //_SET_IMUL:
 //_SET_IDIV:
 //_SET_IMOD:

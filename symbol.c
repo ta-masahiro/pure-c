@@ -1,5 +1,7 @@
 #include <ctype.h>
 #include "symbol.h"
+//#include "fast_memcpy.h"
+//#define memcpy fast_memcpy
 
 Symbol * new_symbol(unsigned char * str, unsigned long size) {
     char * s = (char * )malloc((size + 1) * sizeof(char)); 
@@ -13,7 +15,8 @@ Symbol * new_symbol(unsigned char * str, unsigned long size) {
 }
 
 int symbol_eq(Symbol*s1,Symbol*s2) {
-    return (s1->_size) != (s2->_size) ? FALSE : strcmp(s1->_table,s2->_table)==0;
+    //return (s1->_size) != (s2->_size) ? FALSE : strcmp(s1->_table,s2->_table)==0;
+    return (s1->_size) != (s2->_size) ? FALSE : memcmp(s1->_table,s2->_table, s1->_size * sizeof(char)) == 0;
 }
 
 Symbol* symbol_cat(Symbol*s1,Symbol*s2) {

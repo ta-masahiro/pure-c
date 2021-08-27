@@ -188,6 +188,10 @@ Vector * chg_byte_code(Vector * code, Hash * G) {
                 push(t, (void * )op); 
                 push(t, chg_byte_code ((Vector * ) dequeue(code), G));
                 break;
+            case WHILE:
+                push(t, (void *)op);
+                push(t, dequeue(code));
+                push(t, chg_byte_code((Vector *)dequeue(code), G));
             default: 
                 if (op==-1) {printf("illegal OPcode! %s\n",(char*)c);exit(-1);}
                 if (op_size[op] == 0) {
@@ -230,6 +234,10 @@ void disassy(Vector * code, int indent) {
                 s = ((Symbol * )dequeue(code)) -> _table;
                 printf("%s\t%s\n", code_name[c], s);
                 break;   
+            case WHILE:
+                printf("%s\t%ld\n", code_name[c], (long)dequeue(code));
+                disassy((Vector*)dequeue(code), indent);
+                break;
             default:
                 if (op_size[c] == 0) printf("%s\n", code_name[c]);
                 else if (op_size[c] == 1) printf("%s\t%ld\n", code_name[c], (long)dequeue(code)); 

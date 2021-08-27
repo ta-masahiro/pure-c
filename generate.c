@@ -534,12 +534,12 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
         if (type_right != OBJ_INT) push(code_right,(void*)conv_op[type_right][OBJ_INT]);
     } else if (type_left < type_right) {
         op_code = conv_op[type_left][type_right];
-        if (op_code ==0 ) {printf("SyntaxError:IllegalOpecode!\n");Throw(0);}
+        if (op_code ==0 ) {printf("SyntaxError:IllegalOpecode!000\n");Throw(0);}
         push(code_left,(void*)(long)op_code);
         r_type=type_right;
     } else if (type_left > type_right) {
         op_code = conv_op[type_right][type_left];
-        if (op_code ==0 ) {printf("SyntaxError:IllegalOpecode!\n");Throw(0);}
+        if (op_code ==0 ) {printf("SyntaxError:IllegalOpecode!001 %d %d\n",type_right,type_left);ast_print(_2op_ast,0);Throw(0);}
         push(code_right,(void*)(long)op_code);
         r_type=type_left;
     } else r_type=type_left;
@@ -549,7 +549,7 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
         if (op2_1[i]==(int)(long)vector_ref(_2op_ast->table,0)) break;
     }
     if (i>=18) {printf("illegal 2oprand\n");return NULL;}
-    if ((op_code =op2_2[r_type][i])==0) {printf("SyntaxError:IllegalOpecode!\n");Throw(0);};
+    if ((op_code =op2_2[r_type][i])==0) {printf("SyntaxError:IllegalOpecode!002\n");Throw(0);};
     push(code,(void*)(long)op_code);
     //
     if (op2_3[i] != 0) r_type=op2_3[i];
@@ -816,7 +816,21 @@ code_ret * codegen_while(ast *while_ast, Vector *env, int tail){
     //
     return new_code(code, new_ct(OBJ_NONE, OBJ_NONE, (void*)0, FALSE));
 }
-
+/*
+code_ret * codegen_loop(ast *loop_ast, Vector *env, int tail){
+    code_ret *code_s = codegen(vector_ref(loop_ast->table, 0), env, FALSE);
+    if (code_s->ct->type != OBJ_INT ) {printf("SyntaxError:Must be Cond code!\n");Throw(0);}
+    Vector * code = code_s->code; //long n = vector_length(code);
+    //
+    code_s = codegen(vector_ref(loop_ast->table, 1), env, FALSE);
+    Vector *loop_code =code_s->code;
+    push(loop_code, (void*)DROP); push(loop_code, (void*)JOIN);
+    //
+    push(code, (void*)WHILE); push(code, (void*)n); push(code, (void*)loop_code);
+    //
+    return new_code(code, new_ct(OBJ_NONE, OBJ_NONE, (void*)0, FALSE));
+}
+*/
 code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[cond_expr,true_expr,false_expr]
 
     code_ret *code_s1 = codegen(vector_ref(a -> table, 0),env,FALSE);
@@ -1102,7 +1116,7 @@ void disassy(Vector * code, int indent, FILE*fp) {
                 disassy((Vector * ) dequeue(code), indent ,fp); 
                 disassy((Vector * ) dequeue(code), indent, fp); 
                 break; 
-            case LDF:   case LDP:
+            case LDF:   case LDP:   case LOOP:
                 fprintf(fp,"%s\n", code_name[c]); 
                 disassy((Vector *)dequeue(code), indent,fp ); 
                 break;
@@ -1114,7 +1128,7 @@ void disassy(Vector * code, int indent, FILE*fp) {
                 s = ((Symbol * )dequeue(code)) -> _table;
                 fprintf(fp,"%s\t%s\n", code_name[c], s);
                 break;
-            case WHILE:
+            case WHILE: 
                 fprintf(fp,"%s\t%ld\n", code_name[c], (long)dequeue(code));
                 disassy((Vector*)dequeue(code), indent, fp);
                 break;

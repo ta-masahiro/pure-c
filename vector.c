@@ -1,4 +1,6 @@
 #include "vector.h"
+//#include "fast_memcpy.h"
+//#define memcpy fast_memcpy
 #define INIT_SIZE 32    //vectorの初期サイズ
 Vector *  vector_init( int init) {
     Vector * s = (Vector * )malloc(sizeof(Vector)); 

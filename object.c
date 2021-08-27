@@ -576,8 +576,8 @@ object*objRMOD(mpq_ptr x, mpq_ptr y) {
 object * objRPOW(mpq_ptr x,long y) {
     object * o = (object*)malloc(sizeof(object) );
     mpq_ptr z =(mpq_ptr)malloc(sizeof(MP_RAT));mpq_init(z);
-    mpz_ptr n=mpq_numref(x);
-    mpz_ptr d=mpq_denref(x);
+    mpz_ptr n=mpq_numref(x);mpz_pow_ui(n,n,y);
+    mpz_ptr d=mpq_denref(x);mpz_pow_ui(d,d,y);
     mpq_set_num(z,n);mpq_set_den(z,d);
     o->data.ptr=(void*)z;
     o->type=OBJ_RAT;
