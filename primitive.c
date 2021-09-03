@@ -185,7 +185,9 @@ void *p_olgamma(Vector *v) {return (void*)objlgamma((object*)vector_ref(v,0));}
 //
 void *p_sum(Vector *v) {object* o = objcpy(vector_ref(v,0));int i;for(i=v->_cp+1;i<v->_sp;i++) o = objadd(o,vector_ref(v,i));return (void*)o;}
 void *p_vsum(Vector *v) {return p_sum((Vector*)vector_ref(v,0));}
-
+// 数論関数
+void * p_lis_prime(Vector *v) {int reps=(v->_sp<=1)?20:(int)(long)vector_ref(v,1);return  (void*)(long)mpz_probab_prime_p(vector_ref(v,0),reps);}
+void * p_lnext_prime(Vector *v) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)vector_ref(v,0));return (void*)r;}
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_getc, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,
@@ -195,7 +197,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
-                                 p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum,NULL};
+                                 p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_lis_prime, p_lnext_prime, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -205,7 +207,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
-                                "fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum",NULL};
+                                "fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime",NULL};
 int primitive_function_arglisti[][3] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT},                                      // set_prec
@@ -280,7 +282,9 @@ int primitive_function_arglisti[][3] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},//ogamma
                                 {OBJ_GEN},//olgamma
                                 {OBJ_GEN},//sum
-                                {OBJ_VECT}//vsum
+                                {OBJ_VECT},//vsum
+                                {OBJ_LINT, OBJ_INT},//is_prime
+                                {OBJ_LINT}//next_prime
                                 };
 
 int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        // print
@@ -357,7 +361,9 @@ int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        /
                                 {OBJ_GEN,  1, FALSE}, // ogamma 
                                 {OBJ_GEN,  1, FALSE}, // olgamma
                                 {OBJ_GEN,  1, TRUE} , // sum
-                                {OBJ_GEN,  1,FALSE}   //vsum
+                                {OBJ_GEN,  1,FALSE} ,  //vsum
+                                {OBJ_INT, 2,TRUE},//is_prime
+                                {OBJ_LINT,1,FALSE} //next_prime
                                  };
 
 void * make_primitive() {
