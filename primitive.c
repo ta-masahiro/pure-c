@@ -1,4 +1,6 @@
 #include "generate.h"
+gmp_randstate_t  RAND_STATE;
+unsigned long mulmod(unsigned long a,unsigned long b,unsigned long c);
 
 //extern Hash * PRIMITIVE_FUNC;
 void * p_exit() {exit(0);}
@@ -188,6 +190,11 @@ void *p_vsum(Vector *v) {return p_sum((Vector*)vector_ref(v,0));}
 // 数論関数
 void * p_lis_prime(Vector *v) {int reps=(v->_sp<=1)?20:(int)(long)vector_ref(v,1);return  (void*)(long)mpz_probab_prime_p(vector_ref(v,0),reps);}
 void * p_lnext_prime(Vector *v) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)vector_ref(v,0));return (void*)r;}
+// 乱数
+static unsigned long x=123456789,y=362436069,z=521288629,w=88675123;
+void init_irand(unsigned long s) {z ^=s;z ^= z >>21;z ^= z<< 35; z ^= z >>4; z *=2685821657736338717L;}
+void * p_irand(Vector * v) {unsigned long t=(x ^ (x << 11));x=y;y=z;z=w;return (void*) (w = (w ^ (w >>19)) ^ (t ^ (t >>8)));}
+void * p_lrand(Vector *v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(r); mpz_urandomm(r, RAND_STATE, (mpz_ptr)vector_ref(v, 0));return (void *)r;}
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_getc, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,
@@ -197,7 +204,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
-                                 p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_lis_prime, p_lnext_prime, NULL};
+                                 p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_lis_prime, p_lnext_prime, p_irand, p_lrand, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -207,7 +214,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
-                                "fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime",NULL};
+                                "fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime", "irand", "lrand",NULL};
 int primitive_function_arglisti[][3] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT},                                      // set_prec
@@ -284,7 +291,9 @@ int primitive_function_arglisti[][3] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},//sum
                                 {OBJ_VECT},//vsum
                                 {OBJ_LINT, OBJ_INT},//is_prime
-                                {OBJ_LINT}//next_prime
+                                {OBJ_LINT},//next_prime
+                                {OBJ_NONE} ,//irand
+                                {OBJ_LINT} //lrand
                                 };
 
 int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        // print
@@ -363,7 +372,9 @@ int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        /
                                 {OBJ_GEN,  1, TRUE} , // sum
                                 {OBJ_GEN,  1,FALSE} ,  //vsum
                                 {OBJ_INT, 2,TRUE},//is_prime
-                                {OBJ_LINT,1,FALSE} //next_prime
+                                {OBJ_LINT,1,FALSE} ,//next_prime
+                                 {OBJ_INT,0,FALSE},//irand
+                                 {OBJ_LINT,1,FALSE}
                                  };
 
 void * make_primitive() {
@@ -373,6 +384,7 @@ void * make_primitive() {
     char *s;
     complex *c=(complex*)malloc(sizeof(complex));
     *c=I;
+    gmp_randinit_default(RAND_STATE);
 
     PRIMITIVE_FUNC = Hash_init(128);
     Symbol *char_I=new_symbol("I",1);
