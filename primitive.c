@@ -191,9 +191,10 @@ void *p_vsum(Vector *v) {return p_sum((Vector*)vector_ref(v,0));}
 void * p_lis_prime(Vector *v) {int reps=(v->_sp<=1)?20:(int)(long)vector_ref(v,1);return  (void*)(long)mpz_probab_prime_p(vector_ref(v,0),reps);}
 void * p_lnext_prime(Vector *v) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)vector_ref(v,0));return (void*)r;}
 // 乱数
-static unsigned long x=123456789,y=362436069,z=521288629,w=88675123;
-void init_irand(unsigned long s) {z ^=s;z ^= z >>21;z ^= z<< 35; z ^= z >>4; z *=2685821657736338717L;}
-void * p_irand(Vector * v) {unsigned long t=(x ^ (x << 11));x=y;y=z;z=w;return (void*) (w = (w ^ (w >>19)) ^ (t ^ (t >>8)));}
+static unsigned long _X=123456789,_Y=362436069,_Z=521288629,_W=88675123;
+void * p_init_irand(Vector * v) {_Z ^=(unsigned long)vector_ref(v,0);_Z ^= _Z >>21;_Z ^= _Z<< 35; _Z ^= _Z >>4; _Z *=2685821657736338717L;return (void*)0;}
+void * p_init_lrand(Vector * v) { gmp_randseed(RAND_STATE, (mpz_ptr)vector_ref(v, 0));return (void*)0;}
+void * p_irand(Vector * v) {unsigned long t=(_X ^ (_X << 11));_X=_Y;_Y=_Z;_Z=_W;return (void*) (_W = (_W ^ (_W >>19)) ^ (t ^ (t >>8)));}
 void * p_lrand(Vector *v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(r); mpz_urandomm(r, RAND_STATE, (mpz_ptr)vector_ref(v, 0));return (void *)r;}
 #include "ntheory.c"
 void * p_pollard_rho(Vector *v) {
@@ -235,6 +236,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
+<<<<<<< HEAD
                                 "fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime", 
                                 "irand", "lrand", "pollard_rho", "pollard_pm1", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
@@ -320,75 +322,76 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_LINT,OBJ_INT,OBJ_INT}//pollard_pm1
                                 };
 
-int primitive_function_ct[][3]  ={//{OBJ_NONE,1, TRUE},                        // print
+int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
                                 {OBJ_NONE,0, FALSE},
                                 {OBJ_NONE,1, FALSE},
                                 {OBJ_INT, 0, FALSE},
                                 {OBJ_NONE,1, TRUE},
-                                {OBJ_NONE,2, FALSE},                        // printf
-                                {OBJ_IO,  2, FALSE},                        // open
-                                {OBJ_NONE,1, FALSE},                        // close
-                                {OBJ_SYM, 1, FALSE},                        // gets
-                                {OBJ_SYM, 1, FALSE},                        // getc
-                                {OBJ_FLT, 1, FALSE},                        // sin
-                                {OBJ_FLT, 1, FALSE},                        // cos
-                                {OBJ_FLT, 1, FALSE},                        // tan
-                                {OBJ_FLT, 1, FALSE},                        // asin
-                                {OBJ_FLT, 1, FALSE},                        // acos
-                                {OBJ_FLT, 1, FALSE},                        // atan
-                                {OBJ_FLT, 1 ,FALSE},                        // sinh
-                                {OBJ_FLT, 1, FALSE},                        // cosh
-                                {OBJ_FLT, 1, FALSE},                        // tanh
-                                {OBJ_FLT, 1, FALSE},                        // asinh
-                                {OBJ_FLT, 1, FALSE},                        // acosh
-                                {OBJ_FLT, 1, FALSE},                        // atanh
-                                {OBJ_FLT, 1, FALSE},                        // log10 
-                                {OBJ_FLT, 1, FALSE},                        // logE
-                                {OBJ_FLT, 2, FALSE},                        // log
-                                {OBJ_FLT, 1, FALSE},                        // exp
-                                {OBJ_INT, 1, FALSE},                        // iabs
-                                {OBJ_FLT, 1, FALSE},                        // fabs
-                                {OBJ_INT, 1, FALSE},                        // isqrt
-                                {OBJ_FLT, 1, FALSE},                        // fsqrt
-                                {OBJ_LINT,1, FALSE},                        // labs
-                                {OBJ_RAT, 1, FALSE},                        // rabs
-                                {OBJ_LFLT,1, FALSE},                        // lfabs
-                                {OBJ_CMPLX,1, FALSE},                       // cabs
-                                {OBJ_LINT, 1, FALSE},                       // lsqrt
-                                {OBJ_LFLT, 1, FALSE},                       // lfsqrt
-                                {OBJ_CMPLX,1, FALSE},                       // caqrt
-                                {OBJ_LFLT, 1, FALSE},                        // lfsin
-                                {OBJ_LFLT, 1, FALSE},                        // lfcos
-                                {OBJ_LFLT, 1, FALSE},                        // lftan
-                                {OBJ_LFLT, 1, FALSE},                        // lfasin
-                                {OBJ_LFLT, 1, FALSE},                        // lfacos
-                                {OBJ_LFLT, 1, FALSE},                        // lfatan
-                                {OBJ_LFLT, 1, FALSE},                        // lfsinh
-                                {OBJ_LFLT, 1, FALSE},                        // lfcosh
-                                {OBJ_LFLT, 1, FALSE},                        // lftanh
-                                {OBJ_LFLT, 1, FALSE},                        // lfasinh
-                                {OBJ_LFLT, 1, FALSE},                        // lfacosh
-                                {OBJ_LFLT, 1, FALSE},                        // lfatanh
-                                {OBJ_LFLT, 1, FALSE},                        // lflo10
-                                {OBJ_LFLT, 1, FALSE},                        // lflogE
-                                {OBJ_LFLT, 2, FALSE},                        // lflog
-                                {OBJ_LFLT, 1, FALSE},                        // lflog1p
-                                {OBJ_LFLT, 1, FALSE},                        // lfexp
-                                {OBJ_GEN,  1, FALSE},                        // abs
-                                {OBJ_GEN,  1, FALSE},                         // sqrt
-                                {OBJ_GEN,  1, FALSE}, // sin
-                                {OBJ_GEN,  1, FALSE}, // cos
-                                {OBJ_GEN,  1, FALSE}, // tan
-                                {OBJ_GEN,  1, FALSE}, // asin
-                                {OBJ_GEN,  1, FALSE}, // acos
-                                {OBJ_GEN,  1, FALSE}, // atan
-                                {OBJ_GEN,  1, FALSE}, // sinh
-                                {OBJ_GEN,  1, FALSE}, // cosh
-                                {OBJ_GEN,  1, FALSE}, // tanh
-                                {OBJ_GEN,  1, FALSE}, // asinh
-                                {OBJ_GEN,  1, FALSE}, // acosh
-                                {OBJ_GEN,  1, FALSE}, // atanh
+                                {OBJ_NONE,2, FALSE},    // printf
+                                {OBJ_IO,  2, FALSE},    // open
+                                {OBJ_NONE,1, FALSE},    // close
+                                {OBJ_SYM, 1, FALSE},    // gets
+                                {OBJ_SYM, 1, FALSE},    // getc
+                                {OBJ_FLT, 1, FALSE},    // sin
+                                {OBJ_FLT, 1, FALSE},    // cos
+                                {OBJ_FLT, 1, FALSE},    // tan
+                                {OBJ_FLT, 1, FALSE},    // asin
+                                {OBJ_FLT, 1, FALSE},    // acos
+                                {OBJ_FLT, 1, FALSE},    // atan
+                                {OBJ_FLT, 1 ,FALSE},    // sinh
+                                {OBJ_FLT, 1, FALSE},    // cosh
+                                {OBJ_FLT, 1, FALSE},    // tanh
+                                {OBJ_FLT, 1, FALSE},    // asinh
+                                {OBJ_FLT, 1, FALSE},    // acosh
+                                {OBJ_FLT, 1, FALSE},    // atanh
+                                {OBJ_FLT, 1, FALSE},    // log10 
+                                {OBJ_FLT, 1, FALSE},    // logE
+                                {OBJ_FLT, 2, FALSE},    // log
+                                {OBJ_FLT, 1, FALSE},    // exp
+                                {OBJ_INT, 1, FALSE},    // iabs
+                                {OBJ_FLT, 1, FALSE},    // fabs
+                                {OBJ_INT, 1, FALSE},    // isqrt
+                                {OBJ_FLT, 1, FALSE},    // fsqrt
+                                {OBJ_LINT,1, FALSE},    // labs
+                                {OBJ_RAT, 1, FALSE},    // rabs
+                                {OBJ_LFLT,1, FALSE},    // lfabs
+                                {OBJ_CMPLX,1, FALSE},   // cabs
+                                {OBJ_LINT, 1, FALSE},   // lsqrt
+                                {OBJ_LFLT, 1, FALSE},   // lfsqrt
+                                {OBJ_CMPLX,1, FALSE},   // caqrt
+                                {OBJ_LFLT, 1, FALSE},   // lfsin
+                                {OBJ_LFLT, 1, FALSE},   // lfcos
+                                {OBJ_LFLT, 1, FALSE},   // lftan
+                                {OBJ_LFLT, 1, FALSE},   // lfasin
+                                {OBJ_LFLT, 1, FALSE},   // lfacos
+                                {OBJ_LFLT, 1, FALSE},   // lfatan
+                                {OBJ_LFLT, 1, FALSE},   // lfsinh
+                                {OBJ_LFLT, 1, FALSE},   // lfcosh
+                                {OBJ_LFLT, 1, FALSE},   // lftanh
+                                {OBJ_LFLT, 1, FALSE},   // lfasinh
+                                {OBJ_LFLT, 1, FALSE},   // lfacosh
+                                {OBJ_LFLT, 1, FALSE},   // lfatanh
+                                {OBJ_LFLT, 1, FALSE},   // lflo10
+                                {OBJ_LFLT, 1, FALSE},   // lflogE
+                                {OBJ_LFLT, 2, FALSE},   // lflog
+                                {OBJ_LFLT, 1, FALSE},   // lflog1p
+                                {OBJ_LFLT, 1, FALSE},   // lfexp
+                                {OBJ_GEN,  1, FALSE},   // abs
+                                {OBJ_GEN,  1, FALSE},   // sqrt
+                                {OBJ_GEN,  1, FALSE},   // sin
+                                {OBJ_GEN,  1, FALSE},   // cos
+                                {OBJ_GEN,  1, FALSE},   // tan
+                                {OBJ_GEN,  1, FALSE},   // asin
+                                {OBJ_GEN,  1, FALSE},   // acos
+                                {OBJ_GEN,  1, FALSE},   // atan
+                                {OBJ_GEN,  1, FALSE},   // sinh
+                                {OBJ_GEN,  1, FALSE},   // cosh
+                                {OBJ_GEN,  1, FALSE},   // tanh
+                                {OBJ_GEN,  1, FALSE},   // asinh
+                                {OBJ_GEN,  1, FALSE},   // acosh
+                                {OBJ_GEN,  1, FALSE},   // atanh
                                 //{OBJ_GEN,  1, FALSE}  // sqrt
+<<<<<<< HEAD
                                 {OBJ_FLT,  1, FALSE}, // fgamma 
                                 {OBJ_FLT,  1, FALSE}, // flgamma 
                                 {OBJ_GEN,  1, FALSE}, // ogamma 
