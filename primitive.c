@@ -177,7 +177,9 @@ void *p_oasinh(Vector *v) {return (void*)objasinh((object*)vector_ref(v,0));}
 void *p_oacosh(Vector *v) {return (void*)objacosh((object*)vector_ref(v,0));}
 void *p_oatanh(Vector *v) {return (void*)objatanh((object*)vector_ref(v,0));}
 //void *p_osqrt(Vector *v) {return (void*)objsqrt((object *)vector_ref(v,0));}
-
+// constnt
+void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(r);mpfr_const_pi(r,MPFR_RNDA);return (void*)r;}
+void *p_llog2(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(r);mpfr_const_log2(r,MPFR_RNDA);return (void*)r;}
 void *p_fgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = tgamma(*(double*)&l); return (void*)*(long*)&f;}
 void *p_flgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = lgamma(*(double*)&l); return (void*)*(long*)&f;}
 //void *p_fgamma(Vector *v) {double *f = (double*)malloc(sizeof(double));*f = tgamma(*(double*)vector_ref(v,0)); return (void*)f;}
@@ -225,7 +227,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
-                                 p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_lis_prime, p_lnext_prime,
+                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_lis_prime, p_lnext_prime,
                                  p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "getc", "fsin", "fcos", "ftan", 
@@ -236,8 +238,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
-<<<<<<< HEAD
-                                "fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime", 
+                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime", 
                                 "irand", "lrand", "pollard_rho", "pollard_pm1", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
@@ -308,6 +309,8 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},//acosh
                                 {OBJ_GEN},//atanh
                                 //{OBJ_GEN} //sqrt
+                                {OBJ_NONE}, //pi
+                                {OBJ_NONE}, //log2
                                 {OBJ_FLT},//fgamma
                                 {OBJ_FLT},//flgamma
                                 {OBJ_GEN},//ogamma
@@ -391,16 +394,17 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE},   // acosh
                                 {OBJ_GEN,  1, FALSE},   // atanh
                                 //{OBJ_GEN,  1, FALSE}  // sqrt
-<<<<<<< HEAD
-                                {OBJ_FLT,  1, FALSE}, // fgamma 
-                                {OBJ_FLT,  1, FALSE}, // flgamma 
-                                {OBJ_GEN,  1, FALSE}, // ogamma 
-                                {OBJ_GEN,  1, FALSE}, // olgamma
-                                {OBJ_GEN,  1, TRUE} , // sum
-                                {OBJ_GEN,  1, FALSE} ,  //vsum
-                                {OBJ_INT,  2, TRUE},//is_prime
-                                {OBJ_LINT, 1, FALSE} ,//next_prime
-                                {OBJ_INT,  0, FALSE},//irand
+                                {OBJ_LFLT, 0, FALSE},   // pi
+                                {OBJ_LFLT, 0, FALSE},   // log2
+                                {OBJ_FLT,  1, FALSE},   // fgamma 
+                                {OBJ_FLT,  1, FALSE},   // flgamma 
+                                {OBJ_GEN,  1, FALSE},   // ogamma 
+                                {OBJ_GEN,  1, FALSE},   // olgamma
+                                {OBJ_GEN,  1, TRUE} ,   // sum
+                                {OBJ_GEN,  1, FALSE} ,  // vsum
+                                {OBJ_INT,  2, TRUE},    // is_prime
+                                {OBJ_LINT, 1, FALSE} ,  // next_prime
+                                {OBJ_INT,  0, FALSE},   // irand
                                 {OBJ_LINT, 1, FALSE},   // lrand
                                 {OBJ_LINT, 5, FALSE},   // pollard_rho
                                 {OBJ_LINT, 3, FALSE}    // pollard_pm1
@@ -413,14 +417,22 @@ void * make_primitive() {
     char *s;
     complex *c=(complex*)malloc(sizeof(complex));
     *c=I;
+    //mpfr_ptr mp_pai = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(mp_pai);mpfr_const_pi(mp_pai,MPFR_RNDN);
+    //mpfr_ptr mp_log2 = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(mp_log2);mpfr_const_log2(mp_log2,MPFR_RNDN);
     gmp_randinit_default(RAND_STATE);
 
     PRIMITIVE_FUNC = Hash_init(128);
     Symbol *char_I=new_symbol("I",1);
     Symbol *char_NONE = new_symbol("None",4);
+    //Symbol *char_PAI = new_symbol("PAI",3);
+    //Symbol *char_LOG2 = new_symbol("LOG2",4);
     Hash_put(G,char_I,(void*)c);
+    //Hash_put(G,char_PAI,(void*)mp_pai);
+    //Hash_put(G,char_LOG2,(void*)mp_log2);
     Hash_put(G,char_NONE,(void*)0);
     Hash_put(GLOBAL_VAR,char_I,new_ct(OBJ_CMPLX,OBJ_NONE,(void*)0,FALSE));
+    //Hash_put(GLOBAL_VAR,char_PAI,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));
+    //Hash_put(GLOBAL_VAR,char_LOG2,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));
     Hash_put(GLOBAL_VAR,char_NONE,new_ct(OBJ_NONE,OBJ_NONE,(void*)0,FALSE));
     while (primitive_func[i] != NULL) {
         v=vector_init(3);

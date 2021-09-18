@@ -2,8 +2,8 @@ PROGRAM := pure
 OBJS := hash.o vector.o symbol.o vm.o object.o lexer.o  parser.o generate.o primitive.o CException.o
 
 CC := gcc
-FLAGS := -g -O0
-#FLAGS := -O3
+#FLAGS := -g -O0
+FLAGS := -O3
 LDLIBS :=  -lgc -lgmp -lmpfr -lm
 
 $(PROGRAM): $(OBJS)
