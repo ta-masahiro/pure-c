@@ -1652,12 +1652,14 @@ object*symbol2obj(Symbol*s,obj_type t) {
 void*symbol2objtype(Symbol*s,obj_type t){
     if (s==NULL) none_error();
     void*w;
+    double d;
 
     switch (t) {
         case OBJ_INT:
-            w=malloc(sizeof(long));
-            sscanf(s->_table,"%ld",(long*)w);
-            return w;
+            //w=malloc(sizeof(long));
+            //sscanf(s->_table,"%ld",(long*)w);
+            //return w;
+            return (void*)strtol(s->_table,NULL,10);
         case OBJ_LINT:
             w=malloc(sizeof(MP_INT));
             mpz_init_set_str((mpz_ptr)w,s->_table,10);
@@ -1667,15 +1669,18 @@ void*symbol2objtype(Symbol*s,obj_type t){
             mpq_init((mpq_ptr)w);mpq_set_str((mpq_ptr)w,s->_table,10);mpq_canonicalize((mpq_ptr)w);
             return w;
         case OBJ_FLT:
-            w=malloc(sizeof(double));
-            sscanf(s->_table,"%lg",(double*)w);
-            return w;
+            //w=malloc(sizeof(double));
+            //sscanf(s->_table,"%lg",(double*)w);
+            d=strtod(s->_table,NULL);
+            //return w;
+            return (void*)*(long*)(&d);
         case OBJ_LFLT:
             w=malloc(sizeof(__mpfr_struct));
             mpfr_init_set_str((mpfr_ptr)w,s->_table,10,MPFR_RNDA);
             return w;
+        case OBJ_CMPLX:
         //case OBJ_CMPLX:
-        default:printf("RntimeError:CanotConvert Symbol to Complex!\n");Throw(3);
+        default:printf("RntimeError:CanotConvert Symbol to Complex! %s\n",s->_table);Throw(3);
     }
 
 }

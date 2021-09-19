@@ -600,7 +600,27 @@ code_ret *codegen_apply(ast *apply_ast, Vector *env, int tail) {    // AST_APPLY
     
     return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
 }
-
+char *sys_func_name[] =     {"toint","tolong","torat","tofloat","tolfloat","tocmplex","tostr","togeneral",  // 変換関数
+                             "abs","sqrt","cbrt","num","den","imag","real","conj",                                                          // 数値処理
+                             ""};
+int sys_func_code[][10] = {//int    long    rat     float   lfloat  complex 
+                            {0,     LTOI,   RTOI,   FTOI,   LFTOI,  0,      STOI,   OTOI},      // toint
+                            {ITOL,  0,      RTOL,   FTOL,   LFTOL,  0,      STOL,   OTOL},      // tolong
+                            {ITOR,  LTOR,   0,      FTOR,   LFTOR,  0,      STOR,   OTOR},      // torational
+                            {ITOF,  LTOF,   RTOF,   0,      LFTOF,  0,      STOF,   OTOLF},     // tofloat
+                            {ITOLF, LTOLF,  RTOLF,  FTOLF,  0,      0,      STOLF,  OTOLF},     // tolfloat
+                            {0,     0,      0,      0,      0,      0,      STOC,   OTOC},      // tocmplex
+                            {ITOS,  LTOS,   RTOS,   FTOS,   LFTOS,  CTOS,   0,      OTOS},      // tostr
+                            {ITOO,  LTOO,   RTOO,   FTOO,   LFTOO,  CTOO,   STOO,   0   },      // togeneral
+                            {IABS,  LABS,   RABS,   FABS,   LFABS,  CABS,   0,      OABS},      // abs
+                            {ISQRT, LSQRT,  RSQRT,  FSQRT,  LFSQRT, CSQRT,  0,      OSQRT},     // sqrt
+                            {ICBRT, LCBRT,  RCBRT,  FCBRT,  LFCBRT, CCBRT,  0,      OCBRT},     // cbrt
+                            {0,     0,      num,    0,      0,      0,      0,      ONUM},      // num
+                            {0,     0,      den,    0,      0,      0,      0,      ODEN},      // den
+                            {0,     0,      0,      0,      0,      IMAG,   0,      OIMAG}.     // imag
+                            {0,     0,      0,      0,      0,      REAL    0,      OREAL},     // real
+                            {0,     0,      0,      0,      0,      CONJ,   0,      OCONJ},     // conj
+                          } ;
 
 code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL [AST_NAME,[AST_EXP_LIST [AST,AST,...]]]
                                                                     //            <0>                     <1,0>,<1,1>...
