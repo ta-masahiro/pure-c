@@ -1652,7 +1652,9 @@ object*symbol2obj(Symbol*s,obj_type t) {
 void*symbol2objtype(Symbol*s,obj_type t){
     if (s==NULL) none_error();
     void*w;
-    double d;
+    double d,q;
+    char*endp;
+    complex c;
 
     switch (t) {
         case OBJ_INT:
@@ -1675,10 +1677,16 @@ void*symbol2objtype(Symbol*s,obj_type t){
             //return w;
             return (void*)*(long*)(&d);
         case OBJ_LFLT:
-            w=malloc(sizeof(__mpfr_struct));
+            w = malloc(sizeof(__mpfr_struct));
             mpfr_init_set_str((mpfr_ptr)w,s->_table,10,MPFR_RNDA);
             return w;
         case OBJ_CMPLX:
+            w = mallock(sizeof(complex));c=*(complex*)w;
+            d =strtod(s->_table,endp);
+            if (*endp == '\0') {c = d;return w;}
+            else {
+
+            }
         //case OBJ_CMPLX:
         default:printf("RntimeError:CanotConvert Symbol to Complex! %s\n",s->_table);Throw(3);
     }
@@ -1964,7 +1972,7 @@ object *objlgamma(object *x) {
    else x=newFLT(mpfr_get_d(Xf));
    }
    } else {
-   x = newRAT(Xq);
+  x = newRAT(Xq);
    }
    } else {
    if (mpz_cmp_si(Xl,2147483647)>0 || mpz_cmp_si(Xl,-2147483648)<0) x=newOBJ_LINT(Xl);
