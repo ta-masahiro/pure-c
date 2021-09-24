@@ -532,6 +532,12 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     } else if (lit_type=='>'*256+'>' || lit_type == '<'*256+'<') {
         r_type=type_left;
         if (type_right != OBJ_INT) push(code_right,(void*)conv_op[type_right][OBJ_INT]);
+    // 累乗命令
+    //      2,3,4乗は特別に
+    //      1/2,1/3,1/4乗も特別
+    // 加減算命令
+    //      ±2までは特別に
+    // その他一般の場合
     } else if (type_left < type_right) {
         op_code = conv_op[type_left][type_right];
         if (op_code ==0 ) {printf("SyntaxError:IllegalOpecode!000\n");Throw(0);}
@@ -612,14 +618,14 @@ int sys_func_code[][10] = {//int    long    rat     float   lfloat  complex
                             {0,     0,      0,      0,      0,      0,      STOC,   OTOC},      // tocmplex
                             {ITOS,  LTOS,   RTOS,   FTOS,   LFTOS,  CTOS,   0,      OTOS},      // tostr
                             {ITOO,  LTOO,   RTOO,   FTOO,   LFTOO,  CTOO,   STOO,   0   },      // togeneral
-                            {IABS,  LABS,   RABS,   FABS,   LFABS,  CABS,   0,      OABS},      // abs
-                            {ISQRT, LSQRT,  RSQRT,  FSQRT,  LFSQRT, CSQRT,  0,      OSQRT},     // sqrt
-                            {ICBRT, LCBRT,  RCBRT,  FCBRT,  LFCBRT, CCBRT,  0,      OCBRT},     // cbrt
-                            {0,     0,      num,    0,      0,      0,      0,      ONUM},      // num
-                            {0,     0,      den,    0,      0,      0,      0,      ODEN},      // den
-                            {0,     0,      0,      0,      0,      IMAG,   0,      OIMAG}.     // imag
-                            {0,     0,      0,      0,      0,      REAL    0,      OREAL},     // real
-                            {0,     0,      0,      0,      0,      CONJ,   0,      OCONJ},     // conj
+                          //{IABS,  LABS,   RABS,   FABS,   LFABS,  CABS,   0,      OABS},      // abs
+                          //{ISQRT, LSQRT,  RSQRT,  FSQRT,  LFSQRT, CSQRT,  0,      OSQRT},     // sqrt
+                          //{ICBRT, LCBRT,  RCBRT,  FCBRT,  LFCBRT, CCBRT,  0,      OCBRT},     // cbrt
+                          //{0,     0,      num,    0,      0,      0,      0,      ONUM},      // num
+                          //{0,     0,      den,    0,      0,      0,      0,      ODEN},      // den
+                          //{0,     0,      0,      0,      0,      IMAG,   0,      OIMAG}.     // imag
+                          //{0,     0,      0,      0,      0,      REAL    0,      OREAL},     // real
+                          //{0,     0,      0,      0,      0,      CONJ,   0,      OCONJ},     // conj
                           } ;
 
 code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL [AST_NAME,[AST_EXP_LIST [AST,AST,...]]]
@@ -673,7 +679,9 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
         }
 
         code = vector_append(code, code_function);    // 展開した実印数のコードに関数名コードを追加append Function name % expr_list
-        if (code_s_function->ct->type == OBJ_PFUNC) {
+        if (code_s_function->ct->type == OBJ_SYSFUNC) {
+            push(code,(void*))
+        } else if (code_s_function->ct->type == OBJ_PFUNC) {
             push(code, (void*)PCALL);
             push(code, (void*)(long)n);
         } else {

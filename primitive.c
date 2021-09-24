@@ -104,28 +104,6 @@ void *p_iabs(Vector *v)     {return (void*)labs((long)vector_ref(v,0));}
 void *p_fabs(Vector *v)    {long l = (long)vector_ref(v,0);double f = fabs(*(double*)&l); return (void*)*(long*)&f;}
 void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
 void *p_fsqrt(Vector *v)    {long l = (long)vector_ref(v,0);double f = sqrt(*(double*)&l); return (void*)*(long*)&f;}
-/*
-void *p_fcos(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = cos  (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_ftan(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = tan  (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_fasin(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = asin (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_facos(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = acos (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_fatan(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = atan (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_fsinh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = sinh (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_fcosh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = cosh (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_ftanh(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = tanh (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_fasinh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = asinh(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_facosh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = acosh(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_fatanh(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = atanh(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_log10(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = log10(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_logE(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = log  (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_log1p(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = log1p(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_log(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = log  (*(double*)vector_ref(v,1))/log(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_exp(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = exp  (*(double*)vector_ref(v,0)); }
-void *p_iabs(Vector *v)     {return (void*)labs((long)vector_ref(v,0));}
-void *p_fabs(Vector *v)     {double *f = (double*)malloc(sizeof(double));*f = fabs(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
-void *p_fsqrt(Vector *v)    {double *f = (double*)malloc(sizeof(double));*f = sqrt(*(double*)vector_ref(v,0)); return (void*)f;}
-*/
 //
 void *p_labs(Vector *v)     {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_abs(L,L);return (void*)L;}
 void *p_rabs(Vector *v)     {mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_set(Q,(mpq_ptr)vector_ref(v,0));mpq_abs(Q,Q);return (void*)Q;}
@@ -218,6 +196,11 @@ void * p_pollard_pm1(Vector *v) {
     }
     return NULL;
 }
+Vector * p_num(Vector *v) {};
+Vector * p_den(Vector *v) {};
+Vector * p_real(Vector *v) {};
+Vector * p_imag(Vector *v) {};
+
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_getc, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,

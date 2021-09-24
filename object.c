@@ -1653,7 +1653,7 @@ void*symbol2objtype(Symbol*s,obj_type t){
     if (s==NULL) none_error();
     void*w;
     double d,q;
-    char*endp;
+    char*endp1,*endp2;
     complex c;
 
     switch (t) {
@@ -1682,12 +1682,16 @@ void*symbol2objtype(Symbol*s,obj_type t){
             return w;
         case OBJ_CMPLX:
             w = mallock(sizeof(complex));c=*(complex*)w;
-            d =strtod(s->_table,endp);
-            if (*endp == '\0') {c = d;return w;}
-            else {
-
+            d =strtod(s->_table,&endp1);
+            if (*endp1 != '\0') { 
+                q=strtod(endp1,&endp2);
+                if (*endp2 =='i') {
+                    c=d+q*I;
+                    return w;
+                } 
             }
-        //case OBJ_CMPLX:
+            c=(complex)d;
+            return w;
         default:printf("RntimeError:CanotConvert Symbol to Complex! %s\n",s->_table);Throw(3);
     }
 

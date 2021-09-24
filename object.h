@@ -8,11 +8,11 @@
 typedef enum { OBJ_NONE=0,
     // 1     2          3       4        5         6          7
     OBJ_INT, OBJ_LINT, OBJ_RAT, OBJ_FLT, OBJ_LFLT, OBJ_CMPLX, OBJ_GEN,
-    //      8          9      10
-    OBJ_PFUNC, OBJ_UFUNC, OBJ_CNT,
-    //    11        12        13      14
-    OBJ_VECT, OBJ_DICT, OBJ_PAIR,OBJ_SYM,
-    // 15
+    //      8          9      10        11
+    OBJ_SYSFUNC, OBJ_PFUNC, OBJ_UFUNC, OBJ_CNT,
+    //    12        13        14      15    16
+    OBJ_VECT, OBJ_DICT, OBJ_PAIR,OBJ_SYM, OBJ_ARRAY,
+    // 17
     OBJ_IO,
 } obj_type;
 
