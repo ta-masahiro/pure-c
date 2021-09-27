@@ -8,11 +8,15 @@ void * p_forget(Vector *v) {
 
 }
 void * p_set_prec(Vector *v) {
-    mpfr_set_default_prec((long)vector_ref(v,0));
+    if (v->_sp==1) mpfr_set_default_prec((long)vector_ref(v,0));
+    else if(v->_sp==2) mpfr_set_prec(obj2lflt((object*)vector_ref(v,1)),(long)vector_ref(v,0));
+    //else {printf("no!\n");Throw(3); 
     return NULL;
 }
-void* p_get_prec() {
-    int i=mpfr_get_default_prec();
+void* p_get_prec(Vector *v) {
+    int i;
+    if (v->_sp==0) i=mpfr_get_default_prec();
+    else i=mpfr_get_prec(obj2lflt((object*)vector_ref(v,0)));
     return (void*)(long)i;
 }
 // io
@@ -156,8 +160,8 @@ void *p_oacosh(Vector *v) {return (void*)objacosh((object*)vector_ref(v,0));}
 void *p_oatanh(Vector *v) {return (void*)objatanh((object*)vector_ref(v,0));}
 //void *p_osqrt(Vector *v) {return (void*)objsqrt((object *)vector_ref(v,0));}
 // constnt
-void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(r);mpfr_const_pi(r,MPFR_RNDA);return (void*)r;}
-void *p_llog2(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(r);mpfr_const_log2(r,MPFR_RNDA);return (void*)r;}
+void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_pi(r,MPFR_RNDA);return (void*)r;}
+void *p_llog2(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_log2(r,MPFR_RNDA);return (void*)r;}
 void *p_fgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = tgamma(*(double*)&l); return (void*)*(long*)&f;}
 void *p_flgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = lgamma(*(double*)&l); return (void*)*(long*)&f;}
 //void *p_fgamma(Vector *v) {double *f = (double*)malloc(sizeof(double));*f = tgamma(*(double*)vector_ref(v,0)); return (void*)f;}
@@ -225,8 +229,8 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "irand", "lrand", "pollard_rho", "pollard_pm1", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
-                                {OBJ_INT},                                      // set_prec
-                                {OBJ_NONE},                                     // get_prec
+                                {OBJ_INT,OBJ_LFLT},                                      // set_prec
+                                {OBJ_INT},                                     // get_prec
                                 {OBJ_GEN},                                      // print
                                 {OBJ_SYM,OBJ_GEN},                              // printf
                                 {OBJ_SYM,OBJ_SYM},                              // open
@@ -292,8 +296,8 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},//acosh
                                 {OBJ_GEN},//atanh
                                 //{OBJ_GEN} //sqrt
-                                {OBJ_NONE}, //pi
-                                {OBJ_NONE}, //log2
+                                {OBJ_INT}, //pi
+                                {OBJ_INT}, //log2
                                 {OBJ_FLT},//fgamma
                                 {OBJ_FLT},//flgamma
                                 {OBJ_GEN},//ogamma
@@ -309,10 +313,10 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 };
 
 int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
-                                {OBJ_NONE,0, FALSE},
-                                {OBJ_NONE,1, FALSE},
-                                {OBJ_INT, 0, FALSE},
-                                {OBJ_NONE,1, TRUE},
+                                {OBJ_NONE,0, FALSE},    // exit
+                                {OBJ_NONE,2, TRUE},    // set_proc
+                                {OBJ_INT, 1, TRUE},    // get_proc
+                                {OBJ_NONE,1, TRUE},     // print
                                 {OBJ_NONE,2, FALSE},    // printf
                                 {OBJ_IO,  2, FALSE},    // open
                                 {OBJ_NONE,1, FALSE},    // close
@@ -377,8 +381,8 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE},   // acosh
                                 {OBJ_GEN,  1, FALSE},   // atanh
                                 //{OBJ_GEN,  1, FALSE}  // sqrt
-                                {OBJ_LFLT, 0, FALSE},   // pi
-                                {OBJ_LFLT, 0, FALSE},   // log2
+                                {OBJ_LFLT, 1, FALSE},   // pi
+                                {OBJ_LFLT, 1, FALSE},   // log2
                                 {OBJ_FLT,  1, FALSE},   // fgamma 
                                 {OBJ_FLT,  1, FALSE},   // flgamma 
                                 {OBJ_GEN,  1, FALSE},   // ogamma 

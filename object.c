@@ -1681,7 +1681,7 @@ void*symbol2objtype(Symbol*s,obj_type t){
             mpfr_init_set_str((mpfr_ptr)w,s->_table,10,MPFR_RNDA);
             return w;
         case OBJ_CMPLX:
-            w = mallock(sizeof(complex));c=*(complex*)w;
+            w = malloc(sizeof(complex));c=*(complex*)w;
             d =strtod(s->_table,&endp1);
             if (*endp1 != '\0') { 
                 q=strtod(endp1,&endp2);

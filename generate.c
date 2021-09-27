@@ -82,6 +82,13 @@ enum CODE sub_op[][5] = {
     {   FADD,   FADD,   FADD,   FADD,   LFfADD  },
     {   LFADDi, LFADDl, LFADDr, LFADDf, LFADD   }
 };
+enum CODE mul_op[][5] = {
+    {   IMUL,   LiMUL,  RiMUL,  FMUL,   LFiMUL  },
+    {   LMULi,  LMUL,   RlSUB,  FMUL,   LFlMUL  },
+    {   RMULi,  RMUL,   RMUL,   FMUL,   LFrMUL  },
+    {   FMUL,   FMUL,   FMUL,   FMUL,   LFfMUL  },
+    {   LFMULi, LFMULl, LFMULr, LFMULf, LFMUL   }
+};
 */
 enum CODE get_convert_op(obj_type from, obj_type to) {
     if (from<=to) return 0;
@@ -382,10 +389,10 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
     Vector*code=vector_init(3);
     Symbol*s=(Symbol*)vector_ref(var_ast->table,0);  // s:var name
     code_type*ct;
-    // macroにあるか…後で
-    // システム定義変数か…後で
-    // primitive functionか？
     s =(Symbol*)vector_ref(var_ast->table, 0);
+    // macroにあるか…後で
+    // システム定義変数関数か…後で
+    // primitive functionか？
     if (Hash_get(PRIMITIVE_FUNC,s) != NULL) {
         ct=(code_type*)*Hash_get(PRIMITIVE_FUNC,s);  
         push(code,(void*)LDG);push(code,(void*)vector_ref(var_ast->table,0));
@@ -606,9 +613,10 @@ code_ret *codegen_apply(ast *apply_ast, Vector *env, int tail) {    // AST_APPLY
     
     return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
 }
+
 char *sys_func_name[] =     {"toint","tolong","torat","tofloat","tolfloat","tocmplex","tostr","togeneral",  // 変換関数
-                             "abs","sqrt","cbrt","num","den","imag","real","conj",                                                          // 数値処理
-                             ""};
+                             "abs","sqrt","cbrt","num","den","imag","real","conj",                          // 数値処理
+                             "copy",NULL};
 int sys_func_code[][10] = {//int    long    rat     float   lfloat  complex 
                             {0,     LTOI,   RTOI,   FTOI,   LFTOI,  0,      STOI,   OTOI},      // toint
                             {ITOL,  0,      RTOL,   FTOL,   LFTOL,  0,      STOL,   OTOL},      // tolong
@@ -678,9 +686,9 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
             code=vector_append(code,code_param);
         }
 
-        code = vector_append(code, code_function);    // 展開した実印数のコードに関数名コードを追加append Function name % expr_list
-        if (code_s_function->ct->type == OBJ_SYSFUNC) {
-            push(code,(void*))
+        code = vector_append(code, code_function);      // 展開した実印数のコードに関数名コードを追加append Function name % expr_list
+        if (code_s_function->ct->type == OBJ_SYSFUNC) { // sys funcの場合はコードは完成している
+           ;// push(code,(void*))
         } else if (code_s_function->ct->type == OBJ_PFUNC) {
             push(code, (void*)PCALL);
             push(code, (void*)(long)n);
