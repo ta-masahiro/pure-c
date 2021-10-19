@@ -207,10 +207,13 @@ ast * is_factor(Stream*S) {
         }
         printf("SyntaxError:Not a exper list or ']' error\n");
         Throw(1);
-    } else {
-        unget_token(S);
-        if (a=is_ml_expr(S)) {
-            return a;
+    } else if (t=='{') { 
+        if ((a=is_pair_list(S)) && get_token(S)->type=='}') return a;
+        else {
+            unget_token(S);
+            if (a=is_ml_expr(S)) {
+                return a;
+            }
         }
     }
     tokenbuff->_cp=token_p;

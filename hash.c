@@ -116,10 +116,13 @@ void  **Hash_get(Hash * hashT, Symbol *key) {
 
 void print_hashTable(Hash * h) {
     unsigned long i; 
+    Symbol * key;
     for(i = 0;  i < (h ->size); i ++ ) {
-        if (h ->hashTable[i].key != NULL) 
-            printf("i:%ld key:%s val:%ld\n",i , (h ->hashTable[i].key) ->_table, (long)(h ->hashTable[i].val));  
+        key=h->hashTable[i].key;
+        if (key != NULL) 
+            printf("i:%ld key:%s hash:%ld, val:%ld\n",i , key ->_table, hash(key->_table,key->_size, h->initval) & (h->size -1), (long)(h ->hashTable[i].val));  
     }
+    printf("hash size:%ld\n",h->entries);
 }
 /*
 Symbol * new_symbol(char * str, int size) {

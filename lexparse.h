@@ -122,6 +122,7 @@ ast * is_lit(Stream*S) ;
 ast * is_var(Stream *S) ; 
 ast * is_nomad(Stream *S) ;
 ast * is_expr_list(Stream * S) ; 
+ast * is_pair_list(Stream * S) ; 
 ast * is_factor(Stream*s);
 ast * is_expr_0(Stream *S) ; 
 ast * is_expr_1(Stream * S) ; 

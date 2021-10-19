@@ -23,7 +23,7 @@ char * code_name[] =
      "LFADD", "LFSUB","LFMUL","LFDIV","LFMOD","LFPOW","LFGT", "LFLT", "LFEQ", "LFNEQ","LFGEQ","LFLEQ","LFNEG","ITOLF",
      "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","CADD", "CSUB", "CMUL", "CDIV", "CPOW",
      "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE", "LOOP_SET",
-     "LOOP",  "STOLF","STOC", "$$$" };
+     "LOOP",  "STOLF","STOC", "DIC",  "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -44,7 +44,7 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
-        1,    0,     0,    0     };
+        1,    0,     0,    0,    1     };
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -72,7 +72,7 @@ Vector *tosqs(Vector*code, const void** table) {
 
 void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash * G) {
     Symbol * sym,*sym1;
-    long inst, ff, i, j, n, p, SSP=S->_sp;
+    long inst, ff, i, j, n, p, *ip, SSP=S->_sp;
     Vector * fn, * keys, * t_exp, * f_exp, * code, * args, * cl, * ref, * Es, * l, *ll, *lll;
     void ** g, * v;
     Funcpointer func;
@@ -107,7 +107,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LFADD, &&_LFSUB,&&_LFMUL,&&_LFDIV,&&_LFMOD,&&_LFPOW,&&_LFGT, &&_LFLT, &&_LFEQ, &&_LFNEQ,&&_LFGEQ,&&_LFLEQ,&&_LFNEG,&&_ITOLF,\
             &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO,&&_CADD, &&_CSUB, &&_CMUL, &&_CDIV ,&&_CPOW, \
             &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE,&&_LOOP_SET,\
-            &&_LOOP,  &&_STOLF,&&_STOC   };
+            &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC  };
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -1121,21 +1121,21 @@ _LFADD:
     lfy=(mpfr_ptr)pop(S);lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr )malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
-    mpfr_add(lfz,lfx,lfy,MPFR_RNDA);
+    mpfr_add(lfz,lfx,lfy,MPFR_RNDN);
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFSUB:
     lfy=(mpfr_ptr)pop(S);lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
-    mpfr_sub(lfz,lfx,lfy,MPFR_RNDA);
+    mpfr_sub(lfz,lfx,lfy,MPFR_RNDN);
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFMUL:
     lfy=(mpfr_ptr)pop(S);lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
-    mpfr_mul(lfz,lfx,lfy,MPFR_RNDA);
+    mpfr_mul(lfz,lfx,lfy,MPFR_RNDN);
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFDIV:
@@ -1144,21 +1144,21 @@ _LFDIV:
     lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
-    mpfr_div(lfz,lfx,lfy,MPFR_RNDA);
+    mpfr_div(lfz,lfx,lfy,MPFR_RNDN);
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFMOD:
     lfy=(mpfr_ptr)pop(S);lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
-    mpfr_modf(lfz,lfx,lfy,MPFR_RNDA);
+    mpfr_modf(lfz,lfx,lfy,MPFR_RNDN);
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFPOW:
     lfy=(mpfr_ptr)pop(S);lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
-    mpfr_pow(lfz,lfx,lfy,MPFR_RNDA);
+    mpfr_pow(lfz,lfx,lfy,MPFR_RNDN);
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFGT:
@@ -1189,41 +1189,41 @@ _LFNEG:
     lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
-    mpfr_neg(lfz,lfx,MPFR_RNDA);
+    mpfr_neg(lfz,lfx,MPFR_RNDN);
     push(S,(void*)lfz);
     goto * dequeue(C);
 _ITOLF:
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init_set_si(lfz, (long)pop(S),MPFR_RNDA);
+    mpfr_init_set_si(lfz, (long)pop(S),MPFR_RNDN);
     push(S, (void*)lfz);
     goto *dequeue(C);
 _LTOLF:
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init_set_z(lfz,(mpz_ptr)pop(S),MPFR_RNDA);
+    mpfr_init_set_z(lfz,(mpz_ptr)pop(S),MPFR_RNDN);
     push(S, (void*)lfz);
     goto *dequeue(C);
 _RTOLF:
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init_set_q(lfz,(mpq_ptr)pop(S),MPFR_RNDA);
+    mpfr_init_set_q(lfz,(mpq_ptr)pop(S),MPFR_RNDN);
     push(S, (void*)lfz);
     goto *dequeue(C);
 _FTOLF:
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     //fz=(double*)pop(S);
     i = (long)pop(S);
-    mpfr_init_set_d(lfz,*(double*)&i, MPFR_RNDA);
+    mpfr_init_set_d(lfz,*(double*)&i, MPFR_RNDN);
     push(S, (void*)lfz);
     goto *dequeue(C);
 _OTOLF:
     push(S, (void*)obj2lflt((object*)pop(S)));
     goto *dequeue(C);
 _LFTOI:
-    push(S,(void*)mpfr_get_si((mpfr_ptr)pop(S),MPFR_RNDA));
+    push(S,(void*)mpfr_get_si((mpfr_ptr)pop(S),MPFR_RNDN));
     goto *dequeue(C);
 _LFTOL:
     z=(mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(z);
-    mpfr_get_z(z,(mpfr_ptr)pop(S),MPFR_RNDA);
+    mpfr_get_z(z,(mpfr_ptr)pop(S),MPFR_RNDN);
     push(S,(void*)z);
     goto *dequeue(C);
 _LFTOR:
@@ -1234,8 +1234,8 @@ _LFTOR:
     goto *dequeue(C);
 _LFTOF:
     //fx=(double*)malloc(sizeof(double));
-    //*fx=mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDA);
-    zz = mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDA);
+    //*fx=mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDN);
+    zz = mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDN);
     push(S,(void*)*(long*)&zz);
     goto *dequeue(C);
 _LFTOO:
@@ -1304,7 +1304,7 @@ _FTOC:
     goto *dequeue(C);
 _LFTOC:
     cz=(complex*)malloc(sizeof(complex));
-    *cz=mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDA)+0.0*I;
+    *cz=mpfr_get_d((mpfr_ptr)pop(S),MPFR_RNDN)+0.0*I;
     push(S,(void*)cz);
     goto *dequeue(C);
 _OTOC:
@@ -1331,6 +1331,24 @@ _WHILE:
         push(S, (void*)0);
     }
     goto *dequeue(C);
+_DIC:
+    n=(long)pop(S);
+    for(i=0;i<n;i++) {
+        v=pop(S);Hash_put(G,(Symbol*)pop(S),v);
+    } 
+    goto *dequeue(C);
+_ITOK:
+_FTOK:
+    ip=(long*)malloc(sizeof(long));
+    *ip=(long)pop(S);
+    push(S,new_symbol((char*)ip,8));
+    goto *dequeue(C);
+_LTOK:
+_RTOK:
+_LFTOK:
+_VTOK:
+_STOK:
+
 _LOOP_SET:
     LOOP_COUNTER = (long)dequeue(S);
     goto *dequeue(C);

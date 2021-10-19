@@ -125,6 +125,7 @@ int objneq(object*x,object*y);
 char * objtostr(object * o);
 char * objtype2str(obj_type t,void* v);
 Symbol*objtype2symbol(obj_type t,void*value); 
+Symbol*obj2symbol(object * o); 
 object * objcpy(object * s);
 object* objpop(object * s);
 long objlen(object*o);

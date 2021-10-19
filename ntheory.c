@@ -1,5 +1,9 @@
 #include "general.h"
- // 
+//   fermat : fermat法を使い素因数分解を行う
+//
+//   n 素因数分解を行う対象の数
+//   a 発見された因数
+//
 void fermat(mpz_t n, mpz_t a) {
     mpz_t b2; mpz_init(b2);
     if (mpz_tstbit(n,0) ==0)                // nが偶数の時fermat法は止まらない
@@ -14,13 +18,13 @@ void fermat(mpz_t n, mpz_t a) {
     mpz_sqrt(b2,b2);mpz_sub(a,a,b2);        // a=a-√b2
 }
 //   pollard_pm1 : ポラードの p-1 法を使い素因数分解を行う
- //
- //   n 素因数分解を行う対象の数
- //   g 発見された因数
- //   b 底(初期値として与える)
- //   maxC 最大処理回数(指数の最大値 + 1)
- //
- //   戻り値 : 素因数分解に成功したらTRUEを返す
+//
+//   n 素因数分解を行う対象の数
+//   g 発見された因数
+//   b 底(初期値として与える)
+//   maxC 最大処理回数(指数の最大値 + 1)
+//
+//   戻り値 : 素因数分解に成功したらTRUEを返す
 int pollard_pm1(mpz_t n, mpz_t g, unsigned long b, unsigned long maxC ) {
     mpz_t m; mpz_init_set_ui(m, b); 
     mpz_t mm1; mpz_init(mm1); 

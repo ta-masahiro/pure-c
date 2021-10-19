@@ -23,7 +23,7 @@ double itof(long n) {
 
 mpfr_ptr itolf(long n) {
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init(F); mpfr_set_si(F, n, MPFR_RNDA);
+    mpfr_init(F); mpfr_set_si(F, n, MPFR_RNDN);
     return F;
 }
 
@@ -52,7 +52,7 @@ double litof(mpz_ptr L) {
 mpfr_ptr litolf(mpz_ptr L) {
     if (L==NULL) none_error();
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init(F); mpfr_set_z(F, L, MPFR_RNDA);
+    mpfr_init(F); mpfr_set_z(F, L, MPFR_RNDN);
     return F;
 }
 
@@ -85,7 +85,7 @@ double rtof(mpq_ptr Q) {
 mpfr_ptr rtolf(mpq_ptr Q) {
     if (Q==NULL) none_error();
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init(F); mpfr_set_q(F, Q, MPFR_RNDA);
+    mpfr_init(F); mpfr_set_q(F, Q, MPFR_RNDN);
     return F;
 }
 
@@ -113,7 +113,7 @@ mpq_ptr ftor(double d) {
 
 mpfr_ptr ftolf(double f) {
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init_set_d(F, f, MPFR_RNDA);
+    mpfr_init_set_d(F, f, MPFR_RNDN);
     return F;
 }
 
@@ -125,18 +125,18 @@ complex *ftoc(double f) {
 
 long lftoi(mpfr_ptr F) {
     if (F==NULL) none_error();
-    return mpfr_get_si(F,MPFR_RNDA);
+    return mpfr_get_si(F,MPFR_RNDN);
 }
 
 mpz_ptr lftol(mpfr_ptr F) {
    mpz_ptr L=(mpz_ptr)malloc(sizeof(MP_INT));
    mpz_init(L);
-   mpfr_get_z(L,F,MPFR_RNDA);
+   mpfr_get_z(L,F,MPFR_RNDN);
    return L;
 }
 double lftof(mpfr_ptr F) {
     if (F==NULL) none_error();
-    return mpfr_get_d(F,MPFR_RNDA);
+    return mpfr_get_d(F,MPFR_RNDN);
 }
 
 mpq_ptr lftor(mpfr_ptr F) {
@@ -149,7 +149,7 @@ mpq_ptr lftor(mpfr_ptr F) {
 complex *lftoc(mpfr_ptr F) {
     if (F==NULL) none_error();
     complex *c = (complex*)malloc(sizeof(complex));
-    *c=mpfr_get_d(F,MPFR_RNDA)+0.0*I;
+    *c=mpfr_get_d(F,MPFR_RNDN)+0.0*I;
 }
 
 object * newINT(long n) {
@@ -214,7 +214,7 @@ object * newLFLT(mpfr_ptr F) {
 object * newLFFT_f(double f) {
     object * o = (object * )malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init_set_d(F, f, MPFR_RNDA);
+    mpfr_init_set_d(F, f, MPFR_RNDN);
     o -> type = OBJ_LFLT;
     o ->data.ptr = (void * )F;
     return o;
@@ -634,7 +634,7 @@ object * objLFADD(mpfr_ptr x, mpfr_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_add(F, x, y, MPFR_RNDA);
+    mpfr_add(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -644,7 +644,7 @@ object *objLFADD_i(mpfr_ptr x, long y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_add_si(F, x, y, MPFR_RNDA);
+    mpfr_add_si(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -654,7 +654,7 @@ object *objLFADD_L(mpfr_ptr x, mpz_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_add_z(F, x, y, MPFR_RNDA);
+    mpfr_add_z(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -663,7 +663,7 @@ object *objLFADD_R(mpfr_ptr x, mpq_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_add_q(F, x, y, MPFR_RNDA);
+    mpfr_add_q(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -672,7 +672,7 @@ object *objLFADD_f(mpfr_ptr x, double y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_add_d(F, x, y, MPFR_RNDA);
+    mpfr_add_d(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -682,7 +682,7 @@ object * objLFMUL(mpfr_ptr x, mpfr_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_mul(F, x, y, MPFR_RNDA);
+    mpfr_mul(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -692,7 +692,7 @@ object *objLFMUL_i(mpfr_ptr x, long y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_mul_si(F, x, y, MPFR_RNDA);
+    mpfr_mul_si(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -701,7 +701,7 @@ object *objLFMUL_L(mpfr_ptr x, mpz_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_mul_z(F, x, y, MPFR_RNDA);
+    mpfr_mul_z(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -710,7 +710,7 @@ object *objLFMUL_R(mpfr_ptr x, mpq_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_mul_q(F, x, y, MPFR_RNDA);
+    mpfr_mul_q(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -719,7 +719,7 @@ object *objLFMULL_f(mpfr_ptr x, double y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_mul_d(F, x, y, MPFR_RNDA);
+    mpfr_mul_d(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -728,7 +728,7 @@ object * objLFSUB(mpfr_ptr x, mpfr_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_sub(F, x, y, MPFR_RNDA);
+    mpfr_sub(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -739,7 +739,7 @@ object * objLFDIV(mpfr_ptr x, mpfr_ptr y) {
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
     if (mpfr_sgn(y)) zero_division_error();
-    mpfr_div(F, x, y, MPFR_RNDA);
+    mpfr_div(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
     return o;
@@ -754,7 +754,7 @@ object*objLFMOD(mpfr_ptr x, mpfr_ptr y) {
     //mpfr_trunc(F,F);
     //mpfr_mul(F,F,y);
     //mpfr_sub(F,x,F);
-    mpfr_modf(F, x, y, MPFR_RNDA);
+    mpfr_modf(F, x, y, MPFR_RNDN);
     o->data.ptr=(void*)F;
     o->type=OBJ_LFLT;
     return o;
@@ -764,7 +764,7 @@ object*objLFPOW_i(mpfr_ptr x, long y) {
     object * o = (object*)malloc(sizeof(object) );
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_pow_ui(F, x, y, MPFR_RNDA);
+    mpfr_pow_ui(F, x, y, MPFR_RNDN);
     o->type=OBJ_LFLT;o->data.ptr=(void*)F;
     return o;
 }
@@ -773,7 +773,7 @@ object*objLFPOW(mpfr_ptr x, mpfr_ptr y) {
     object * o = (object*)malloc(sizeof(object) );
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    mpfr_pow(F, x, y, MPFR_RNDA);
+    mpfr_pow(F, x, y, MPFR_RNDN);
     o->type=OBJ_LFLT;o->data.ptr=(void*)F;
     return o;
 }
@@ -1471,7 +1471,7 @@ object * objneg(object *x) {
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_neg(L,L); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_neg(Q, Q); o->data.ptr=(void*)Q;return o;
         case OBJ_FLT : o->data.flt = - (o->data.flt); return o;
-        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_neg(F,F,MPFR_RNDA); o->data.ptr=(void*)F;return o;
+        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_neg(F,F,MPFR_RNDN); o->data.ptr=(void*)F;return o;
         case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=-(*c);return o;
         default:printf("runtime error illegal add op\n");return NULL;
     }
@@ -1497,7 +1497,7 @@ object * objabs(object *x) {
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_abs(L,L); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_abs(Q, Q); o->data.ptr=(void*)Q;return o;
         case OBJ_FLT : o->data.flt = fabs(o->data.flt); return o;
-        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_abs(F,F,MPFR_RNDA); o->data.ptr=(void*)F;return o;
+        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_abs(F,F,MPFR_RNDN); o->data.ptr=(void*)F;return o;
         case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=cabs((*c));return o;
         default:printf("runtime error illegal ABS op\n");return NULL;
     }
@@ -1512,7 +1512,7 @@ object*objinc(object *x) {
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_add_ui(L,L,1); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_init(QQ); mpq_set_ui(QQ,1,1);mpq_add(Q, Q, QQ); o->data.ptr=(void*)Q;return o;
         case OBJ_FLT : o->data.flt += 1.0; return o;
-        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_add_ui(F,F,1,MPFR_RNDA); o->data.ptr=(void*)F;return o;
+        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_add_ui(F,F,1,MPFR_RNDN); o->data.ptr=(void*)F;return o;
         case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=(*c)+1.0;return o;
         default:printf("runtime error illegal INC op\n");return NULL;
     }
@@ -1527,7 +1527,7 @@ object*objdec(object *x) {
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_sub_ui(L,L,1); o->data.ptr=(void*)L;return o;
         case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_init(QQ); mpq_set_ui(QQ,1,1);mpq_sub(Q, Q, QQ); o->data.ptr=(void*)Q;return o;
         case OBJ_FLT : o->data.flt -= 1.0; return o;
-        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_sub_ui(F,F,1,MPFR_RNDA); o->data.ptr=(void*)F;return o;
+        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_sub_ui(F,F,1,MPFR_RNDN); o->data.ptr=(void*)F;return o;
         case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=(*c)-1.0;return o;
         default:printf("runtime error illegal DEC op\n");return NULL;
     }
@@ -1539,9 +1539,9 @@ object * objsqrt(object *x) {
     switch(x->type) {
         case OBJ_INT : o->data.intg = (long)sqrt((double)o->data.intg); return o;
         case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_sqrt(L,L); o->data.ptr=(void*)L;return o;
-        case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpfr_init_set_q(F,Q,MPFR_RNDA);mpfr_sqrt(F, F,MPFR_RNDA); o->data.ptr=(void*)F;o->type=OBJ_LFLT;return o; // BUG!!!!
+        case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpfr_init_set_q(F,Q,MPFR_RNDN);mpfr_sqrt(F, F,MPFR_RNDN); o->data.ptr=(void*)F;o->type=OBJ_LFLT;return o; // BUG!!!!
         case OBJ_FLT : o->data.flt = sqrt(o->data.flt); return o;
-        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_sqrt(F,F,MPFR_RNDA); o->data.ptr=(void*)F;return o;
+        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_sqrt(F,F,MPFR_RNDN); o->data.ptr=(void*)F;return o;
         case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=csqrt((*c));return o; // BUG!!!!
         default:printf("runtime error illegal SQRT op\n");return NULL;
     }
@@ -1581,6 +1581,15 @@ char*objtostr(object* o) {
         case OBJ_INT:return objtype2str(OBJ_INT,(void*)(o->data.intg));
         case OBJ_FLT:return objtype2str(OBJ_FLT,(void*)*(long*)(&(o->data.flt)));
         default:     return objtype2str(o->type,(void*)(o->data.ptr));
+    }
+}
+
+Symbol *obj2symbol(object* o) {
+    //if (o==NULL) return "None";
+    switch(o->type) {
+        case OBJ_INT:return objtype2symbol(OBJ_INT,(void*)(o->data.intg));
+        case OBJ_FLT:return objtype2symbol(OBJ_FLT,(void*)*(long*)(&(o->data.flt)));
+        default:     return objtype2symbol(o->type,(void*)(o->data.ptr));
     }
 }
 
@@ -1678,7 +1687,7 @@ void*symbol2objtype(Symbol*s,obj_type t){
             return (void*)*(long*)(&d);
         case OBJ_LFLT:
             w = malloc(sizeof(__mpfr_struct));
-            mpfr_init_set_str((mpfr_ptr)w,s->_table,10,MPFR_RNDA);
+            mpfr_init_set_str((mpfr_ptr)w,s->_table,10,MPFR_RNDN);
             return w;
         case OBJ_CMPLX:
             w = malloc(sizeof(complex));c=*(complex*)w;
@@ -1707,7 +1716,7 @@ object * objcpy(object * s) {
         case OBJ_LINT: L=(mpz_ptr)malloc(sizeof(MP_INT)); mpz_init_set(L, (mpz_ptr)s ->data.ptr); t -> data.ptr = (void * )L; return t;
         case OBJ_RAT: Q=(mpq_ptr)malloc(sizeof(MP_RAT));  mpq_init(Q); mpq_set(Q, (mpq_ptr)s ->data.ptr); t -> data.ptr = (void * )Q; return t;
         case OBJ_LFLT: F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));
-                       mpfr_init_set(F, (mpfr_ptr)s ->data.ptr,MPFR_RNDA); t -> data.ptr = (void * )F; return t;
+                       mpfr_init_set(F, (mpfr_ptr)s ->data.ptr,MPFR_RNDN); t -> data.ptr = (void * )F; return t;
         case OBJ_CMPLX: c=(complex *)malloc(sizeof(complex));*c=*(complex *)s->data.ptr;t->data.ptr=c;t->type=OBJ_CMPLX;return t;
         case OBJ_VECT:t->data.ptr=(void*)vector_copy0((Vector*)t->data.ptr);t->type=OBJ_VECT;return t;
         case OBJ_SYM: t->data.ptr=(void*)symbol_cpy((Symbol*)t->data.ptr);t->type=OBJ_SYM;return t;
@@ -1781,10 +1790,10 @@ object *objlogE(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(log(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_log(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_log(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_log(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_log(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(log(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_log(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_log(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=clog(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1792,10 +1801,10 @@ object *objsin(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(sin(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_sin(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_sin(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_sin(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_sin(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(sin(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_sin(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_sin(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=csin(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1803,10 +1812,10 @@ object *objcos(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(cos(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_cos(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_cos(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_cos(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_cos(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(cos(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_cos(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_cos(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=ccos(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1814,10 +1823,10 @@ object *objtan(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(tan(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_tan(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_tan(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_tan(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_tan(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(tan(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_tan(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_tan(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=ctan(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1825,10 +1834,10 @@ object *objasin(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(asin(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_asin(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_asin(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_asin(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_asin(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(asin(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_asin(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_asin(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=casin(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1836,10 +1845,10 @@ object *objacos(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(acos(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_acos(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_acos(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_acos(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_acos(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(acos(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_acos(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_acos(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=cacos(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1847,10 +1856,10 @@ object *objatan(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(atan(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_atan(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_atan(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_atan(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_atan(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(atan(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_atan(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_atan(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=catan(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1858,10 +1867,10 @@ object *objsinh(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(sinh(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_sinh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_sinh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_sinh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_sinh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(sinh(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_sinh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_sinh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=csinh(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1869,10 +1878,10 @@ object *objcosh(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(cosh(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_cosh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_cosh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_cosh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_cosh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(cosh(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_cosh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_cosh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=ccosh(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1880,10 +1889,10 @@ object *objtanh(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(tanh(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_tanh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_tanh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_tanh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_tanh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(tanh(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_tanh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_tanh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=ctanh(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1891,10 +1900,10 @@ object *objasinh(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(asinh(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_asinh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_asinh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_asinh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_asinh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(asinh(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_asinh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_asinh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=casinh(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1902,10 +1911,10 @@ object *objacosh(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(acosh(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_acosh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_acosh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_acosh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_acosh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(acosh(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_acosh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_acosh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=cacosh(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1913,10 +1922,10 @@ object *objatanh(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(atanh(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_atanh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_atanh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_atanh(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_atanh(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(atanh(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_atanh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_atanh(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=catanh(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
@@ -1925,10 +1934,10 @@ object *objgamma(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(tgamma(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_gamma(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_gamma(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_gamma(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_gamma(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(tgamma(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_gamma(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_gamma(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         //case OBJ_CMPLX:*c=catanh(*(complex*)x->data.ptr);return newCMPLX(c);
         default:printf("RntimeError:Illegal argument!\n");Throw(3);
     }
@@ -1937,11 +1946,22 @@ object *objlgamma(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
         case OBJ_INT:  return newFLT(lgamma(itof(x->data.intg)));
-        case OBJ_LINT: mpfr_init(F);mpfr_lngamma(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
-        case OBJ_RAT:  mpfr_init(F);mpfr_lngamma(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LINT: mpfr_init(F);mpfr_lngamma(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_lngamma(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
         case OBJ_FLT:  return newFLT(lgamma(x->data.flt));
-        case OBJ_LFLT: mpfr_init(F);mpfr_lngamma(F,(mpfr_ptr)x->data.ptr,MPFR_RNDA);return newLFLT(F) ;
+        case OBJ_LFLT: mpfr_init(F);mpfr_lngamma(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         //case OBJ_CMPLX:*c=catanh(*(complex*)x->data.ptr);return newCMPLX(c);
+        default:printf("RntimeError:Illegal argument!\n");Throw(3);
+    }
+}
+
+Symbol * objtype2hashkeySymbol(obj_type t, void *o) {
+    void ** v = (void **)malloc(sizeof(void*));
+    switch(t) {
+        case OBJ_INT: case OBJ_FLT:
+            v[0] = (void*)o;
+            return new_symbol((char)v, 8);
+        case OBJ_LINT:
         default:printf("RntimeError:Illegal argument!\n");Throw(3);
     }
 }
