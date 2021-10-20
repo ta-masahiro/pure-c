@@ -602,10 +602,12 @@ ast * is_expr_2n(Stream * S,int n) {
     }
 }
 
-char*dcl_string[]=     {"none",   "int",  "long",  "rational","float", "lfloat","complex","var",\
-    //                  OBJ_NONE,OBJ_INT,OBJ_LINT,OBJ_RAT,    OBJ_FLT,OBJ_LFLT, OBJ_CMPLX, OBJ_GEN,
-                        "_function","function","cont","vector", "dict",   "pair"   ,"string",    \
-    //                  OBJ_PFUNC,  OBJ_UFUNC,OBJ_CNT,OBJ_VECT, OBJ_DICT,  OBJ_PAIR,OBJ_SYM,
+char*dcl_string[]=     {"none",     "int",      "long",     "rational", "float",    "lfloat",   "complex",  "var",\
+    //                  OBJ_NONE,   OBJ_INT,    OBJ_LINT,   OBJ_RAT,    OBJ_FLT,    OBJ_LFLT,   OBJ_CMPLX,  OBJ_GEN,
+                        "__function",   "_function",    "function", "cont",\
+    //                  OBJ_SYSFUNC,    OBJ_PFUNC,      OBJ_UFUNC,  OBJ_CNT
+                        "vector",   "dict",   "pair",   "string",   "array",    \
+    //                   OBJ_VECT,  OBJ_DICT,  OBJ_PAIR,OBJ_SYM,    OBJ_ARRAY
                         "file",(void*)0};
     //                  OBJ_IO
 

@@ -1960,7 +1960,7 @@ Symbol * objtype2hashkeySymbol(obj_type t, void *o) {
     switch(t) {
         case OBJ_INT: case OBJ_FLT:
             v[0] = (void*)o;
-            return new_symbol((char)v, 8);
+            return new_symbol((char*)v, 8);
         case OBJ_LINT:
         default:printf("RntimeError:Illegal argument!\n");Throw(3);
     }
