@@ -731,7 +731,7 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
     int j,i,dotted;
     Vector *code = vector_init(3);                                                                   
     ast *ast_j, *ast_i,*fcall_ast, *arglist_ast, *f_name_ast;
-    code_ret *code_s_right;
+    code_ret *code_s_right, *code_s;
     code_type *ct;
     Symbol *s;
 
@@ -783,7 +783,9 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
                 put_gv(s,ct);
                 //code_ret *code_s_fname=codegen(f_name_ast,env,FALSE);Vector *code_fname = code_s_fname->code;
                 //code=vector_append(code,code_fname);
-                push(code,(void*)LDC);push(code,create_zero(OBJ_UFUNC));                // 「0」で初期化しておく
+                code_s = codegen_set(ast_j,env,tail);
+                code = code_s->code;disassy(code,0,stdout);
+                //push(code,(void*)LDC);push(code,create_zero(OBJ_UFUNC));                // 「0」で初期化しておく
                 push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
                 //ct=new_ct(ct->functon_ret_type,OBJ_NONE,(void*)0,FALSE);
                 //
