@@ -442,5 +442,5 @@ void * make_primitive() {
         Hash_put(G,new_symbol(s,n),(void*)vv);
         i++;
     }
-    print_hashTable(PRIMITIVE_FUNC);print_hashTable(G);
+    //print_hashTable(PRIMITIVE_FUNC);print_hashTable(G);
 }

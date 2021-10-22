@@ -3,3 +3,7 @@ irange=lambda(int start,int end,int step) {function l(int i,vector s)= if i>=end
 function tak;tak(int x,int y,int z)={function t(int x,int y,int z)=if x<=y:z:t(t(x--,y,z),t(y--,z,x),t(z--,x,y));t(x,y,z)};tak(19, 8, 0); 
 function fib;fib(int n)={function t(int n,long a,long b)=if n==0:b:t(n--,a+b,a);t(n,1,0)};fib(10000); 
 function SUM; SUM=lambda(vector x){function sum;sum=lambda(i,s) if i<0:s:sum(i--,s=s+x[i]);sum(@x-1,0)};SUM([1, 2, 3, 4, 5, 6]);  
+
+vector mapref(vector L,int n)={vector s=[];int i=@L;while (i-=1)>=0:s<-(L[i][n]);s};
+vector map(var f(x..),vector v..)={vector s=[];int i=-1,M=@v[0];while (i+=1)<M:s<-(apply(f,mapref(v,i)));s};
+map(lambda(x..) vsum(x),[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15,16,17,18,19,20]);

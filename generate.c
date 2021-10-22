@@ -1259,7 +1259,7 @@ int main(int argc, char*argv[]) {
                 ct=code_s->ct;type=ct->type;
                 if (DEBUG) {
                     printf("expr type:%d\n",type);
-                    if (type==OBJ_UFUNC ) {
+                    if (type==OBJ_UFUNC || type==OBJ_PFUNC ) {
                             if (ct->functon_ret_type !=0) {printf("arg type:");vector_print(ct->arg_type);printf("ret type: %d\n",ct->functon_ret_type);}
                             else {printf("argment & return type not assigned!\n");}
                     }

@@ -355,7 +355,10 @@ ast * is_expr_0(Stream *S) {    // expr_0以降が形式上左辺式に使える
                     //}
                     //v1=vector_init(1);push(v1,new_ast(AST_EXP_LIST,v));
                     //return new_ast(AST_APPLY, v1);
-                    a2->type=AST_EXP_LIST_DOTS;
+                    if (a2->type == AST_EXP_LIST) a2->type=AST_EXP_LIST_DOTS;
+                    else if (a2->type == AST_ARG_LIST) a2->type=AST_ARG_LIST_DOTS;
+                    else break;
+                    //a2->type=AST_EXP_LIST_DOTS;
                     push(v, (void * )a1); push(v, (void * )a2);
                     a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
                     continue;
