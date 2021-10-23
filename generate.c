@@ -607,7 +607,7 @@ code_ret *codegen_apply(ast *apply_ast, Vector *env, int tail) {    // AST_APPLY
         obj_type type_i = ct_i->type;
         //
         if (i==0) {                         // 最初の引数は関数でなければならない
-            if (type_i != OBJ_UFUNC) {printf("SyntaxError:Must be Function!\n");Throw(0);}
+            if (type_i != OBJ_UFUNC && type_i != OBJ_PFUNC) {printf("SyntaxError:Must be Function!\n");Throw(0);}
                 r_type = ct_i->functon_ret_type;    // 関数を返す関数の場合どうする？
         } else if (i == n-1) {              //最後の引数はtypeがvectorであることを確認しそのままcodeにする
             if ( type_i != OBJ_VECT) {printf("SyntaxError:Must be Vector!\n");Throw(0);}
@@ -1272,7 +1272,11 @@ int main(int argc, char*argv[]) {
                 printf("%s ok\n", objtype2str(type,value));
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {
-                if (a==NULL) exit(0);
+                if (a==NULL) {
+                    //exit(0);
+                    fclose(fp);
+                    fp=stdin;S=new_stream(fp);
+                }
                 // tokenbuff->_cp=token_p;
                 tokenbuff=vector_init(100);
             } 

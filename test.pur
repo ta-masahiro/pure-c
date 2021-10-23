@@ -7,3 +7,7 @@ function SUM; SUM=lambda(vector x){function sum;sum=lambda(i,s) if i<0:s:sum(i--
 vector mapref(vector L,int n)={vector s=[];int i=@L;while (i-=1)>=0:s<-(L[i][n]);s};
 vector map(var f(x..),vector v..)={vector s=[];int i=-1,M=@v[0];while (i+=1)<M:s<-(apply(f,mapref(v,i)));s};
 map(lambda(x..) vsum(x),[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15,16,17,18,19,20]);
+
+vector filter(int fn(x),vector v)={vector s=[];int i=-1,M=@v;while (i+=1)<M:if fn(v[i]):s<-v[i]:None;s};
+vector partition(int fn(x),vector v)={vector s=[],t=[];int i=-1,M=@v;while (i+=1)<M:if fn(v[i]):s<-v[i]:t<-v[i];[s,t]};
+

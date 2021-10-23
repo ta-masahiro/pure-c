@@ -201,10 +201,21 @@ void * p_pollard_pm1(Vector *v) {
     return NULL;
 }
 void * p_str(Vector *v) {return (void*)obj2symbol((object*)vector_ref(v,0));}
+void * p_copy(Vector *v) {return (void*)objcpy((object*)vector_ref(v,0));}
 void * p_num(Vector *v) {};
 void * p_den(Vector *v) {};
 void * p_real(Vector *v) {};
 void * p_imag(Vector *v) {};
+/*
+void * p_load(Vector *v) {
+    FILE * fp;
+    Stream * s;
+    if (v->_sp>0 || (fp=fopen((char*)vector_ref(v,0), "r")) != NULL ) {
+        s=new_stream(fp);
+    }
+
+}
+*/
 
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_puts,p_getc, p_fsin, p_fcos, p_ftan, 
@@ -216,7 +227,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_lis_prime, p_lnext_prime,
-                                 p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_str, NULL};
+                                 p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_str, p_copy, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -227,7 +238,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime", 
-                                "irand", "lrand", "pollard_rho", "pollard_pm1", "str", NULL};
+                                "irand", "lrand", "pollard_rho", "pollard_pm1", "str", "copy",NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT,OBJ_LFLT},                                      // set_prec
@@ -313,6 +324,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_LINT,OBJ_LINT,OBJ_LINT,OBJ_INT,OBJ_INT},   // pollard_rho
                                 {OBJ_LINT,OBJ_INT,OBJ_INT},                     // pollard_pm1
                                 {OBJ_GEN},                                      // str
+                                {OBJ_GEN},                                      // copy
                                 };
 
 int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
@@ -399,7 +411,8 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_LINT, 1, FALSE},   // lrand
                                 {OBJ_LINT, 5, FALSE},   // pollard_rho
                                 {OBJ_LINT, 3, FALSE},   // pollard_pm1
-                                {OBJ_SYM,  1, FALSE}    // str  
+                                {OBJ_SYM,  1, FALSE},   // str
+                                {OBJ_GEN,  1, FALSE},   // copy
                                  };
 
 void * make_primitive() {

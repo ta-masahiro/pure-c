@@ -1718,7 +1718,7 @@ object * objcpy(object * s) {
         case OBJ_LFLT: F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));
                        mpfr_init_set(F, (mpfr_ptr)s ->data.ptr,MPFR_RNDN); t -> data.ptr = (void * )F; return t;
         case OBJ_CMPLX: c=(complex *)malloc(sizeof(complex));*c=*(complex *)s->data.ptr;t->data.ptr=c;t->type=OBJ_CMPLX;return t;
-        case OBJ_VECT:t->data.ptr=(void*)vector_copy0((Vector*)t->data.ptr);t->type=OBJ_VECT;return t;
+        case OBJ_VECT:t->data.ptr=(void*)vector_copy0((Vector*)s->data.ptr);t->type=OBJ_VECT;return t;
         case OBJ_SYM: t->data.ptr=(void*)symbol_cpy((Symbol*)t->data.ptr);t->type=OBJ_SYM;return t;
         default:printf("RntimeError:Illegal copy Method!\n");Throw(3);
     }

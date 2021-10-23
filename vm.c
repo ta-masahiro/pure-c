@@ -647,6 +647,7 @@ _APL:
     memcpy(l->_table+n-2,ll->_table,(ll->_sp)*(sizeof(void*)));
     //l ->_sp = n+(ll->_sp)-1; S ->_sp = S ->_sp - n; //vector_print(l);
     l ->_sp = n+(ll->_sp)-2; S ->_sp = S ->_sp - n; //vector_print(l);
+    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     push(R, (void * )C);
     push(EE, (void * )E);
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
@@ -660,6 +661,7 @@ _TAPL:
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n+1) , (n-2) * (sizeof(void * )) );
     memcpy(l->_table+n-2,ll->_table,(ll->_sp)*(sizeof(void*)));
     l ->_sp = n+(ll->_sp)-1; S ->_sp = S ->_sp - n; //vector_print(l);
+    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     //push(R, (void * )C);
     //push(EE, (void * )E);
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
@@ -940,7 +942,7 @@ _FMOD:
     goto*dequeue(C);
 _OMOD:
     o=(object*)pop(S);
-    push(S,objmod(o,(object*)pop(S)));
+    push(S,objmod((object*)pop(S),o));
     goto*dequeue(C);
 _IBOR:
     push(S,(void*)((long)pop(S) | (long)pop(S)));
