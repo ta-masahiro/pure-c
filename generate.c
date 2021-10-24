@@ -166,6 +166,7 @@ Vector * var_location(Symbol * varname, Vector * env) { // env: [[(sym00:type00)
     if (is_stac_empty(env)) return NULL; 
     for(i = 0; i< env->_sp; i ++ ) {
         v = vector_ref(env,env->_sp-i-1);//vector_print(v);
+        if (v->_sp==0) continue;            // 引数なしの場合は飛ばす
         if ((ttt=symbol_eq((Symbol*)((Data*)vector_ref(v,v->_sp-1))->key,new_symbol("..",2)))) {max_j=v->_sp-1;dotted=TRUE;} else {max_j=v->_sp;dotted=FALSE;}
         for (j = 0; j<max_j; j ++ ) {//printf("env%d:%s\n",j,((Symbol*)vector_ref(v,j))->_table);printf("%d\n",symbol_eq(varname,vector_ref(v,j)));
             if (symbol_eq(varname, ((Data*)vector_ref(v, j))->key)) {
@@ -840,11 +841,11 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
     code_ret *code_s=codegen((ast*)vector_ref(lambda_ast->table,1),env,TRUE);//PR(2);
     Vector * code1 = code_s -> code; push(code1,(void*)RTN);
     // code=vector_append(code,code_s->code);
-    code_type *ct=code_s->ct;
+    code_type *ct=code_s->ct;                                                   // CT:body_exprが返すcode_type
     push(code,(void*)code1);
     //
     pop(env);// !!don't forget!!!
-    code_s= new_code(code,new_ct(OBJ_UFUNC,ct->type,v,0));//code_s->arg_type=v;code_s->function_r_type=type1;
+    code_s= new_code(code,new_ct(OBJ_UFUNC,ct->type,v,0));                      // codeの型はUFUNC、返す値の型はbody_exprが返す型
     if (arg_list_ast->type==AST_ARG_LIST_DOTS) code_s->ct->dotted=1;
     return code_s;
 }
@@ -1016,7 +1017,15 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                     if (conv_op[ct2->type][ct1->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
                     push(code,(void*)conv_op[ct2->type][ct1->type]);
                 }
-                //
+                // ct1->type,ct2->typeがfunctionの場合はそのret_typeが同じかどうか確かめる
+                if ((ct1->type==OBJ_UFUNC || ct1->type == OBJ_PFUNC) && (ct1->functon_ret_type != ct2->functon_ret_type)) {
+                    if (conv_op[ct2->functon_ret_type][ct1->functon_ret_type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
+                    //push(code,(void*)conv_op[ct2->functon_ret_type][ct1->functon_ret_type]);
+                    // codeは []... LDF [... RTN]]の形をしているがRETの前に型変換命令を入れる(tail call時のif命令だった場合は別途考慮!!)
+                    v=(Vector*)vector_ref(code,code->_sp-1);// 関数のbodyのコード
+                    vector_set(v,v->_sp-1,(void*)conv_op[ct2->functon_ret_type][ct1->functon_ret_type]);//返還命令を入れて
+                    push(v,(void*)RTN);
+                }
                 push(code,(void*)GSET);push(code,(void*)s);
             }
             return new_code(code,ct1);

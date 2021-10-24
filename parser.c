@@ -331,7 +331,8 @@ ast * is_expr_0(Stream *S) {    // expr_0以降が形式上左辺式に使える
             t2 = get_token(S) -> type;
             if (t1=='(' && t2 == ')'){
                 v = vector_init(2);
-                push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
+                //push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のexplistを作る
+                push(v, (void * )a1); push(v, new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
                 a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
                 continue;
             }

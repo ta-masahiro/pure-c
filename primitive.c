@@ -227,7 +227,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_lis_prime, p_lnext_prime,
-                                 p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_str, p_copy, NULL};
+                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_str, p_copy, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -238,7 +238,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime", 
-                                "irand", "lrand", "pollard_rho", "pollard_pm1", "str", "copy",NULL};
+                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "str", "copy",NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT,OBJ_LFLT},                                      // set_prec
@@ -319,6 +319,8 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_VECT},                                     // vsum
                                 {OBJ_LINT, OBJ_INT},                            // is_prime
                                 {OBJ_LINT},                                     // next_prime
+                                {OBJ_INT},                                      // init_irand
+                                {OBJ_LINT},                                     // init_lint
                                 {OBJ_NONE} ,                                    // irand
                                 {OBJ_LINT},                                     // lrand
                                 {OBJ_LINT,OBJ_LINT,OBJ_LINT,OBJ_INT,OBJ_INT},   // pollard_rho
@@ -407,6 +409,8 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE} ,  // vsum
                                 {OBJ_INT,  2, TRUE},    // is_prime
                                 {OBJ_LINT, 1, FALSE} ,  // next_prime
+                                {OBJ_NONE, 1, FALSE},   // init_irand
+                                {OBJ_NONE, 1, FALSE},   // init_lrand
                                 {OBJ_INT,  0, FALSE},   // irand
                                 {OBJ_LINT, 1, FALSE},   // lrand
                                 {OBJ_LINT, 5, FALSE},   // pollard_rho
@@ -425,6 +429,7 @@ void * make_primitive() {
     //mpfr_ptr mp_pai = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(mp_pai);mpfr_const_pi(mp_pai,MPFR_RNDN);
     //mpfr_ptr mp_log2 = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(mp_log2);mpfr_const_log2(mp_log2,MPFR_RNDN);
     gmp_randinit_default(RAND_STATE);
+
 
     PRIMITIVE_FUNC = Hash_init(256);
     Symbol *char_I=new_symbol("I",1);
