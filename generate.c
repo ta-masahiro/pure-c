@@ -692,6 +692,11 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
                 if ((t_op=conv_op[type_param][type_dummy])==0) {printf("SyntaxError:IllegalArgmentType!\n");Throw(0);}
                 if (t_op != -1) {push(code_param,(void*)conv_op[type_param][type_dummy]);}
             }
+            // type_param,type_dummyがfunctionの場合はそのret_typeが同じかどうか確かめたいが、現状引数である関数のパラメータ詳細を保持していない
+            // (CT->arg_typeは型名しかもたずfunction型であることはわかっても戻り値等不明なため)
+            // 現状仮引数に書いた関数を実引数に書いた関数をきっちり一致させるのはユーザ責任！<=修正が必要
+            //
+            //
             code=vector_append(code,code_param);
         }
 
@@ -1020,11 +1025,18 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                 // ct1->type,ct2->typeがfunctionの場合はそのret_typeが同じかどうか確かめる
                 if ((ct1->type==OBJ_UFUNC || ct1->type == OBJ_PFUNC) && (ct1->functon_ret_type != ct2->functon_ret_type)) {
                     if (conv_op[ct2->functon_ret_type][ct1->functon_ret_type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
-                    //push(code,(void*)conv_op[ct2->functon_ret_type][ct1->functon_ret_type]);
-                    // codeは []... LDF [... RTN]]の形をしているがRETの前に型変換命令を入れる(tail call時のif命令だった場合は別途考慮!!)
-                    v=(Vector*)vector_ref(code,code->_sp-1);// 関数のbodyのコード
-                    vector_set(v,v->_sp-1,(void*)conv_op[ct2->functon_ret_type][ct1->functon_ret_type]);//返還命令を入れて
-                    push(v,(void*)RTN);
+                    //
+                    // codeは [... LDF [... RTN]]の形をしており通常はRETの前に型変換命令を入れる
+                    // tail call時のif命令だった場合は[... LDF [... TSEL [... RTN] [... RTN] RTN]]
+                    v=(Vector*)vector_ref(code,code->_sp-1);//disassy(v,0,stdout);// 関数のbodyのコード
+                    if (vector_ref(v,v->_sp-4) == (void*)TSEL) {    // tail call のIF式である
+                        v1=(Vector*)vector_ref(v,v->_sp-2);v2=(Vector*)vector_ref(v,v->_sp-3);
+                        vector_set(v1,v1->_sp-1,(void*)conv_op[ct2->functon_ret_type][ct1->functon_ret_type]);push(v1,(void*)RTN);
+                        vector_set(v2,v2->_sp-1,(void*)conv_op[ct2->functon_ret_type][ct1->functon_ret_type]);push(v2,(void*)RTN);
+                    } else {                                        // 通常の式である
+                        vector_set(v,v->_sp-1,(void*)conv_op[ct2->functon_ret_type][ct1->functon_ret_type]);//返還命令を入れて
+                        push(v,(void*)RTN);
+                    }
                 }
                 push(code,(void*)GSET);push(code,(void*)s);
             }

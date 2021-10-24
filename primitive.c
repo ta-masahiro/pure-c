@@ -171,6 +171,12 @@ void *p_olgamma(Vector *v) {return (void*)objlgamma((object*)vector_ref(v,0));}
 //
 void *p_sum(Vector *v) {object* o = objcpy(vector_ref(v,0));int i;for(i=v->_cp+1;i<v->_sp;i++) o = objadd(o,vector_ref(v,i));return (void*)o;}
 void *p_vsum(Vector *v) {return p_sum((Vector*)vector_ref(v,0));}
+void *p_irange(Vector* v) {
+    int i,n=(int)(long)vector_ref(v,0);
+    Vector *r=vector_init(n);
+    for (i=0;i<n;i++) push(r,(void*)newINT((long)i));
+    return (void*)r;
+}
 // 数論関数
 void * p_lis_prime(Vector *v) {int reps=(v->_sp<=1)?20:(int)(long)vector_ref(v,1);return  (void*)(long)mpz_probab_prime_p(vector_ref(v,0),reps);}
 void * p_lnext_prime(Vector *v) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)vector_ref(v,0));return (void*)r;}
@@ -226,7 +232,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
-                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_lis_prime, p_lnext_prime,
+                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange,p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_str, p_copy, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
@@ -237,7 +243,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
-                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "lis_prime", "lnext_prime", 
+                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "str", "copy",NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
@@ -317,6 +323,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},//olgamma
                                 {OBJ_GEN},                                      //sum
                                 {OBJ_VECT},                                     // vsum
+                                {OBJ_INT},                                      // irange
                                 {OBJ_LINT, OBJ_INT},                            // is_prime
                                 {OBJ_LINT},                                     // next_prime
                                 {OBJ_INT},                                      // init_irand
@@ -407,6 +414,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE},   // olgamma
                                 {OBJ_GEN,  1, TRUE} ,   // sum
                                 {OBJ_GEN,  1, FALSE} ,  // vsum
+                                {OBJ_VECT, 1, FALSE},   // irange
                                 {OBJ_INT,  2, TRUE},    // is_prime
                                 {OBJ_LINT, 1, FALSE} ,  // next_prime
                                 {OBJ_NONE, 1, FALSE},   // init_irand

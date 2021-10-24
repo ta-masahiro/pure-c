@@ -10,4 +10,4 @@ map(lambda(x..) vsum(x),[1,2,3,4,5],[6,7,8,9,10],[11,12,13,14,15,16,17,18,19,20]
 
 vector filter(int fn(x),vector v)={vector s=[];int i=-1,M=@v;while (i+=1)<M:if fn(v[i]):s<-v[i]:None;s};
 vector partition(int fn(x),vector v)={vector s=[],t=[];int i=-1,M=@v;while (i+=1)<M:if fn(v[i]):s<-v[i]:t<-v[i];[s,t]};
-
+vector vtabulate(int n,var f(int x))={vector s=[];int i=-1;while (i+=1)<n:s<-f(i);s};
