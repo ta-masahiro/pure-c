@@ -366,7 +366,7 @@ token * is_DEL(Stream*S, tokenstate s, char* buff) {
     switch(c) {
         case '+':case '-':case '*': case '/':case '%':case '&':case '|':case '^':case '!': case '<':case '=':case '>':
             cc=get_char(S);
-            if (cc == c || cc == '=' || ( c == '-' && cc == '>') || (c=='<' && cc=='-')) {
+            if (cc == c || cc == '=' || ( c == '-' && cc == '>') || (c=='<' && cc=='-') || (c=='/' && cc=='*')) {
                 *(buff ++ ) = c; *(buff ++ ) = cc;
                 if ((c=='>' && cc=='>') || (c=='<' && cc=='<')) {
                     ccc=get_char(S);
@@ -376,6 +376,8 @@ token * is_DEL(Stream*S, tokenstate s, char* buff) {
                     }
                     unget_char(S);
                 }
+                //if (c=='/' && cc=='/') return is_comm(S,TOKEN_LCOMM);   // '//'はコメント行
+                //if (c=='/' && cc=='*') return is_comm(S,TOKEN_COMM);    // '/*'はコメントの開始
                 return new_token(c*256+cc, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0,S);
             } else { 
                 unget_char(S); 
@@ -401,7 +403,29 @@ token * is_DEL(Stream*S, tokenstate s, char* buff) {
             return NULL;
     }
 }
+/*
+int is_comm(Stream *S, tokenstate s,int comm_lvl) {
+    char c=get_char(S),cc,*p;
+    if (s==TOKEN_NONE) {
+        if (c=='/') {
+            if ((cc=get_char(S))=='*') {
+                return is_comm(S,TOKEN_COMM,1);
+            } else if (cc=='/') {
+                return is_COMM(S,TOKEN_LCOMM,1);
+            }
+            unget_char(S);unget_char(S);
+        }
+        unget_char(S);return TRUE;
+    } else if (s==TOKEN_LCOMM) {
+        while ((c=get_char(S) != '\n')) {;}
+        if ((p=re_load(S))==NULL) return FALSE; 
+        return TRUE; 
+    } else if (s==TOKEN_COMM) {
+        while ((c=get_char))
 
+    }
+}
+*/
 token * _get_token(Stream * S){
     // ストリームからtokenを取り出す
     // tokenがなくなったらNULLを返す  
@@ -416,11 +440,13 @@ token * _get_token(Stream * S){
     unget_char(S);                         // そうでなければ読み込んだ文字を返して
     // if (c == EOF) return NULL; 
     // unget_char(S); 
-    if (t = is_NUM(S, TOKEN_NONE, STR_BUFF)) return t; // 数値ならそれをtokenに入れて返す  
-    if (t = is_SYM(S, TOKEN_NONE, STR_BUFF)) return t; // シンボルなら
-    if (t = is_STR(S, TOKEN_NONE, STR_BUFF)) return t; // 文字列なら  
-    if (t = is_CHR(S, TOKEN_NONE, STR_BUFF)) return t; // 文字なら  
-    if (t = is_DEL(S, TOKEN_NONE, STR_BUFF)) return t; // 記号なら 
+    // is_comm(S,TOKEN_NONE);                              // コメントを取り去る
+
+    if (t = is_NUM(S, TOKEN_NONE, STR_BUFF)) return t;  // 数値ならそれをtokenに入れて返す  
+    if (t = is_SYM(S, TOKEN_NONE, STR_BUFF)) return t;  // シンボルなら
+    if (t = is_STR(S, TOKEN_NONE, STR_BUFF)) return t;  // 文字列なら  
+    if (t = is_CHR(S, TOKEN_NONE, STR_BUFF)) return t;  // 文字なら  
+    if (t = is_DEL(S, TOKEN_NONE, STR_BUFF)) return t;  // 記号なら 
 
     if (t == NULL) return NULL;                        // NULLならNULLを返す
     // いずれでもない場合

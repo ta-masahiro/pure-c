@@ -177,6 +177,23 @@ void *p_irange(Vector* v) {
     for (i=0;i<n;i++) push(r,(void*)newINT((long)i));
     return (void*)r;
 }
+// vector swap : vector[i]<->vector[j]
+void * p_vswap(Vector *v) {
+    Vector *t=(Vector*)vector_ref(v,0);
+    int i=(int)(long)vector_ref(v,1);
+    int j=(int)(long)vector_ref(v,2);
+    void* w=t->_table[i];t->_table[i]=t->_table[j];t->_table[j]=w;
+    return (void*)0;
+}
+//  sorting !!うまく動いていない
+int cmp(const void* x,const void* y) {return objcmp((object*)x,(object*)y);}
+void *p_sort(Vector *vv) {
+    Vector *v=(Vector *)vector_ref(v,0);
+    int data_size=v->_sp;
+    void ** data_pt=v->_table;
+    qsort(data_pt,data_size,sizeof(void*),cmp);
+    return (void*)0;
+}
 // 数論関数
 void * p_lis_prime(Vector *v) {int reps=(v->_sp<=1)?20:(int)(long)vector_ref(v,1);return  (void*)(long)mpz_probab_prime_p(vector_ref(v,0),reps);}
 void * p_lnext_prime(Vector *v) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)vector_ref(v,0));return (void*)r;}
@@ -232,7 +249,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
-                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange,p_lis_prime, p_lnext_prime,
+                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_str, p_copy, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
@@ -243,7 +260,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
-                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "lis_prime", "lnext_prime", 
+                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort","lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "str", "copy",NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
@@ -324,6 +341,8 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},                                      //sum
                                 {OBJ_VECT},                                     // vsum
                                 {OBJ_INT},                                      // irange
+                                {OBJ_VECT,OBJ_INT,OBJ_INT},                     // vswap
+                                {OBJ_VECT},                                     // sort
                                 {OBJ_LINT, OBJ_INT},                            // is_prime
                                 {OBJ_LINT},                                     // next_prime
                                 {OBJ_INT},                                      // init_irand
@@ -415,6 +434,8 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, TRUE} ,   // sum
                                 {OBJ_GEN,  1, FALSE} ,  // vsum
                                 {OBJ_VECT, 1, FALSE},   // irange
+                                {OBJ_NONE, 3, FALSE},   // vswap
+                                {OBJ_NONE, 1, FALSE},   // sort
                                 {OBJ_INT,  2, TRUE},    // is_prime
                                 {OBJ_LINT, 1, FALSE} ,  // next_prime
                                 {OBJ_NONE, 1, FALSE},   // init_irand
