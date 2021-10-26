@@ -760,43 +760,35 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
                 code = vector_append(code, (void*)code_s_right->code);ct=code_s_right->ct;
                 // 変数名sに型を設定する
                 // ここにおいて右辺値の型はct、dcl宣言された型はdcl_ast->o_typeである
-                if (dcl_ast->o_type==OBJ_UFUNC || dcl_ast->o_type==OBJ_PFUNC) {         //型宣言詞がfunctionの場合
+                if (dcl_ast->o_type==OBJ_UFUNC || dcl_ast->o_type==OBJ_PFUNC) {         //型宣言詞がfunctionの場合  =>=> この構文は削除予定!!
                     if (ct->type==OBJ_UFUNC || ct->type==OBJ_PFUNC) {                   //右辺値もfunctionなら正常
                         put_gv(s,ct);                                                   //そのまま変数名に割り当てる
                     } else {
-                        printf("SyntaxError:Must be Function!\n");                          //そうえないならエラー
+                        printf("SyntaxError:Must be Function!\n");                      // 左辺値がfunctionなのに右辺値がそうでないならエラー
                         Throw(0) ;
                     }
-
                 } else {                                                                //型宣言が関数タイプでないときは
-                    put_gv(s,new_ct(dcl_ast->o_type,OBJ_NONE,(void*)0,FALSE));      //宣言された型を変数名sに割り当てるが
-                    if (dcl_ast->o_type != ct->type) {                              //右辺値の型と宣言型が異なる場合には型変換命令を入れる
+                    put_gv(s,new_ct(dcl_ast->o_type,OBJ_NONE,(void*)0,FALSE));          //宣言された型を変数名sに割り当てるが
+                    if (dcl_ast->o_type != ct->type) {                                  //右辺値の型と宣言型が異なる場合には型変換命令を入れる
                         push(code, (void*)conv_op[ct->type][dcl_ast->o_type]);
-                        ct->type=dcl_ast->o_type;                                   //返す型は型返還後のもの、すなわち宣言型する
+                        ct->type=dcl_ast->o_type;                                       //返す型は型返還後のもの、すなわち宣言型する
                     }
                 }
                 push(code,(void*)GSET);push(code,(void*)s);
                 push(code,(void*)DROP);
-            } else if ((fcall_ast=(ast*)vector_ref(ast_j->table,1))->type==AST_FCALL) {
+            } else if ((fcall_ast=(ast*)vector_ref(ast_j->table,1))->type==AST_FCALL) { //  左辺式がAST_CALL即ち関数宣言
                 arglist_ast = (ast*)vector_ref(fcall_ast->table,1);
                 f_name_ast = (ast*)vector_ref(fcall_ast->table,0);
                 if (f_name_ast->type != AST_VAR) {printf("SyntaxError:IllegalFunctionName!\n");Throw(1);}
                 Vector *d_args = make_arg_list_type(arglist_ast);
                 if (arglist_ast->type ==  AST_ARG_LIST_DOTS ||arglist_ast->type ==  AST_EXP_LIST_DOTS) dotted=TRUE; else dotted=FALSE;
                 //
-                s=(Symbol*)vector_ref(f_name_ast->table,0);
-                ct=new_ct(OBJ_UFUNC, dcl_ast->o_type,(Vector*)vector_ref(d_args,1),dotted);
-                put_gv(s,ct);
-                //code_ret *code_s_fname=codegen(f_name_ast,env,FALSE);Vector *code_fname = code_s_fname->code;
-                //code=vector_append(code,code_fname);
-                code_s = codegen_set(ast_j,env,tail);
-                code = code_s->code;disassy(code,0,stdout);
-                //push(code,(void*)LDC);push(code,create_zero(OBJ_UFUNC));                // 「0」で初期化しておく
-                push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
-                //ct=new_ct(ct->functon_ret_type,OBJ_NONE,(void*)0,FALSE);
-                //
-                // !!!!! fcall_astの[2]番目をlambda式に落とすコードを書くこと !!!!!
-                //
+                s=(Symbol*)vector_ref(f_name_ast->table,0);                                 // sは関数名
+                ct=new_ct(OBJ_UFUNC, dcl_ast->o_type,(Vector*)vector_ref(d_args,1),dotted); // CTを作り
+                put_gv(s,ct);                                                               // sにセット
+                code_s = codegen_set(ast_j,env,tail);                                       // ast_jは型宣言詞抜きのset astなので型情報がセットされた上でcode化
+                code = code_s->code;//disassy(code,0,stdout);
+                push(code,(void*)DROP);                                                     // declear式は値を返さない;
             }else {
                 printf("SyntaxError:IllegalDecleartype!\n");
                 Throw(1);
@@ -813,18 +805,16 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
             s=(Symbol*)vector_ref(f_name_ast->table,0);
             ct=new_ct(OBJ_UFUNC, dcl_ast->o_type,(Vector*)vector_ref(d_args,1),dotted);
             put_gv(s,ct);
-            //code_ret *code_s_fname=codegen(f_name_ast,env,FALSE);Vector *code_fname = code_s_fname->code;
-            //code=vector_append(code,code_fname);
+            //
             push(code,(void*)LDC);push(code,create_zero(OBJ_UFUNC));                // 「0」で初期化しておく
             push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
-            //ct=new_ct(ct->functon_ret_type,OBJ_NONE,(void*)0,FALSE);
-        } else {
+        } else {                                                                    // 宣言詞の後に続くのは変数(var),関数呼び出し(fcall)≒関数宣言 以外にない
             printf("SyntaxError:IllegalDecleaition!\n");
             Throw(0);
         }
     }
-    pop(code);
-    return  new_code(code,ct);
+    pop(code);                  // 最後のDROPコードは不要なので削除
+    return  new_code(code,ct);  // 最後に作ったcodeとCTを返す
 }
 
 code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]
