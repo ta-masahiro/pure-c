@@ -2,6 +2,7 @@
 
 #define MAXBUFF 1024
 
+
 Stream  * new_stream(FILE * f) {
     Stream * S = (Stream * )malloc(sizeof(Stream) );
     S ->_pos = 0;
@@ -10,6 +11,7 @@ Stream  * new_stream(FILE * f) {
     char * p = fgets(S ->_buff, MAXBUFF, f); 
     S -> _fp = f;
     if (p == NULL) return NULL;  
+    S->_max=strlen(p);
     return S; 
 }
 
@@ -18,17 +20,22 @@ char * re_load(Stream * S) {
     S ->_pos = 0;
     (S ->_line)++; 
     p = fgets(S ->_buff, MAXBUFF, S ->_fp);
-     // if (p == NULL) printf("faile EOF\n");
+    if (p == NULL) {
+    //    printf("faile EOF\n");
+        return p;
+    }
+    S->_max=strlen(p);
     return p;   
 }
 
 char get_char(Stream * S) {
     char  * p;  
     char c = S ->_buff[(S ->_pos) ++ ];
-    // if (c == '\n') {
-    //     p = re_load(S);
-    //     if (p) return EOF;
-    // }
+    if (c == '\n') {
+         p = re_load(S);
+         if (p==NULL) return '\0';
+    }
+    if (S->_pos >= S->_max) c='\0';
     return c;  
 }
 
@@ -44,6 +51,13 @@ token * new_token(int type, Symbol * s, void * val, Stream * S) {
     t->pos = S->_pos;
     return t;
 } 
+
+TokenBuff * new_tokenbuff(FILE *f) {
+    TokenBuff * tokens = (TokenBuff*)malloc(sizeof(TokenBuff));
+    tokens->S = new_stream(f);
+    tokens->buff = vector_init(10);
+    return tokens;
+}
 
 char STR_BUFF[4096];
 
@@ -403,29 +417,32 @@ token * is_DEL(Stream*S, tokenstate s, char* buff) {
             return NULL;
     }
 }
-/*
+
+int is_comm(Stream *S, tokenstate s,int comm_lvl);
+
 int is_comm(Stream *S, tokenstate s,int comm_lvl) {
-    char c=get_char(S),cc,*p;
+    char c,cc,*p;
     if (s==TOKEN_NONE) {
-        if (c=='/') {
+        if ((c=get_char(S))=='/') {
             if ((cc=get_char(S))=='*') {
                 return is_comm(S,TOKEN_COMM,1);
             } else if (cc=='/') {
-                return is_COMM(S,TOKEN_LCOMM,1);
+                return is_comm(S,TOKEN_LCOMM,1);
             }
-            unget_char(S);unget_char(S);
+            unget_char(S);
         }
         unget_char(S);return TRUE;
     } else if (s==TOKEN_LCOMM) {
-        while ((c=get_char(S) != '\n')) {;}
-        if ((p=re_load(S))==NULL) return FALSE; 
+        while ((c=get_char(S)) != '\n') {;}
+        if (c=='\0') return FALSE;
+        unget_char(S); 
         return TRUE; 
-    } else if (s==TOKEN_COMM) {
-        while ((c=get_char))
-
-    }
+    } //else if (s==TOKEN_COMM) {
+      //  while ((c=get_char))
+      //  ;
+    //}
 }
-*/
+/*
 token * _get_token(Stream * S){
     // ストリームからtokenを取り出す
     // tokenがなくなったらNULLを返す  
@@ -453,6 +470,44 @@ token * _get_token(Stream * S){
     printf("SyntaxError:Ileagal Token!\n");
     Throw(0); 
 }
+*/
+
+token * _get_token(Stream * S) {
+    // streamからtokenを取り出す
+    // tokenがなくなったらNULLを返す            
+    token * t;
+    char c,*p;
+    while (TRUE) {
+        while (isblank(c=get_char(S))) ;                    // 空白を読み飛ばして 
+        if (c=='\0') return NULL;                           // NULLなら終了
+        if (c != '\n') unget_char(S);                       // token間の\nは読み飛ばす
+        is_comm(S,TOKEN_NONE,0);                            // コメントを読み飛ばす
+        if (t = is_NUM(S, TOKEN_NONE, STR_BUFF)) return t;  // 数値ならそれをtokenに入れて返す  
+        if (t = is_SYM(S, TOKEN_NONE, STR_BUFF)) return t;  // シンボルなら
+        if (t = is_STR(S, TOKEN_NONE, STR_BUFF)) return t;  // 文字列なら  
+        if (t = is_CHR(S, TOKEN_NONE, STR_BUFF)) return t;  // 文字なら  
+        if (t = is_DEL(S, TOKEN_NONE, STR_BUFF)) return t;  // 記号なら 
+    }
+}
+token * get_token(TokenBuff * tokens) {
+    // token bufferからtokenを取り出し返す
+    // bufferが空なら_get_ktokenでBuffに読み込み、それを返す
+    // EOFの時はNULLが返る 
+    Vector * tokenbuff =tokens->buff;
+    Stream * S = tokens->S;
+    token * t;
+    //token_print(tokens);
+    if (!is_queu_empty(tokenbuff)) return (token*)dequeue(tokenbuff);
+    t=_get_token(S);//printf("%s\n",t->source->_table);
+    push(tokenbuff,(void*)t);(tokenbuff->_cp)++;
+    return  t; // if EOF return NULL
+}
+
+void unget_token(TokenBuff *tokens) {
+    if ((tokens->buff->_cp) == 0) printf("Unget_token is too much!\n"); 
+    else (tokens->buff->_cp) --;
+    //token_print(tokens); 
+}
 
 
 /*
@@ -468,11 +523,11 @@ void unget_token(Stream * S) {
 }
 
 int main(int argc, char * argv[]) {
-    Stream * S = new_stream(stdin);
-    tokenbuff = vector_init(100);
+    //Stream * S = new_stream(stdin);
+    TokenBuff *tokens = new_tokenbuff(stdin);
 
     while (TRUE) {
-        token * t = get_token(S);
+        token * t = get_token(tokens);
         printf("tokentype:%d\ttokensouce:%s\ttokenline:%d\ttokenpos:%d\n", \
             t -> type, t -> source->_table,t->line,t->pos);
         if (t == NULL) return  - 1;  

@@ -3,6 +3,7 @@
 
 void disassy(Vector*v,int i,FILE*fp);
 */
+#include <unistd.h>
 #include <time.h>
 #include "generate.h"
 
@@ -1210,8 +1211,8 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
 int main(int argc, char*argv[]) {
     void* value;
     ast *a;
-    Stream *S;
-    int token_p,DEBUG=FALSE;
+    TokenBuff *S;
+    int tokencp,tokensp,DEBUG=FALSE;
     Vector*env;
     Vector*code;
     code_ret *code_s;
@@ -1231,6 +1232,7 @@ int main(int argc, char*argv[]) {
     clock_t s1_time,s2_time,e_time;
     //if (argc<=1) S=new_stream(stdin);
     FILE*fp=stdin;
+    char*PROMPT=">";
     make_primitive();    
     int i=1;
     CEXCEPTION_T e;
@@ -1251,17 +1253,18 @@ int main(int argc, char*argv[]) {
     }
     if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");
     //DEBUG=TRUE;
-    S = new_stream(fp);
-    tokenbuff=vector_init(100);
+    S = new_tokenbuff(fp);
+    //tokenbuff=vector_init(100);
     signal(SIGINT,ctrc_handler);
     while (TRUE) {
         //printf(">>");
         //tokenbuff=vector_init(100);
         env=vector_init(10);
-        //token_p=tokenbuff->_cp;
+        tokencp = S->buff->_cp;tokensp=S->buff->_sp;
         //token_print(tokenbuff);
         Try {
-            if (fp==stdin) putchar('>');
+            //if (fp==stdin) putchar('>');
+            if (fp==stdin) write(1,PROMPT,1);
             if ((a=is_expr(S)) && get_token(S)->type==';') {
                 if (DEBUG) ast_print(a,0);
                 s1_time = clock();
@@ -1283,13 +1286,13 @@ int main(int argc, char*argv[]) {
                 printf("%s ok\n", objtype2str(type,value));
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {
-                if (a==NULL) {
+                if (a==NULL) {//printf("file end!!\n");
                     //exit(0);
                     fclose(fp);
-                    fp=stdin;S=new_stream(fp);
+                    fp=stdin;S=new_tokenbuff(fp);
                 }
                 // tokenbuff->_cp=token_p;
-                tokenbuff=vector_init(100);
+                //tokenbuff=vector_init(100);
             } 
         } Catch(e) {
             switch(e) {
@@ -1298,11 +1301,14 @@ int main(int argc, char*argv[]) {
                 case 3: printf("Error in VM\n");break;
                 case 4: printf("Ctr-C pressed!\n");break;
             }
-            tokenbuff=vector_init(100);
+            //fclose(fp);
+            S=new_tokenbuff(stdin);
+            //S->buff=vector_init(100);
+            //S->buff->_cp = tokencp;S->buff->_sp=tokensp;
             continue;
         }
-        //token_print(tokenbuff); 
-        tokenbuff->_cp=0;tokenbuff->_sp=0;
+        if (DEBUG) token_print(S); 
+        //S->buff->_cp=0;S->buff->_sp=0;
     }
 
 }

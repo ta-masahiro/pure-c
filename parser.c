@@ -1,7 +1,7 @@
 #include "lexparse.h"
 
-Vector * tokenbuff;
-
+//Vector * tokenbuff;
+/*
 token * get_token(Stream * S) {
     token*t;
     if (is_queu_empty(tokenbuff)) {
@@ -16,14 +16,14 @@ void unget_token(Stream * S) {
     if ((tokenbuff -> _cp) < 0) printf("Unget_token is too much!\n");
     else (tokenbuff -> _cp) --;
 }
-
-void drop_token(Stream*S) {
-    pop(tokenbuff);
+*/
+void drop_token(TokenBuff *t) {
+    pop(t->buff);
 }
-void token_print(Vector * tokenbuff) {
+void token_print(TokenBuff * tokenbuff) {
     int i;
-    printf("%d:", tokenbuff -> _cp);
-    for(i = 0; i<tokenbuff -> _sp; i ++ ) printf("%s  ",((token*)vector_ref(tokenbuff,i))->source->_table);
+    printf("%d:", tokenbuff->buff -> _cp);
+    for(i = 0; i<tokenbuff->buff -> _sp; i ++ ) printf("%s  ",((token*)vector_ref(tokenbuff->buff,i))->source->_table);
     printf("\n");
 }
 
@@ -32,6 +32,7 @@ ast * new_ast(ast_type type, obj_type o_type,Vector * table) {
     a->type     = type;
     a->o_type   = o_type;
     a ->table   = table;
+    //ast_print(a,0);
     return a;
 }
 
@@ -103,7 +104,7 @@ void ast_print(ast*a, int tablevel) {
         //    break;
     }
 }
-ast *  is_lit(Stream*S) {
+ast *  is_lit(TokenBuff*S) {
     Vector * v;
     ast *a;
     token * t = get_token(S);
@@ -149,7 +150,7 @@ ast *  is_lit(Stream*S) {
     }
 }
 
-ast * is_var(Stream *S) {
+ast * is_var(TokenBuff *S) {
     Vector * v;
     token * t = get_token(S);
     if (t -> type == TOKEN_SYM ) {
@@ -162,7 +163,7 @@ ast * is_var(Stream *S) {
     }
 }
 
-ast * is_nomad(Stream *S) {
+ast * is_nomad(TokenBuff *S) {
     ast*a;
     //printf("!!!\n");
     if (a=is_lit(S)) return a;
@@ -170,7 +171,7 @@ ast * is_nomad(Stream *S) {
     return NULL;
 }
 
-ast * is_factor(Stream*S) {
+ast * is_factor(TokenBuff *S) {
     // factor       : nomad
     //              | '(' expr ')'
     //              | '{' ml_expr_list '}'
@@ -179,7 +180,7 @@ ast * is_factor(Stream*S) {
     ast*a;
     tokentype t;
     Vector *v;
-    int token_p=tokenbuff->_cp;
+    int token_p = S->buff->_cp;
 
     if (a=is_nomad(S)) return a;
     if ((t=get_token(S)->type)=='(') {
@@ -216,33 +217,33 @@ ast * is_factor(Stream*S) {
             }
         }
     }
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 
-ast * is_pair(Stream * S) {
+ast * is_pair(TokenBuff * S) {
     // pair     : expr ':' expr
     ast *a1,*a2;
     token *t;
     Vector * v;
-    int token_p = tokenbuff ->_cp;
+    int token_p = S->buff ->_cp;
 
     if ((a1=is_expr(S)) && (t=get_token(S))->type == ':'  && (a2=is_expr(S))) {
         v = vector_init(2);
         push(v,a1);push(v,a2);
         return new_ast(AST_PAIR,OBJ_NONE,v); 
     }
-    tokenbuff -> _cp = token_p;
+    S->buff -> _cp = token_p;
     return NULL;
 }
 
-ast * is_pair_list(Stream * S) {
+ast * is_pair_list(TokenBuff * S) {
     // pair_list    : pair ',' pair_list
     //              | pair
     ast * a1, * a2;
     token * t1, * t2;
     Vector * v;
-    int token_p = tokenbuff ->_cp;
+    int token_p = S->buff ->_cp;
 
     if (a1 = is_pair(S)) {
         v=vector_init(3);
@@ -261,16 +262,16 @@ ast * is_pair_list(Stream * S) {
             }
         }
     }
-    tokenbuff -> _cp = token_p;
+    S->buff -> _cp = token_p;
     return NULL;
 }
-ast * is_expr_list(Stream * S) {
+ast * is_expr_list(TokenBuff * S) {
     // expr_list    : expr ',' expr_list
     //              | expr
     ast * a1, * a2;
     token * t1, * t2;
     Vector * v;
-    int token_p = tokenbuff ->_cp;
+    int token_p = S->buff ->_cp;
 
     if (a1 = is_expr(S)) {
         v=vector_init(3);
@@ -289,13 +290,13 @@ ast * is_expr_list(Stream * S) {
             }
         }
     }
-    tokenbuff -> _cp = token_p;
+    S->buff -> _cp = token_p;
     return NULL;
 }
 
-ast*is_arg_list(Stream*S);
+ast*is_arg_list(TokenBuff * S);
 
-ast * is_expr_0(Stream *S) {    // expr_0以降が形式上左辺式に使える
+ast * is_expr_0(TokenBuff *S) {    // expr_0以降が形式上左辺式に使える
     // exp_0        : APPLY '(' expr_list ')'
     //              | factor '(' arg_list '..' ')'
     //              | fator  '(' arg_list ')'
@@ -307,7 +308,7 @@ ast * is_expr_0(Stream *S) {    // expr_0以降が形式上左辺式に使える
     ast * a1, * a2;
     token*t;
     tokentype t1,t2;
-    int token_p = tokenbuff -> _cp,i;
+    int token_p = S->buff -> _cp,i;
     Vector*v,*v1;
     // applyの処理
     if ((t=get_token(S))->type==TOKEN_SYM && strcmp(t->source->_table,"apply")==0) {
@@ -376,93 +377,18 @@ ast * is_expr_0(Stream *S) {    // expr_0以降が形式上左辺式に使える
             Throw(1);
         }
     }
-    tokenbuff -> _cp = token_p;
+    S->buff -> _cp = token_p;
     return NULL;
 }
-/*
-ast * is_expr_0(Stream *S) {
-    // exp_0        : APPLY '(' expr_list ')'
-    //              | factor '(' arg_list '..' ')'
-    //              | fator  '(' arg_list ')'
-    //              | factor '(' expr_list '..' ')'
-    //              | factor '(' expr_list ')'
-    //              | factor '(' ')'
-    //              | factor '[' expr_list ']'
-    //              | factor '[' pair_list ']'
-    ast * a1, * a2;
-    token*t;
-    tokentype t1,t2;
-    int token_p = tokenbuff -> _cp,i;
-    Vector*v,*v1;
-    // applyの処理
-    if ((t=get_token(S))->type==TOKEN_SYM && strcmp(t->source->_table,"apply")==0) {
-        if ((get_token(S)->type =='(') && (a1=is_expr_list(S)) && get_token(S)->type==')') {
-            v=vector_init(1);push(v,(void*)a1);
-            return new_ast(AST_APPLY,OBJ_UFUNC,v);
-        }
-        printf("Syntax error in apply\n");
-        Throw(1);
-    }
-    unget_token(S);
-    // 
-    if (a1 = is_factor(S)) {
-        t1 = get_token(S)->type;
-        if (t1 !='(' && t1 != '[') {
-            unget_token(S);
-            return a1;
-        } // factorの後に'('または'['が続く場合
-        t2 = get_token(S) -> type;
-        if (t1=='(' && t2 == ')'){
-            v = vector_init(2);
-            push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
-            return new_ast(AST_FCALL,OBJ_UFUNC, v);
-        }
-        unget_token(S);
-        if ((a2 = is_pair_list(S)) || (a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
-        //if ((a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
-            t2 = get_token(S) ->type;
-            if ((t1=='(' && t2 == ')') || (t1 == '[' && t2==']')) {
-                v = vector_init(2);
-                push(v, (void * )a1); push(v, (void * )a2);
-                if (t1=='(') {
-                    return new_ast(AST_FCALL,OBJ_UFUNC, v);
-                } else if (a2->type==AST_PAIR_LIST) return new_ast(AST_SLS,OBJ_NONE,v);
-                return new_ast(AST_VREF,OBJ_UFUNC, v);
-            } else if (t1=='(' && t2=='.'*256+'.' && get_token(S)->type==')') {
-                v = vector_init(2);
-                //push(v, (void * )a1);//expr_list a2の先頭にa1を入れたものをvとすること！！
-                //for(i=0;i<a2->table->_sp;i++) {
-                //    push(v, (void*)vector_ref(a2->table,i));
-                //}
-                //v1=vector_init(1);push(v1,new_ast(AST_EXP_LIST,v));
-                //return new_ast(AST_APPLY, v1);
-                a2->type=AST_EXP_LIST_DOTS;
-                push(v, (void * )a1); push(v, (void * )a2);
-                return new_ast(AST_FCALL,OBJ_UFUNC, v);
-            }
-        //} else { //空引数のfunction call 
-        //    t2 = get_token(S) -> type;
-        //    if (t1=='(' && t2 == ')'){
-        //        v = vector_init(2);
-        //        push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
-        //        return new_ast(AST_FCALL,OBJ_UFUNC, v);
-        //    }
-        }
-        printf("syntax error in function call/vector\n");
-        Throw(1);
-    }
-    tokenbuff -> _cp = token_p;
-    return NULL;
-}
-*/
+
 #define max(a,b) (a ? a >= b: b)
 
-ast * is_expr_1(Stream *S) {
+ast * is_expr_1(TokenBuff *S) {
     // expr_1       : expr_0
     //              : expr_0 '**' expr_1
     ast*a1,*a2;
     tokentype t;
-    int token_p=tokenbuff->_cp;
+    int token_p = S->buff->_cp;
     Vector*v;
     int op='*'*256+'*';
     if (a1=is_expr_0(S)) {
@@ -476,16 +402,16 @@ ast * is_expr_1(Stream *S) {
             return new_ast(AST_2OP,max(a1->o_type,a2->o_type),v);
         }
     }
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 
-ast * is_expr_2(Stream * S) {
+ast * is_expr_2(TokenBuff * S) {
     // expr_2       : expr_1
     //              | [-|~|@] expr_2
     ast * a;
     tokentype t;
-    int token_p = tokenbuff ->_cp;
+    int token_p = S->buff ->_cp;
     Vector*v;
 
     if (((t = (get_token(S) -> type)) == '-') || (t == '~') || (t=='@')){
@@ -501,40 +427,16 @@ ast * is_expr_2(Stream * S) {
             return a;
         }
     }
-    tokenbuff -> _cp = token_p;
+    S->buff -> _cp = token_p;
     return NULL;
 }
-/*
-ast * is_expr_3(Stream * S) {
-    // expr_incdec  : expr_2  --
-    //              | expr_2  ++
-    //              | expr_2
-    ast * a;
-    tokentype t;
-    int token_p = tokenbuff ->_cp;
-    Vector*v;
 
-    if (a=is_expr_2(S)) {
-        if ((t=get_token(S)->type)=='-'*256+'-' || t== '+'*256+'+') {
-            v=vector_init(2);
-            push(v,(void*)t);push(v, (void * )a);
-            return new_ast(AST_1OP,a->o_type, v);
-        } else {
-            unget_token(S);
-            return a;
-        }
-    }
-    tokenbuff->_cp=token_p;
-    return NULL;
-}
-*/
-
-ast * is_expr_3(Stream * S) {
+ast * is_expr_3(TokenBuff * S) {
     // expr_incdec  : expr_2  [--|++|->]
     //              | expr_2 
     ast * a;
     tokentype t;
-    int token_p = tokenbuff ->_cp;
+    int token_p = S->buff ->_cp;
     Vector*v;
 
     if (a=is_expr_2(S)) {
@@ -548,7 +450,7 @@ ast * is_expr_3(Stream * S) {
             a=new_ast(AST_1OP,a->o_type, v);
         }
     }
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 /*
@@ -572,7 +474,7 @@ int op_type[][7]={  {0}, {0}, {0}, {0}, {'<'*256+'-'},
     {'!'*256+'!',0},  {'&'*256+'&',0},{'|'*256+'|',0}
 };
 
-ast * is_expr_2n(Stream * S,int n) {
+ast * is_expr_2n(TokenBuff * S,int n) {
     // expr_n       : expr_n-1
     //              | expr_n-1 op_type expr_n-1 op_type ...
     //
@@ -583,7 +485,7 @@ ast * is_expr_2n(Stream * S,int n) {
 
     if (n==3) return is_expr_3(S);
 
-    int token_p = tokenbuff -> _cp;
+    int token_p = S->buff -> _cp;
     if (a1 = is_expr_2n(S,n-1)) {
         while (TRUE) {
             tp=is_in(op_type[n],(void*)(long)(get_token(S) -> type) );
@@ -601,7 +503,7 @@ ast * is_expr_2n(Stream * S,int n) {
                 Throw(1);
             }
         }
-        tokenbuff->_cp = token_p;
+        S->buff->_cp = token_p;
         return NULL;
     }
 }
@@ -626,13 +528,13 @@ int string_isin(char* s,char* table[]) {
     return -1;
 }
 
-ast * is_arg_list(Stream * S) {
+ast * is_arg_list(TokenBuff * S) {
     // arg_list     : dcl_expr ',' arg_list
     //              | dcl_expr
     ast * a1, * a2;
     token *t,* t1, * t2;
     Vector * v;
-    int i,token_p = tokenbuff ->_cp;
+    int i,token_p = S->buff->_cp;
     obj_type o_type;
     //if (a1 = is_dcl_expr(S)) {
     if ((t=get_token(S))->type == TOKEN_SYM) {
@@ -655,23 +557,23 @@ ast * is_arg_list(Stream * S) {
                         continue;
                     }
                 } 
-                tokenbuff -> _cp = token_p;
+                S->buff -> _cp = token_p;
                 return NULL;
             }
         }
     }
-    tokenbuff -> _cp = token_p;
+    S->buff -> _cp = token_p;
     return NULL;
 }
 
-ast * is_lambda_expr(Stream *S) {
+ast * is_lambda_expr(TokenBuff *S) {
     // lambda_expr  : lambda ( expr_list ..) expr
     //              | lambda ( expr_list ) expr
     //              | lambda ( ) expr
     ast * a1, * a2;
     token*t,*t1 ;
     Vector * v;
-    int token_p = tokenbuff->_cp;
+    int token_p = S->buff->_cp;
 
     t=get_token(S);
     if ((t->type)==TOKEN_SYM && strcmp("lambda",t->source->_table)==0) {
@@ -705,16 +607,16 @@ ast * is_lambda_expr(Stream *S) {
         printf("Syntax error in lambda\n");
         Throw(1);
     }
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 
-ast*is_if_expr(Stream*S) {
+ast*is_if_expr(TokenBuff *S) {
     // if_expr  : if expr : expr : expr
     ast*a1,*a2,*a3;
     token*t;
     Vector*v;
-    int token_p=tokenbuff->_cp;
+    int token_p = S->buff->_cp;
 
     t=get_token(S);
     if (t->type==TOKEN_SYM && strcmp("if",t->source->_table)==0) {
@@ -748,16 +650,16 @@ ast*is_if_expr(Stream*S) {
             Throw(1);
         }
     }
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 
-ast*is_while_expr(Stream*S) {
+ast*is_while_expr(TokenBuff *S) {
     // while_expr  : while expr : expr
     ast*a1,*a2,*a3;
     token*t;
     Vector*v;
-    int token_p=tokenbuff->_cp;
+    int token_p = S->buff->_cp;
 
     t=get_token(S);
     if (t->type==TOKEN_SYM && strcmp("while",t->source->_table)==0) {
@@ -781,16 +683,16 @@ ast*is_while_expr(Stream*S) {
             Throw(1);
         }
     }
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 
-ast*is_loop_expr(Stream*S) {
+ast*is_loop_expr(TokenBuff *S) {
     // loop_expr  : loop expr : expr
     ast*a1,*a2,*a3;
     token*t;
     Vector*v;
-    int token_p=tokenbuff->_cp;
+    int token_p = S->buff->_cp;
 
     t=get_token(S);
     if (t->type==TOKEN_SYM && strcmp("loop",t->source->_table)==0) {
@@ -814,18 +716,18 @@ ast*is_loop_expr(Stream*S) {
             Throw(1);
         }
     }
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 
 int set_op[]={'=','*'*256+'=','/'*256+'=','%'*256+'=','+'*256+'=','-'*256+'=', '|'*256+'=',0};
 
-ast * is_set_expr(Stream * S) {
+ast * is_set_expr(TokenBuff * S) {
     // set_expr : expr_0 [=|+=|-=|*=|/=] expr
     ast* a1,*a2;
     tokentype  t;
     Vector*v;
-    int token_p = tokenbuff->_cp;
+    int token_p = S->buff->_cp;
     //if ((a1 = is_expr_0(S)) && (t=*is_in(set_op, (void*)get_token(S)->type)) && (a2 = is_expr(S))) {
     if ((a1=is_expr_0(S)) &&
             ((t=get_token(S)->type)=='=' || t=='+'*256+'=' || t=='-'*256+'=' || t=='*'*256+'=' || 
@@ -837,16 +739,16 @@ ast * is_set_expr(Stream * S) {
         push(v,(void*)t); push(v,(void*)a1); push(v,(void*)a2);
         return new_ast(AST_SET,a1->o_type,v);
     }
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 
-ast * is_dcl_expr(Stream*S) {
+ast * is_dcl_expr(TokenBuff*S) {
     int i;
     ast*a;
     token*t;
     Vector*v;
-    int token_p=tokenbuff->_cp;
+    int token_p = S->buff->_cp;
 
     t=get_token(S);
     //if (t->type==TOKEN_SYM && strcmp("var",t->source->_table)==0) {
@@ -857,11 +759,11 @@ ast * is_dcl_expr(Stream*S) {
             return new_ast(AST_DCL,i,v);
         }
     } //printf("!!!\n");
-    tokenbuff->_cp=token_p;
+    S->buff->_cp=token_p;
     return NULL;
 }
 
-ast * is_expr(Stream *S) {
+ast * is_expr(TokenBuff *S) {
     ast * a;
     if (get_token(S) == NULL) return NULL;  // tokenがない場合
     unget_token(S);
@@ -883,10 +785,10 @@ ast * is_expr(Stream *S) {
     Throw(1);
 }
 
-ast *  is_ml_expr(Stream * S ) {
+ast *  is_ml_expr(TokenBuff * S ) {
     ast * a;
     token * t;
-    int token_p = tokenbuff ->_cp;
+    int token_p = S->buff ->_cp;
     Vector*v;
     if (get_token(S) -> type == '{') {
         if ( a = is_ml_expr_list(S) ) {
@@ -897,16 +799,16 @@ ast *  is_ml_expr(Stream * S ) {
             }
         }
     }
-    tokenbuff -> _cp = token_p;
+    S->buff -> _cp = token_p;
     return NULL;
 }
-ast * is_ml_expr_list(Stream * S) {
+ast * is_ml_expr_list(TokenBuff * S) {
     // expr_list    : expr ',' expr_list
     //              | expr
     ast * a1, * a2;
     token * t1, * t2;
     Vector * v;
-    int token_p = tokenbuff ->_cp;
+    int token_p = S->buff ->_cp;
 
     if (a1 = is_expr(S)) {
         v=vector_init(3);
@@ -925,7 +827,7 @@ ast * is_ml_expr_list(Stream * S) {
             }
         }
     }
-    tokenbuff -> _cp = token_p;
+    S->buff -> _cp = token_p;
     return NULL;
 }
 /*

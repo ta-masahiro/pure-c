@@ -364,7 +364,7 @@ object * objISUB(long x, long y) {
 
 object * objIMUL(long x, long y) {
     object * o = (object * )malloc(sizeof(object));
-    if (labs(x)>labs(LONG_MAX/y)) {
+    if ((y != 0) && labs(x)>labs(LONG_MAX/y)) {
         mpz_ptr Lx=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set_si(Lx,x);   
         mpz_ptr Ly=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set_si(Ly,y);
         mpz_mul(Lx,Lx,Ly);
@@ -551,7 +551,7 @@ object * objRDIV(mpq_ptr x, mpq_ptr y) {
     object * o = (object*)malloc(sizeof(object) );
     mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));
     mpq_init(Q);
-    if (mpq_sgn(y)) zero_division_error();
+    if (!mpq_sgn(y)) zero_division_error();
     mpq_div(Q, x, y);
     o -> data.ptr = (void * )Q;
     o -> type = OBJ_RAT;
@@ -1604,16 +1604,17 @@ char * set_lf_format(mpfr_ptr x) {
     sprintf(form,"%s%d%s","%.",i,"Rg");
     return form;
 }
-
+#define NONE ""
+//#define NONE "None"
 char * objtype2str(obj_type type, void* value) {
     int new_size,buf_size=1024;
     char *str,*buf = (char*)malloc(buf_size*sizeof(char)); 
     mp_exp_t e;
     int i,n;
     long lval;
-    if ((type != OBJ_INT && type != OBJ_FLT) && value == NULL) return "None";
+    if ((type != OBJ_INT && type != OBJ_FLT) && value == NULL) return NONE;
     switch(type){
-        case OBJ_NONE:  return "None";
+        case OBJ_NONE:  return NONE;
         case OBJ_INT:   sprintf(buf, "%ld", (long)value); return buf;
         case OBJ_LINT:  return mpz_get_str(NULL, 10, (mpz_ptr)value);
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);

@@ -1,11 +1,12 @@
+// make a vector
 var list(x..) = x; 
 vector vlist(vector x..) = x; 
-
+//  
 vector range(n)={vector r=[];int i=-1;while (i+=1)<n:r<-i;r}; 
-
+// a part of map
 vector vmapref(vector L,int n)={vector s=[];int i= - 1, M=@L;while (i += 1)<M:s<-(L[i][n]);s};
 var mapref(L,n)={vector s=[];int i= - 1, M=@L;while (i += 1)<M:s<-(L[i][n]);s};
-
+// map 
 vector vmap(var f(x..),vector v..)={vector s=[];int i=-1,M=@v[0];while (i+=1)<M:s<-(apply(f,vmapref(v,i)));s};
 var map(var f(x..), v..)={var s=[];int i=-1,M=@v[0];while (i+=1)<M:s<-(apply(f,vmapref(v,i)));s};
 
@@ -14,84 +15,87 @@ none for_each(var f(x..), v..)={int i=-1,M=@v[0];while (i+=1)<M:apply(f,vmapref(
 
 vector filter(int fn(x),vector v)={vector s=[];int i=-1,M=@v;while (i+=1)<M:if fn(v[i]):s<-v[i]:None;s};
 vector partition(int fn(x),vector v)={vector s=[],t=[];int i=-1,M=@v;while (i+=1)<M:if fn(v[i]):s<-v[i]:t<-v[i];[s,t]};
-vector vtabulate(int n,var f(int x))={vector s=[];int i=-1;while (i+=1)<n:s<-f(i);s};
+vector vtabulate(int n,var f(x))={vector s=[];var i=-1;while (i+=1)<n:s<-f(i);s};
 
 int irandn(int n)=irand()%n;
 vector virand(int n)={vector r=[];while (n-=1)>=0:r<-irand();r};
 vector virandn(int n,int m)={vector r=[];while (n-=1)>=0:r<-irandn(m);r};
 vector vfrand(int n)={vector r=[];RANDMAX=2**63-1;while (n-=1)>=0:r<-(1.0*irand()/RANDMAX);r};
 
-vector marge(vector v1,vector v2)={
-    int i=0,j=0,M1=@v1,M2=@v2;
-    var d1,d2;
-    vector r=[];
-    while (i<M1)&&(j<M2):{
-        if (d1=v1[i])>=(d2=v2[j]):
-            {r<-d1;i+=1}
-        :
-            {r<-d2;j+=1}
-    };
-    if i==M1 :
-        while j<M2:{
-            r<-v2[j];
-            j+=1
-        }:
-        while i<M1:{
-            r<-v1[i];
-            i+=1
-        };
-    r
-};
-vector sort(vector v)={
-    int n=@v,n2;
-    n2=n/2;
-    if n<=1:
-        [v[0]]:
-    if n==2:
-        if v[0]>v[1]:
-            v
-	:
-            [v[1],v[0]]:
-    marge(sort(v[0:n2]),sort(v[n2:0]))
-};
+vector marge(vector v1,vector v2)={int i=0,j=0,M1=@v1,M2=@v2;var d1,d2;vector r=[];while (i<M1)&&(j<M2):{if (d1=v1[i])>=(d2=v2[j]):{r<-d1;i+=1}:{r<-d2;j+=1}};if i==M1 :while j<M2:{r<-v2[j];j+=1}:while i<M1:{r<-v1[i];i+=1}; r};
+vector sort(vector v)={int n=@v,n2;n2=n/2;if n<=1:[v[0]]:if n==2:if v[0]>v[1]:v:[v[1],v[0]]:marge(sort(v[0:n2]),sort(v[n2:0]))};
 
-vector msort(vector v) = {
-    vector marge(vector v1,vector v2)={
-        int i=0,j=0,M1=@v1,M2=@v2;
-        var d1,d2;
-        vector r=[];
-        while (i<M1)&&(j<M2):{
-            if (d1=v1[i])>=(d2=v2[j]):
-                {r<-d1;i+=1}
-            :
-                {r<-d2;j+=1}
-        };
-        if i==M1 :
-            while j<M2:{
-                r<-v2[j];
-                j+=1
-            }:
-            while i<M1:{
-                r<-v1[i];
-                i+=1
-            };
-        r
-    };
-    vector sort(vector v)={
-        int n=@v,n2;
-        n2=n/2;
-        if n<=1:
-            [v[0]]:
-        if n==2:
-            if v[0]>v[1]:
-                v
-	        :
-                [v[1],v[0]]
-        :
-        marge(sort(v[0:n2]),sort(v[n2:0]))
-    };
-    sort(v) 
-}; 
-none vfreverse(vector v)={int i=0,j=@v-1;while i<j:{vswap(v,i,j);i+=1;j-=1};None};freverse(vector v)={int i=0,j=@v-1;while i<j:{vswap(v,i,j);i+=1;j-=1};None};
-vector vreverse(vector v)={vector r=[];int i=@v;while (i-=1)>=0:r<-v[i];r};
+// vector marge(vector v1,vector v2)={
+//     int i=0,j=0,M1=@v1,M2=@v2;
+//     var d1,d2;
+//     vector r=[];
+//     while (i<M1)&&(j<M2):{
+//         if (d1=v1[i])>=(d2=v2[j]):
+//             {r<-d1;i+=1}
+//         :
+//             {r<-d2;j+=1}
+//     };
+//     if i==M1 :
+//         while j<M2:{
+//          r<-v2[j];
+//             j+=1
+//         }:
+//         while i<M1:{
+//             r<-v1[i];
+//             i+=1
+//         };
+//     r
+// };
+// vector sort(vector v)={
+//     int n=@v,n2;
+//     n2=n/2;
+//      if n<=1:
+//         [v[0]]:
+//     if n==2:
+//         if v[0]>v[1]:
+//             v
+// 	:
+//             [v[1],v[0]]:
+//     marge(sort(v[0:n2]),sort(v[n2:0]))
+// };
+
+// vector msort(vector v) = {
+//     vector marge(vector v1,vector v2)={
+//         int i=0,j=0,M1=@v1,M2=@v2;
+//         var d1,d2;
+//         vector r=[];
+//         while (i<M1)&&(j<M2):{
+//             if (d1=v1[i])>=(d2=v2[j]):
+//                 {r<-d1;i+=1}
+//             :
+//                 {r<-d2;j+=1}
+//         };
+//         if i==M1 :
+//             while j<M2:{
+//                 r<-v2[j];
+//                 j+=1
+//             }:
+//             while i<M1:{
+//                 r<-v1[i];
+//                 i+=1
+//             };
+//         r
+//     };
+//     vector sort(vector v)={
+//         int n=@v,n2;
+//         n2=n/2;
+//         if n<=1:
+//             [v[0]]:
+//         if n==2:
+//             if v[0]>v[1]:
+//                 v
+// 	        :
+//                 [v[1],v[0]]
+//         :
+//         marge(sort(v[0:n2]),sort(v[n2:0]))
+//     };
+//     sort(v) 
+// }; 
+none vfreverse(vector v)={int i=0,j=@v-1;while i<j:{vswap(v,i,j);i+=1;j-=1};None};
+vector vreverse(vector v)={vector r=[];int i=@v;while (i-=1)>=0:r<-v[i];r};vreverse([1, 2, 3, 4, 5]); 
 

@@ -10,7 +10,8 @@ typedef struct {
 */
 typedef struct {
     int     _line;
-    int     _pos; 
+    int     _pos;
+    int     _max; 
     FILE *  _fp; 
     char *  _buff;
 } Stream;
@@ -63,6 +64,12 @@ typedef struct {
 #define t_DRARSET   '>'*65536+'>'*245+'='
 #define t_DLARSET   '<'*65536+'<'*256+'='
 #define t_DDOT      '.'*256+'.'
+
+typedef struct {
+    Stream * S;
+    Vector * buff;
+} TokenBuff;
+
 typedef enum {
     AST_NONE,       // 0:AST_NONE,[]
     AST_ML,         // 1:AST_ML,[ast_list] 
@@ -108,30 +115,32 @@ ast * new_ast(ast_type type, Vector * table) {
 }
 */
 extern char*dcl_string[];
-
+//char get_char(Stream*S);
 Stream  * new_stream(FILE * f);  
+//void unget_char(Stream *S);
 //Symbol * new_symbol(unsigned char * str, unsigned long size);  
 token * new_token(int type, Symbol * s, void * val, Stream * S); 
-token * _get_token(Stream * S); 
-token * get_token(Stream * S) ; 
-void unget_token(Stream * S); 
-void token_print(Vector*buff); 
+TokenBuff *new_tokenbuff(FILE *f);
+token * _get_token(Stream *S); 
+token * get_token(TokenBuff *t) ; 
+void unget_token(TokenBuff *t); 
+void token_print(TokenBuff*buff); 
 ast * new_ast(ast_type type, obj_type o_type,Vector * table) ;
 void ast_print(ast*a, int tablevel) ; 
-ast * is_lit(Stream*S) ; 
-ast * is_var(Stream *S) ; 
-ast * is_nomad(Stream *S) ;
-ast * is_expr_list(Stream * S) ; 
-ast * is_pair_list(Stream * S) ; 
-ast * is_factor(Stream*s);
-ast * is_expr_0(Stream *S) ; 
-ast * is_expr_1(Stream * S) ; 
-ast * is_expr_2(Stream * S) ; 
-ast * is_expr_3(Stream * S) ; 
-ast * is_expr_4(Stream * S) ; 
-ast * is_expr_5(Stream * S) ; 
-ast * is_expr(Stream *S) ;
-ast * is_set_expr(Stream * S);
-ast * is_if_expr(Stream * S); 
-ast * is_ml_expr(Stream * S ) ; 
-ast * is_ml_expr_list(Stream * S) ; 
+ast * is_lit(TokenBuff*S) ; 
+ast * is_var(TokenBuff *S) ; 
+ast * is_nomad(TokenBuff *S) ;
+ast * is_expr_list(TokenBuff * S) ; 
+ast * is_pair_list(TokenBuff * S) ; 
+ast * is_factor(TokenBuff*s);
+ast * is_expr_0(TokenBuff *S) ; 
+ast * is_expr_1(TokenBuff * S) ; 
+ast * is_expr_2(TokenBuff * S) ; 
+ast * is_expr_3(TokenBuff * S) ; 
+ast * is_expr_4(TokenBuff * S) ; 
+ast * is_expr_5(TokenBuff * S) ; 
+ast * is_expr(TokenBuff *S) ;
+ast * is_set_expr(TokenBuff * S);
+ast * is_if_expr(TokenBuff * S); 
+ast * is_ml_expr(TokenBuff * S ) ; 
+ast * is_ml_expr_list(TokenBuff * S) ; 
