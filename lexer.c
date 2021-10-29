@@ -446,40 +446,21 @@ int is_comm(Stream *S, tokenstate s,int comm_lvl) {
         if (c=='\0') return FALSE;
         unget_char(S); 
         return TRUE; 
-    } //else if (s==TOKEN_COMM) {
-      //  while ((c=get_char))
-      //  ;
-    //}
-}
-/*
-token * _get_token(Stream * S){
-    // ストリームからtokenを取り出す
-    // tokenがなくなったらNULLを返す  
-    token * t;
-    char c,*p;
-    while (isblank(c=get_char(S))) ;            // 空白を読み飛ばして 
-    while (c == '\n') { 
-        p=re_load(S);                           // 改行文字ならもう1行読み込んで 
-        if (p==NULL) return NULL;
-        while (isblank(c=get_char(S)));               // 
+    } else if (s==TOKEN_COMM) {
+        if ((c=get_char(S)) == '/') {
+            if ((cc=get_char(S)) =='*') {
+                return is_comm(S,TOKEN_COMM,comm_lvl+1);
+            }
+            //unget_char(S);
+        } else if (c == '*') {
+            if ((cc=get_char(S))=='/') {
+                if ((--comm_lvl) == 0) return TRUE;
+                return is_comm(S,s,comm_lvl);
+            }
+            //unget_char(S;)
+        } else is_comm(S,TOKEN_COMM,comm_lvl);
     }
-    unget_char(S);                         // そうでなければ読み込んだ文字を返して
-    // if (c == EOF) return NULL; 
-    // unget_char(S); 
-    // is_comm(S,TOKEN_NONE);                              // コメントを取り去る
-
-    if (t = is_NUM(S, TOKEN_NONE, STR_BUFF)) return t;  // 数値ならそれをtokenに入れて返す  
-    if (t = is_SYM(S, TOKEN_NONE, STR_BUFF)) return t;  // シンボルなら
-    if (t = is_STR(S, TOKEN_NONE, STR_BUFF)) return t;  // 文字列なら  
-    if (t = is_CHR(S, TOKEN_NONE, STR_BUFF)) return t;  // 文字なら  
-    if (t = is_DEL(S, TOKEN_NONE, STR_BUFF)) return t;  // 記号なら 
-
-    if (t == NULL) return NULL;                        // NULLならNULLを返す
-    // いずれでもない場合
-    printf("SyntaxError:Ileagal Token!\n");
-    Throw(0); 
 }
-*/
 
 token * _get_token(Stream * S) {
     // streamからtokenを取り出す
@@ -522,19 +503,7 @@ void unget_token(TokenBuff *tokens) {
     //token_print(tokens); 
 }
 
-
 /*
-Vector * tokenbuff; 
-
-token * get_token(Stream * S) {
-    if (is_queu_empty(tokenbuff)) return _get_token(S);
-    else return dequeue(tokenbuff); 
-}
-void unget_token(Stream * S) {
-    if ((tokenbuff -> _cp) == 0) printf("Unget_token is too much!\n"); 
-    else (tokenbuff -> _cp) --; 
-}
-
 int main(int argc, char * argv[]) {
     //Stream * S = new_stream(stdin);
     TokenBuff *tokens = new_tokenbuff(stdin);

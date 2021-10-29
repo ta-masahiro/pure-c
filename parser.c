@@ -1,22 +1,5 @@
 #include "lexparse.h"
 
-//Vector * tokenbuff;
-/*
-token * get_token(Stream * S) {
-    token*t;
-    if (is_queu_empty(tokenbuff)) {
-        if ((t= _get_token(S))==NULL) 
-            return NULL;
-        else 
-            push(tokenbuff,(void*)t);
-    }
-    return dequeue(tokenbuff);
-}
-void unget_token(Stream * S) {
-    if ((tokenbuff -> _cp) < 0) printf("Unget_token is too much!\n");
-    else (tokenbuff -> _cp) --;
-}
-*/
 void drop_token(TokenBuff *t) {
     pop(t->buff);
 }
