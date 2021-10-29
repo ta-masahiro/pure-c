@@ -22,42 +22,42 @@ vector virand(int n)={vector r=[];while (n-=1)>=0:r<-irand();r};
 vector virandn(int n,int m)={vector r=[];while (n-=1)>=0:r<-irandn(m);r};
 vector vfrand(int n)={vector r=[];RANDMAX=2**63-1;while (n-=1)>=0:r<-(1.0*irand()/RANDMAX);r};
 
-vector marge(vector v1,vector v2)={int i=0,j=0,M1=@v1,M2=@v2;var d1,d2;vector r=[];while (i<M1)&&(j<M2):{if (d1=v1[i])>=(d2=v2[j]):{r<-d1;i+=1}:{r<-d2;j+=1}};if i==M1 :while j<M2:{r<-v2[j];j+=1}:while i<M1:{r<-v1[i];i+=1}; r};
-vector sort(vector v)={int n=@v,n2;n2=n/2;if n<=1:[v[0]]:if n==2:if v[0]>v[1]:v:[v[1],v[0]]:marge(sort(v[0:n2]),sort(v[n2:0]))};
+// vector marge(vector v1,vector v2)={int i=0,j=0,M1=@v1,M2=@v2;var d1,d2;vector r=[];while (i<M1)&&(j<M2):{if (d1=v1[i])>=(d2=v2[j]):{r<-d1;i+=1}:{r<-d2;j+=1}};if i==M1 :while j<M2:{r<-v2[j];j+=1}:while i<M1:{r<-v1[i];i+=1}; r};
+// vector sort(vector v)={int n=@v,n2;n2=n/2;if n<=1:[v[0]]:if n==2:if v[0]>v[1]:v:[v[1],v[0]]:marge(sort(v[0:n2]),sort(v[n2:0]))};
 
-// vector marge(vector v1,vector v2)={
-//     int i=0,j=0,M1=@v1,M2=@v2;
-//     var d1,d2;
-//     vector r=[];
-//     while (i<M1)&&(j<M2):{
-//         if (d1=v1[i])>=(d2=v2[j]):
-//             {r<-d1;i+=1}
-//         :
-//             {r<-d2;j+=1}
-//     };
-//     if i==M1 :
-//         while j<M2:{
-//          r<-v2[j];
-//             j+=1
-//         }:
-//         while i<M1:{
-//             r<-v1[i];
-//             i+=1
-//         };
-//     r
-// };
-// vector sort(vector v)={
-//     int n=@v,n2;
-//     n2=n/2;
-//      if n<=1:
-//         [v[0]]:
-//     if n==2:
-//         if v[0]>v[1]:
-//             v
-// 	:
-//             [v[1],v[0]]:
-//     marge(sort(v[0:n2]),sort(v[n2:0]))
-// };
+vector marge(vector v1,vector v2)={
+    int i=0,j=0,M1=@v1,M2=@v2;
+    var d1,d2;
+    vector r=[];
+    while (i<M1)&&(j<M2):{
+        if (d1=v1[i])>=(d2=v2[j]):
+            {r<-d1;i+=1}
+        :
+            {r<-d2;j+=1}
+    };
+    if i==M1 :
+        while j<M2:{
+            r<-v2[j];
+            j+=1
+        }:
+        while i<M1:{
+            r<-v1[i];
+            i+=1
+        };
+    r
+};
+vector sort(vector v)={
+    int n=@v,n2;
+    n2=n/2;
+    if n<=1:
+        [v[0]]:
+    if n==2:
+        if v[0]>v[1]:
+            v
+     	:
+            [v[1],v[0]]:
+    marge(sort(v[0:n2]),sort(v[n2:0]))
+};
 
 // vector msort(vector v) = {
 //     vector marge(vector v1,vector v2)={

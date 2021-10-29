@@ -31,15 +31,24 @@ char * re_load(Stream * S) {
 char get_char(Stream * S) {
     char  * p;  
     char c = S ->_buff[(S ->_pos) ++ ];
-    if (c == '\n') {
-         p = re_load(S);
-         if (p==NULL) return '\0';
+    if (c == '\0') {
+        p=re_load(S);
+        if (p==NULL) return '\0';
+        c=S->_buff[(S->_pos)++];
     }
-    if (S->_pos >= S->_max) c='\0';
+    if (c == '\n') {
+         //p = re_load(S);
+         //if (p==NULL) return '\0';
+         //c=' ';
+    }
+    //if (S->_pos >= S->_max) c='\0';
     return c;  
 }
 
-void unget_char(Stream * S) { (S ->_pos) -- ; }
+void unget_char(Stream * S) { 
+    (S ->_pos) -- ;
+    //if (S->_pos<0) S->_pos=0; 
+}
 
 token * new_token(int type, Symbol * s, void * val, Stream * S) {
     token * t = (token*)malloc(sizeof(token));
@@ -478,15 +487,19 @@ token * _get_token(Stream * S) {
     token * t;
     char c,*p;
     while (TRUE) {
-        while (isblank(c=get_char(S))) ;                    // 空白を読み飛ばして 
-        if (c=='\0') return NULL;                           // NULLなら終了
-        if (c != '\n') unget_char(S);                       // token間の\nは読み飛ばす
+        while (TRUE) {
+            c=get_char(S);                     
+            if (!isblank(c) || c != '\n') break;            // 空白と改行を読み飛ばして
+        }
+        if (c=='\0') return NULL;                           // NULL文字なら終了
+        unget_char(S);
         is_comm(S,TOKEN_NONE,0);                            // コメントを読み飛ばす
         if (t = is_NUM(S, TOKEN_NONE, STR_BUFF)) return t;  // 数値ならそれをtokenに入れて返す  
         if (t = is_SYM(S, TOKEN_NONE, STR_BUFF)) return t;  // シンボルなら
         if (t = is_STR(S, TOKEN_NONE, STR_BUFF)) return t;  // 文字列なら  
         if (t = is_CHR(S, TOKEN_NONE, STR_BUFF)) return t;  // 文字なら  
         if (t = is_DEL(S, TOKEN_NONE, STR_BUFF)) return t;  // 記号なら 
+        //return NULL;
     }
 }
 token * get_token(TokenBuff * tokens) {

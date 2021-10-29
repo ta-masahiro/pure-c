@@ -324,6 +324,7 @@ ast * is_expr_0(TokenBuff *S) {    // expr_0以降が形式上左辺式に使え
     if (a1 = is_factor(S)) {
         //t1 = get_token(S)->type;
         while (TRUE) {
+            //token_print(S);
             t1 = get_token(S)->type;
             if (t1 !='(' && t1 != '[') {
                 unget_token(S);
