@@ -1769,9 +1769,15 @@ void objpush(object *o,object* value) {
 }
 
 object * objslice(object* o,long start,long end) {
+    long sp;
     if (o==NULL) none_error();
     Vector * l,*ll;Symbol * sym;
     if (o->type == OBJ_VECT) {
+        sp=((Vector*)(o->data.ptr))->_sp;
+        if (start<0) start=sp+end;
+        if (end<=0) end=sp+end;
+        if (end>sp) end=sp;
+        if (end<start) start=end;
         l=(Vector*)malloc(sizeof(Vector));
         ll=(Vector*)o->data.ptr;
         l->_table=&ll->_table[start];
