@@ -434,7 +434,7 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
     //} else if 
     } else {    // 大域変数の場合
         s=(Symbol*)vector_ref(var_ast->table,0);
-        if (get_gv(s) == NULL) {printf("SyntaxError :Global value not defined!\n");Throw(0);}
+        if (get_gv(s) == NULL) {printf("SyntaxError :Global value <%s> not defined!\n",s->_table);Throw(0);}
         ct=get_gv(s);
         push(code,(void*)LDG);push(code,(void*)vector_ref(var_ast->table,0));
     } //disassy(code,0,stdout);//PR(6);
