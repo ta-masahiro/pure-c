@@ -106,3 +106,7 @@ vector vreverse(vector v)={vector r=[];int i=@v;while (i-=1)>=0:r<-v[i];r};  /* 
 var fold1(var f(x,y),a,v)=if @v==0:a:fold1(f,f(a,v[0]),v[1:0]);
 
 var fold_n(var f(x,y..),a,v..)={int i=-1,M=@v[0];while (i+=1)<M:a=apply(f,a,vmapref(v,i));a}; /* test */ fold_n(sum,0, [1,2,3,4,5],[5,4,3,2,1]);
+int xor(int x,int y)=~(x&y) & (x|y);
+vector range(int n,opt..)={vector v=[];int start=0,end=n,step=1;if @opt>=1:{start=n;end=opt[0]}:None;if @opt==2:step=opt[1]:None;if step>=0:while start<end:{v<-start;start+=step}:while start >end:{v<-start;start+=step};v};
+vector iota(int n,opt..)={vector v=[];int start=0,step=1;if @opt>=1:start=opt[0]:None;if @opt==2:step=opt[1]:None;while (n-=1)>=0:{v<-start;start+=step};v};
+

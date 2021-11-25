@@ -7,30 +7,30 @@ void disassy(Vector*v,int i,FILE*fp);
 #include <time.h>
 #include "generate.h"
 
-int op2_1[] = {'+', '-', '*', '/', '%', '*'*256+'*','<'*256+'-','|','&', '>'*256+'>', '<'*256+'<', '>', '<', '='*256+'=', '!'*256+'=', '>'*256+'=', '<'*256+'=',0};
+int op2_1[] = {'+', '-', '*', '/', '%', '*'*256+'*','<'*256+'-', '|', '&', '^', '>'*256+'>', '<'*256+'<', '>', '<', '='*256+'=', '!'*256+'=', '>'*256+'=', '<'*256+'=',0};
 //char*op2_alt_name[]={"add","sub","mul","div","mod","pow","push",NULL,NULL,"sr","sl","gt","lt","eq","neq","ge","le"};
-enum CODE op2_2[18][18] = {
-                {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_NONEはINTと同じに   
-              //{ADD,  SUB,  MUL,  DIV,  MOD,  POW,  PUSH, BOR,  BAND, SR,  SL,  GT,  LT,  EQ,  NEQ,  GEQ,  LEQ , 0},
-                {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_INT
-                {LADD, LSUB, LMUL, LDIV, LMOD, LPOW, 0,    LBOR, LBAND,LSR, LSL, LGT, LLT, LEQ, LNEQ, LGEQ, LLEQ, 0},   // OBJ_LINT
-                {RADD, RSUB, RMUL, RDIV, RMOD, RPOW, 0,    0,    0,    0,   0,   RGT, RLT, REQ, RNEQ, RGEQ, RLEQ, 0},   // OBJ_RAT
-                {FADD, FSUB, FMUL, FDIV, FMOD, FPOW, 0,    0,    0,    0,   0,   FGT, FLT, FEQ, FNEQ, FGEQ, FLEQ, 0},   // OBJ_FLT
-                {LFADD,LFSUB,LFMUL,LFDIV,LFMOD,LFPOW,0,    0,    0,    0,   0,   LFGT,LFLT,LFEQ,LFNEQ,LFGEQ,LFLEQ,0},   // OBJ_LFLT
-                {CADD, CSUB, CMUL, CDIV, 0,    CPOW, 0,    0,    0,    0,   0,   0,   0,   CEQ, CNEQ, 0    ,0    ,0},   // OBJ_CMPLX
-                {OADD, OSUB, OMUL, ODIV, OMOD, OPOW, OPUSH,OBOR, OBAND,OSR, OSL, OGT, OLT, OEQ, ONEQ, OGEQ, OLEQ, 0},   // OBJ_GEN
-                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_SYSFUNC
-                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_PFUNC
-                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_UFUNC
-                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_CNT
-                {VAPP, 0,    VMUL, 0,    0,    0,    VPUSH,0,    0,    0,   0,   0,   0,   VEQ, 0,    0,    0,    0},   // OBJ_VECT
-                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_DICT
-                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_PAIR
-                {SAPP, 0,    SMUL, 0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   SEQ, 0,    0,    0,    0},   // OBJ_SYM
-                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_ARRAY
-                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_IO
+enum CODE op2_2[18][19] = {
+                {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,IBXOR,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_NONEはINTと同じに   
+              //{ADD,  SUB,  MUL,  DIV,  MOD,  POW,  PUSH, BOR,  BAND, BXOR, SR,  SL,  GT,  LT,  EQ,  NEQ,  GEQ,  LEQ , 0},
+                {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,IBXOR,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_INT
+                {LADD, LSUB, LMUL, LDIV, LMOD, LPOW, 0,    LBOR, LBAND,LBXOR,LSR, LSL, LGT, LLT, LEQ, LNEQ, LGEQ, LLEQ, 0},   // OBJ_LINT
+                {RADD, RSUB, RMUL, RDIV, RMOD, RPOW, 0,    0,    0,    0,    0,   0,   RGT, RLT, REQ, RNEQ, RGEQ, RLEQ, 0},   // OBJ_RAT
+                {FADD, FSUB, FMUL, FDIV, FMOD, FPOW, 0,    0,    0,    0,    0,   0,   FGT, FLT, FEQ, FNEQ, FGEQ, FLEQ, 0},   // OBJ_FLT
+                {LFADD,LFSUB,LFMUL,LFDIV,LFMOD,LFPOW,0,    0,    0,    0,    0,   0,   LFGT,LFLT,LFEQ,LFNEQ,LFGEQ,LFLEQ,0},   // OBJ_LFLT
+                {CADD, CSUB, CMUL, CDIV, 0,    CPOW, 0,    0,    0,    0,    0,   0,   0,   0,   CEQ, CNEQ, 0    ,0    ,0},   // OBJ_CMPLX
+                {OADD, OSUB, OMUL, ODIV, OMOD, OPOW, OPUSH,OBOR, OBAND,OBXOR,OSR, OSL, OGT, OLT, OEQ, ONEQ, OGEQ, OLEQ, 0},   // OBJ_GEN
+                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_SYSFUNC
+                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_PFUNC
+                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_UFUNC
+                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_CNT
+                {VAPP, 0,    VMUL, 0,    0,    0,    VPUSH,0,    0,    0,    0,   0,   0,   0,   VEQ, 0,    0,    0,    0},   // OBJ_VECT
+                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_DICT
+                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_PAIR
+                {SAPP, 0,    SMUL, 0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   SEQ, 0,    0,    0,    0},   // OBJ_SYM
+                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_ARRAY
+                {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_IO
                 };
-obj_type op2_3[]={0,0,0,0,0,0,0,0,0,0,0,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,0};
+obj_type op2_3[]={0,0,0,0,0,0,0,0,0,0,0,0,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,OBJ_INT,0};
 
 int op1_1[] = {'-', '~', '@','+'*256+'+', '-'*256+'-', '-'*256+'>', 0};
 enum CODE op1_2[18][6] = 
@@ -55,26 +55,26 @@ enum CODE op1_2[18][6] =
                 {0,    0,    0,    0,    0   , 0   },     // IO
                };
 obj_type op1_3[]={0,0,OBJ_INT,0,0,OBJ_GEN};
-enum CODE conv_op[18][18] = 
+enum CODE conv_op[18][19] = 
                         {{0,  0,    ITOL,    ITOR,    ITOF,  0,     ITOO   },    //OBJ_NONEには0が入っているのでINTとみなす
-                    //  NONE  INT   LONG  RAT   FLOAT LFLOAT CMPLX  GEN    SYSFUNC PFUNC UFUNC CNT   VECT DICT PAIR SYM   ARRAY IO
-                        {0,   0,    ITOL, ITOR, ITOF, ITOLF, ITOC,  ITOO,  0,      0,    0,    0,    0,   0,   0,   ITOS, 0,    0  },
-                        {0,   LTOI, 0   , LTOR, LTOF, LTOLF, LTOC,  LTOO,  0,      0,    0,    0,    0,   0,   0,   LTOS, 0,    0  },
-                        {0,   RTOI, RTOL, 0   , RTOF, RTOLF, RTOC,  RTOO,  0,      0,    0,    0,    0,   0,   0,   RTOS, 0,    0  },
-                        {0,   FTOI, FTOL, FTOR, 0   , FTOLF, FTOC,  FTOO,  0,      0,    0,    0,    0,   0,   0,   FTOS, 0,    0  },
-                        {0,   LFTOI,LFTOL,LFTOR,LFTOF,0,     LFTOC, LFTOO, 0,      0,    0,    0,    0,   0,   0,   LFTOS,0,    0  },
-                        {0,   0,    0,    0,    0,    0,     0,     CTOO,  0,      0,    0,    0,    0,   0,   0,   CTOS, 0,    0  },
-                        {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, OTOC,  0,     0,      0,    0,    0,    OTOV,0,   0,   OTOS, 0,    0  },
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0  },//SYSFUNC
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,   -1,    0,    0,   0,   0,   0,    0,    0  },//PFUNC
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,     -1,    0,    0,    0,   0,   0,   0,    0,    0  },//UFUNC
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0  },//CNT
-                        {0,   0,    0,    0,    0,    0,     0,     VTOO,  0,      0,    0,    0,    0,   0,   0,   VTOS, 0,    0  },//VECTOR
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0  },//DICT
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0  },//PAIR
-                        {0,   STOI, STOL, STOR, STOF, 0,     0,     STOO,  0,      0,    0,    0,    0,   0,   0,   0,    0,    0  },//SYM
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0  },//SYM
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0  } //IO 
+                    //  NONE  INT   LONG  RAT   FLOAT LFLOAT CMPLX  GEN    SYSFUNC PFUNC UFUNC CNT   VECT DICT PAIR SYM   ARRAY IO  KEY
+                        {0,   0,    ITOL, ITOR, ITOF, ITOLF, ITOC,  ITOO,  0,      0,    0,    0,    0,   0,   0,   ITOS, 0,    0,  ITOK  },
+                        {0,   LTOI, 0   , LTOR, LTOF, LTOLF, LTOC,  LTOO,  0,      0,    0,    0,    0,   0,   0,   LTOS, 0,    0,  0  },
+                        {0,   RTOI, RTOL, 0   , RTOF, RTOLF, RTOC,  RTOO,  0,      0,    0,    0,    0,   0,   0,   RTOS, 0,    0,  0  },
+                        {0,   FTOI, FTOL, FTOR, 0   , FTOLF, FTOC,  FTOO,  0,      0,    0,    0,    0,   0,   0,   FTOS, 0,    0,  FTOK  },
+                        {0,   LFTOI,LFTOL,LFTOR,LFTOF,0,     LFTOC, LFTOO, 0,      0,    0,    0,    0,   0,   0,   LFTOS,0,    0,  0  },
+                        {0,   0,    0,    0,    0,    0,     0,     CTOO,  0,      0,    0,    0,    0,   0,   0,   CTOS, 0,    0,  0  },
+                        {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, OTOC,  0,     0,      0,    0,    0,    OTOV,0,   0,   OTOS, 0,    0,  0  },
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//SYSFUNC
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,   -1,    0,    0,   0,   0,   0,    0,    0,  0  },//PFUNC
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,     -1,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//UFUNC
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//CNT
+                        {0,   0,    0,    0,    0,    0,     0,     VTOO,  0,      0,    0,    0,    0,   0,   0,   VTOS, 0,    0,  VTOK  },//VECTOR
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//DICT
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//PAIR
+                        {0,   STOI, STOL, STOR, STOF, 0,     0,     STOO,  0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//SYM
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//ARRAY
+                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  } //IO 
                         };
 /* 後で完成させること
 enum CODE add_op[][5] = {
@@ -450,16 +450,20 @@ code_ret *codegen_vref(ast *vref_ast, Vector*env, int tail) {  // AST_VREF [AST_
     code_type *ct = code_vect->ct;
     obj_type type1=ct->type;
     //
-    if (type1 != OBJ_VECT && type1 != OBJ_SYM && type1 != OBJ_GEN) {printf("Syntax Error:must be vector!\n");Throw(0);}
+    if (type1 != OBJ_VECT && type1 != OBJ_SYM && type1 != OBJ_GEN && type1 != OBJ_DICT) {printf("Syntax Error:must be vector/String/Dictionary!\n");Throw(0);}
     code_ret *code_ref = codegen((ast*)vector_ref(((ast*)vector_ref(vref_ast->table,1))->table,0), env,FALSE);
     code = vector_append(code, code_ref->code);
-    if (code_ref->ct->type != OBJ_INT) push(code,(void*)conv_op[code_ref->ct->type][OBJ_INT]);
+    if ((type1 == OBJ_DICT) && (code_ref->ct->type != OBJ_SYM)) push(code, (void*)conv_op[code_ref->ct->type][OBJ_KEY]);  
+    if ((type1 != OBJ_DICT) && (code_ref->ct->type != OBJ_INT)) push(code, (void*)conv_op[code_ref->ct->type][OBJ_INT]);
     //
     if (type1==OBJ_VECT) {
         push(code,(void*)REF);
         return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
     } else if (type1==OBJ_SYM) {
         push(code,(void*)SREF);
+        return new_code(code,new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));
+    } else if (type1==OBJ_DICT) {
+        push(code,(void*)LDH);
         return new_code(code,new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));
     } else {
         push(code,(void*)OREF);
@@ -911,8 +915,8 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
     Symbol *s;
     int i,j,_2op;
     // 演算代入の場合は2項演算命令と代入命令のastを作る
-    if ((long)vector_ref(set_ast->table,0) != '=') {
-        _2op=(((long)vector_ref(set_ast->table,0)) >> 8);
+    if ((long)vector_ref(set_ast->table,0) != '=') {        // set_typeが'='以外の場合は演算代入である
+        _2op=(((long)vector_ref(set_ast->table,0)) >> 8);   // 演算子は上位8bit
         vv=vector_init(3);push(vv,(void*)(long)'=');
         v=vector_init(3);push(v,(void*)(long)_2op);push(v,(void*)vector_ref(set_ast->table,1));push(v,(void*)vector_ref(set_ast->table,2));
         push(vv,(void*)vector_ref(set_ast->table,1));push(vv,(void*)new_ast(AST_2OP,OBJ_NONE,v));

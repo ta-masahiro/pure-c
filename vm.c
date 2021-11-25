@@ -23,7 +23,7 @@ char * code_name[] =
      "LFADD", "LFSUB","LFMUL","LFDIV","LFMOD","LFPOW","LFGT", "LFLT", "LFEQ", "LFNEQ","LFGEQ","LFLEQ","LFNEG","ITOLF",
      "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","CADD", "CSUB", "CMUL", "CDIV", "CPOW",
      "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE", "LOOP_SET",
-     "LOOP",  "STOLF","STOC", "DIC",  "$$$" };
+     "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -44,7 +44,7 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
-        1,    0,     0,    0,    1     };
+        1,    0,     0,    0,    1,    0,   0,   0,    0,   0,   0 };
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -107,7 +107,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LFADD, &&_LFSUB,&&_LFMUL,&&_LFDIV,&&_LFMOD,&&_LFPOW,&&_LFGT, &&_LFLT, &&_LFEQ, &&_LFNEQ,&&_LFGEQ,&&_LFLEQ,&&_LFNEG,&&_ITOLF,\
             &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO,&&_CADD, &&_CSUB, &&_CMUL, &&_CDIV ,&&_CPOW, \
             &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE,&&_LOOP_SET,\
-            &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC  };
+            &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR };
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -474,9 +474,8 @@ _IEQ:
     push(S, (void * )(long)((long)pop(S) == (long)pop(S)));
     goto * dequeue(C);
 _FEQ:
-    fx=(double*)pop(S);fy=(double*)pop(S);
-    //fz = (double * )malloc(sizeof(double)); *fz=(*fx)==(*fy);
-    push(S,(void*)(long)((*fx)==(*fy)));
+    i=(long)pop(S);j=(long)pop(S);
+    push(S,(void*)(long)(*(double*)(&i)==*(double*)(&j)));
     goto * dequeue(C);
 _L_EQ:
     x = (mpz_ptr)pop(S); y = (mpz_ptr)pop(S);
@@ -495,8 +494,8 @@ _INEQ:
     push(S, (void * )(long)((long)pop(S) != (long)pop(S)));
     goto * dequeue(C);
 _FNEQ:
-    fx=(double*)pop(S);fy=(double*)pop(S);
-    push(S,(void*)(long)((*fx)!=(*fy)));
+    i=(long)pop(S);j=(long)pop(S);
+    push(S,(void*)(long)(*(double*)(&i)!=*(double*)(&j)));
     goto * dequeue(C);
 _LNEQ:
     x = (mpz_ptr)pop(S); y = (mpz_ptr)pop(S);
@@ -514,8 +513,8 @@ _ILEQ:
     push(S, (void * )(long)((long)pop(S) >= (long)pop(S)));
     goto * dequeue(C);
 _FLEQ:
-    fx=(double*)pop(S);fy=(double*)pop(S);
-    push(S,(void*)(long)((*fx)>=(*fy)));
+    i=(long)pop(S);j=(long)pop(S);
+    push(S,(void*)(long)(*(double*)(&i)>=*(double*)(&j)));
     goto * dequeue(C);
 _LLEQ:
     x = (mpz_ptr)pop(S); y = (mpz_ptr)pop(S);
@@ -533,8 +532,8 @@ _ILT:
     push(S, (void * )(long)((long)pop(S) > (long)pop(S)));
     goto * dequeue(C);
 _FLT:
-    fx=(double*)pop(S);fy=(double*)pop(S);
-    push(S,(void*)(long)((*fx)>(*fy)));
+    i=(long)pop(S);j=(long)pop(S);
+    push(S,(void*)(long)(*(double*)(&i)>*(double*)(&j)));
     goto * dequeue(C);
 _LLT:
     x = (mpz_ptr)pop(S); y = (mpz_ptr)pop(S);
@@ -552,8 +551,8 @@ _IGT:
     push(S, (void * )(long)((long)pop(S) < (long)pop(S)));
     goto * dequeue(C);
 _FGT:
-    fx=(double*)pop(S);fy=(double*)pop(S);
-    push(S,(void*)(long)((*fx)<(*fy)));
+    i=(long)pop(S);j=(long)pop(S);
+    push(S,(void*)(long)(*(double*)(&i)<*(double*)(&j)));
     goto * dequeue(C);
 _LGT:
     x = (mpz_ptr)pop(S); y = (mpz_ptr)pop(S);
@@ -571,8 +570,8 @@ _IGEQ:
     push(S, (void * )(long)((long)pop(S) <= (long)pop(S)));
     goto * dequeue(C);
 _FGEQ:
-    fx=(double*)pop(S);fy=(double*)pop(S);
-    push(S,(void*)(long)((*fx)<=(*fy)));
+    i=(long)pop(S);j=(long)pop(S);
+    push(S,(void*)(long)(*(double*)(&i)<=*(double*)(&j)));
     goto * dequeue(C);
 _LGEQ:
     x = (mpz_ptr)pop(S); y = (mpz_ptr)pop(S);
@@ -600,9 +599,9 @@ _RNEG:
     push(S,(void*)qz);
     goto * dequeue(C);
 _FNEG:
-    fz=(double*)malloc(sizeof(double));
-    *fz=-(*(double*)pop(S));
-    push(S,(void*)fz);
+    i=(long)pop(S);
+    zz=-*(double*)(&i);
+    push(S,(void*)(*(long*)(&zz)));
     goto * dequeue(C);
 _BNOT:
 _IBNOT:
@@ -968,6 +967,18 @@ _OBAND:
     o=(object*)pop(S);
     push(S,(void*)objand(o,(object*)pop(S)));    
     goto *dequeue(S);
+_IBXOR:
+    push(S,(void*)((long)pop(S) ^ (long)pop(S)));
+    goto*dequeue(C);
+_LBXOR:
+    z=(mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_xor(z,(mpz_ptr)pop(S),(mpz_ptr)pop(S));
+    push(S,(void*)z);
+    goto*dequeue(C);
+_OBXOR:
+    o=(object*)pop(S);
+    push(S,(void*)objxor(o,(object*)pop(S)));    
+    goto *dequeue(S);
 _VLEN:
     push(S,(void*)(long)((Vector*)pop(S))->_sp);
     goto*dequeue(C);
@@ -1006,19 +1017,19 @@ _STOC:
 _ITOS:
     push(S,(void*)objtype2symbol(OBJ_INT,pop(S)));
     goto* dequeue(C);
-_LTOS:
+_LTOS: _LTOK:
     push(S,(void*)objtype2symbol(OBJ_LINT,pop(S)));
     goto* dequeue(C);
-_RTOS:
+_RTOS: _RTOK:
     push(S,(void*)objtype2symbol(OBJ_RAT,pop(S)));
     goto* dequeue(C);
 _FTOS:
     push(S,(void*)objtype2symbol(OBJ_FLT,pop(S)));
     goto* dequeue(C);
-_OTOS:
+_OTOS: _OTOK:
     push(S,(void*)objtype2symbol(OBJ_GEN,pop(S)));
     goto* dequeue(C);
-_VTOS:
+_VTOS: _VTOK:
     push(S,(void*)objtype2symbol(OBJ_VECT,pop(S)));
     goto* dequeue(C);
 /*
@@ -1343,14 +1354,8 @@ _ITOK:
 _FTOK:
     ip=(long*)malloc(sizeof(long));
     *ip=(long)pop(S);
-    push(S,new_symbol((char*)ip,8));
+    push(S,new_symbol((char*)ip, sizeof(double)));
     goto *dequeue(C);
-_LTOK:
-_RTOK:
-_LFTOK:
-_VTOK:
-_STOK:
-
 _LOOP_SET:
     LOOP_COUNTER = (long)dequeue(S);
     goto *dequeue(C);

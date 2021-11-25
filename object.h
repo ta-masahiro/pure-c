@@ -12,8 +12,8 @@ typedef enum { OBJ_NONE=0,
     OBJ_SYSFUNC, OBJ_PFUNC, OBJ_UFUNC, OBJ_CNT,
     //    12        13        14      15    16
     OBJ_VECT, OBJ_DICT, OBJ_PAIR,OBJ_SYM, OBJ_ARRAY,
-    // 17
-    OBJ_IO,
+    // 17   18
+    OBJ_IO, OBJ_KEY
 } obj_type;
 
 typedef struct object {
@@ -106,6 +106,7 @@ object * objdiv(object * x, object * y);
 object * objmod(object * x, object * y);
 object * objpow(object * x, object * y);
 object * objor(object*x,object*y);
+object * objxor(object*x,object*y);
 object * objand(object*x,object*y);
 object * objsr(object *x, object * y);
 object * objsl(object *x, object * y);
