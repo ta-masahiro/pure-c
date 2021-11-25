@@ -188,7 +188,7 @@ void * p_vswap(Vector *v) {
 //  sorting !!うまく動いていない
 int cmp(const void* x,const void* y) {return objcmp((object*)x,(object*)y);}
 void *p_sort(Vector *vv) {
-    Vector *v=(Vector *)vector_ref(v,0);
+    Vector *v=(Vector *)vector_ref(vv,0);
     int data_size=v->_sp;
     void ** data_pt=v->_table;
     qsort(data_pt,data_size,sizeof(void*),cmp);
