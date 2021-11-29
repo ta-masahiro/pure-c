@@ -5,6 +5,7 @@ void disassy(Vector*v,int i,FILE*fp);
 */
 #include <unistd.h>
 #include <time.h>
+#include <sys/time.h>
 #include "generate.h"
 
 int op2_1[] = {'+', '-', '*', '/', '%', '*'*256+'*','<'*256+'-', '|', '&', '^', '>'*256+'>', '<'*256+'<', '>', '<', '='*256+'=', '!'*256+'=', '>'*256+'=', '<'*256+'=',0};
@@ -658,7 +659,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
     int i, n = param_ast->table->_sp, m, t_op;                                  // number of actual parameters
     ast *function_ast = (ast*)vector_ref(fcall_ast->table,0);       // function ast
     // 「..」だったら即APPLYに変換する
-    if (param_ast->type==AST_EXP_LIST_DOTS) {                      // if expr_list_dots -> apply
+    if (param_ast->type==AST_EXP_LIST_DOTS || param_ast->type==AST_ARG_LIST_DOTS) {                      // if expr_list_dots -> apply
         v1=vector_init(1 + param_ast->table->_sp);
         //push(v1,(void*)vector_ref(a->table,0));
         push(v1,(void*)function_ast);
@@ -1234,6 +1235,7 @@ int main(int argc, char*argv[]) {
     GLOBAL_VAR=Hash_init(256);
     //
     clock_t s1_time,s2_time,e_time;
+    struct timespec S1_T,S2_T,E_T;
     //if (argc<=1) S=new_stream(stdin);
     FILE*fp=stdin;
     char*PROMPT=">";
@@ -1271,7 +1273,7 @@ int main(int argc, char*argv[]) {
             if (fp==stdin) write(1,PROMPT,1);
             if ((a=is_expr(S)) && get_token(S)->type==';') {
                 if (DEBUG) ast_print(a,0);
-                s1_time = clock();
+                s1_time = clock();clock_gettime(CLOCK_REALTIME,&S1_T);
                 code_s = codegen(a,env,FALSE);//PR(121);
                 code=code_s->code;push(code,(void*)STOP);//PR(122);
                 ct=code_s->ct;type=ct->type;
@@ -1283,10 +1285,11 @@ int main(int argc, char*argv[]) {
                     }
                     disassy(code,0,stdout);
                 }
-                s2_time = clock();
+                s2_time = clock();clock_gettime(CLOCK_REALTIME,&S2_T);
                 value = eval(Stack,Env,code,Ret,EEnv,G);
-                e_time = clock();
-                printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)1000*(s2_time-s1_time)/CLOCKS_PER_SEC,(double)1000*(e_time-s2_time)/CLOCKS_PER_SEC);
+                e_time = clock();clock_gettime(CLOCK_REALTIME,&E_T);
+                //printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)1000*(s2_time-s1_time)/CLOCKS_PER_SEC,(double)1000*(e_time-s2_time)/CLOCKS_PER_SEC);
+                printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)(S2_T.tv_sec-S1_T.tv_sec)+(double)(S2_T.tv_nsec-S1_T.tv_nsec)/(1000*1000*1000),(double)(E_T.tv_sec-S2_T.tv_sec)+(double)(E_T.tv_nsec-S2_T.tv_nsec)/(1000*1000*1000));
                 printf("%s ok\n", objtype2str(type,value));
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {

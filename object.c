@@ -399,9 +399,9 @@ object * objIPOW(long x, long y) {
     object*o=(object*)malloc(sizeof(object));
     mpz_ptr L=(mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init_set_si(L,x);
-    if (y>0) mpz_pow_ui(L,L,y);
-    else mpz_root(L,L,y);
-    if (mpz_cmp_si(L,2147483647)>0 || mpz_cmp_si(L,-2147483648)<0) {o->data.ptr=(object*)L; o->type=OBJ_LINT;}
+    if (y>=0) mpz_pow_ui(L,L,y);
+    else mpz_set_si(L,0);
+    if (!mpz_fits_slong_p(L)) {o->data.ptr=(object*)L; o->type=OBJ_LINT;}
     else {o->data.intg=mpz_get_si(L);o->type=OBJ_INT;}
     return o;
 }
@@ -511,8 +511,8 @@ object * objLMOD(mpz_ptr x, mpz_ptr y) {
 object * objLPOW(mpz_ptr x, long y) {
     object*o=(object*)malloc(sizeof(object));
     mpz_ptr L=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(L);
-    if (y>0) mpz_pow_ui(L,x,y);
-    else mpz_root(L,x,y);
+    if (y>=0) mpz_pow_ui(L,x,y);
+    else mpz_set_si(L,0);
     o->data.ptr=(object*)L; o->type=OBJ_LINT;
     return o;
 }

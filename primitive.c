@@ -238,8 +238,14 @@ void * p_load(Vector *v) {
     }
 
 }
-*/
 
+code_ret * compile_str(Symbol * s) {
+}
+
+void * eval_str(Symbol * s) {
+
+}
+*/
 Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_puts,p_getc, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,

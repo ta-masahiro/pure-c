@@ -15,8 +15,19 @@ Stream  * new_stream(FILE * f) {
     return S; 
 }
 
+Stream  * new_str_stream(char * str) {
+    Stream * S = (Stream * )malloc(sizeof(Stream) );
+    S ->_pos = 0;
+    S ->_line = 0;
+    S ->_buff = str;  
+    S -> _fp = NULL;
+    S->_max=strlen(str);
+    return S; 
+}
+
 char * re_load(Stream * S) {
-    char * p; 
+    char * p;
+    if (S->_fp == NULL) return NULL;
     S ->_pos = 0;
     (S ->_line)++; 
     p = fgets(S ->_buff, MAXBUFF, S ->_fp);

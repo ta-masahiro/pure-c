@@ -117,6 +117,7 @@ ast * new_ast(ast_type type, Vector * table) {
 extern char*dcl_string[];
 //char get_char(Stream*S);
 Stream  * new_stream(FILE * f);  
+Stream  * new_str_stream(char * str);  
 //void unget_char(Stream *S);
 //Symbol * new_symbol(unsigned char * str, unsigned long size);  
 token * new_token(int type, Symbol * s, void * val, Stream * S); 
