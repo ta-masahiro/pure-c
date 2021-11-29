@@ -109,4 +109,5 @@ var fold_n(var f(x,y..),a,v..)={int i=-1,M=@v[0];while (i+=1)<M:a=apply(f,a,vmap
 int xor(int x,int y)=~(x&y) & (x|y);
 vector range(int n,opt..)={vector v=[];int start=0,end=n,step=1;if @opt>=1:{start=n;end=opt[0]}:None;if @opt==2:step=opt[1]:None;if step>=0:while start<end:{v<-start;start+=step}:while start >end:{v<-start;start+=step};v};
 vector iota(int n,opt..)={vector v=[];int start=0,step=1;if @opt>=1:start=opt[0]:None;if @opt==2:step=opt[1]:None;while (n-=1)>=0:{v<-start;start+=step};v};
-
+vector bsort(vector v)={int i=@v,j=0,j1;while i>=0:{j=0;while j<i-1:{j1=j+1;if v[j]<v[j1]:vswap(v,j,j1):None;j+=1};i-=1};v};
+int fpartition(int f(x),vector v) = {int p=0,i=0;while i<@v:{if f(v[i]):{vswap(v,p,i);p+=1}:None;i+=1};p};//条件を満たすものを前半にそうでないものを後半に入れなおし、区切りのポイントを返す
