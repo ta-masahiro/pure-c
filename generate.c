@@ -305,6 +305,42 @@ code_ret * codegen_vect(ast*vect_ast,Vector*env,int tail) {
 
 }
 
+code_ret * codegen_dict(ast*pair_list_ast,Vector*env,int tail) {
+    // ペアリストタイプのastから辞書リテラルを作る 
+    // AST_pair_list [AST_pair1 [AST_pair_left,AST_pair_right],AST_pair2,...]]
+    //                0          <0,0>         <0,1> ...       1
+    Vector*code=vector_init(3), *code1;
+    code_ret*code_s;
+    code_type *ct1;
+    obj_type type1;
+    ast * pair_ast;
+    int i;
+
+    if (pair_list_ast->table == NULL) {                                     // nullvectorの場合
+        push(code,(void*)DIC);push(code,(void*)0);                          // ->[ DIC 0 ]
+        return new_code(code,new_ct(OBJ_DICT,OBJ_NONE,(void*)0,FALSE));
+    } 
+    int n = pair_list_ast->table->_sp;
+    for(i = 0; i < n; i ++ ) {
+        pair_ast = (ast*)vector_ref(pair_list_ast->table, i);
+        code_s = codegen((ast*)vector_ref(pair_ast->table, 0),env, FALSE);  // code of left_pair
+        code1 = code_s->code;
+        ct1 = code_s->ct;
+        type1 = ct1->type;
+        if (type1 != OBJ_SYM) push(code1,(void*)conv_op[type1][OBJ_KEY]);
+        code=vector_append(code,code1);
+
+        code_s = codegen((ast*)vector_ref(pair_ast->table, 1),env, FALSE);  // code of right_pair
+        code1 = code_s->code;
+        ct1 = code_s->ct;
+        type1 = ct1->type;
+        if (type1 != OBJ_GEN) push(code1,(void*)conv_op[type1][OBJ_GEN]);
+        code=vector_append(code,code1);
+    }
+    push(code,(void*)DIC);push(code,(void*)(long)n);
+    return new_code(code,new_ct(OBJ_DICT,OBJ_GEN,(void*)0,FALSE));
+}
+
 code_ret *codegen_lit(ast*lit_ast,Vector*env,int tail) {
     // リテラルタイプのastを処理し、コードを作る 
     tokentype lit_type=(tokentype)vector_ref(lit_ast->table,0);
@@ -465,7 +501,7 @@ code_ret *codegen_vref(ast *vref_ast, Vector*env, int tail) {  // AST_VREF [AST_
         return new_code(code,new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));
     } else if (type1==OBJ_DICT) {
         push(code,(void*)LDH);
-        return new_code(code,new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));
+        return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
     } else {
         push(code,(void*)OREF);
         return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
@@ -972,7 +1008,7 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
 
 code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_type, AST_left_expr, AST_right_expr]
                                                                 //          <0>       <1>            <2>
-    // case of '+=' '-=' '*=' '/=' '%=' '|=' '&='
+    // case of '+=' '-=' '*=' '/=' '%=' '|=' '&=' '^='
     code_ret *code_s;
     Vector *code, *code1, *v, *vv;
     code_type *ct, *ct1;
@@ -1000,18 +1036,21 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
             code1=code_s->code;ct1=code_s->ct;
             //vector_set(code1,code1->_sp-1,(void*)VSET);
             i=(long)pop(code1);
-            if ((i==REF || i==OREF) && ct->type != OBJ_GEN ) {
+            if ((i==REF || i==OREF || i==LDH) && ct->type != OBJ_GEN ) {
                push(code,(void*)conv_op[ct->type][OBJ_GEN]);
             } else if (i==SREF && ct->type != OBJ_SYM ) {
                //push(code,(void*)conv_op[ct->type][OBJ_SYM]);
                 printf("SyntaxError:Must be Symbol!\n");Throw(0);
-            }
+            } 
             if (i==REF) {
                 push(code1,(void*)VSET);
                 return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
             } else if (i==SREF) {
                 push(code1,(void*)SSET);
                 return new_code(vector_append(code,code1),new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));
+            } else if (i==LDH) {
+                push(code1,(void*)HSET);
+                return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
             } else {
                 push(code1,(void*)OSET);
                 return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
@@ -1206,21 +1245,22 @@ code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list 
 
 code_ret * codegen(ast * a, Vector * env, int tail) {
     switch(a->type) {
-        case AST_ML:    return  codegen_ml      (a, env, tail);
-        case AST_IF:    return  codegen_if      (a, env, tail);
-        case AST_SET:   return  codegen_set     (a, env, tail);
-        case AST_LAMBDA:return  codegen_lambda  (a, env, tail);
-        case AST_DCL:   return  codegen_dcl     (a, env, tail);
-        case AST_FCALL: return  codegen_fcall   (a, env, tail);
-        case AST_APPLY: return  codegen_apply   (a, env, tail);
-        case AST_2OP:   return  codegen_2op     (a, env, tail);
-        case AST_1OP:   return  codegen_1op     (a, env, tail); 
-        case AST_VREF:  return  codegen_vref    (a, env, tail);
-        case AST_SLS:   return  codegen_sls     (a, env, tail);
-        case AST_VAR:   return  codegen_var     (a, env, tail);
-        case AST_LIT:   return  codegen_lit     (a, env, tail);
-        case AST_VECT:  return  codegen_vect    (a, env, tail);
-        case AST_WHILE: return  codegen_while   (a, env, tail);
+        case AST_ML:        return  codegen_ml      (a, env, tail);
+        case AST_IF:        return  codegen_if      (a, env, tail);
+        case AST_SET:       return  codegen_set     (a, env, tail);
+        case AST_LAMBDA:    return  codegen_lambda  (a, env, tail);
+        case AST_DCL:       return  codegen_dcl     (a, env, tail);
+        case AST_FCALL:     return  codegen_fcall   (a, env, tail);
+        case AST_APPLY:     return  codegen_apply   (a, env, tail);
+        case AST_2OP:       return  codegen_2op     (a, env, tail);
+        case AST_1OP:       return  codegen_1op     (a, env, tail); 
+        case AST_VREF:      return  codegen_vref    (a, env, tail);
+        case AST_SLS:       return  codegen_sls     (a, env, tail);
+        case AST_VAR:       return  codegen_var     (a, env, tail);
+        case AST_LIT:       return  codegen_lit     (a, env, tail);
+        case AST_VECT:      return  codegen_vect    (a, env, tail);
+        case AST_PAIR_LIST: return  codegen_dict    (a, env, tail);
+        case AST_WHILE:     return  codegen_while   (a, env, tail);
         default: printf("syntaxError:Unknown AST!\n");Throw(0);
     } 
 }
@@ -1290,13 +1330,13 @@ int main(int argc, char*argv[]) {
     mp_set_memory_functions((void *)GC_malloc, (void * )_realloc, (void * ) GC_free);
     mpfr_set_default_prec(256);
     Vector * t; 
-    Vector * Stack = vector_init(500000); 
+    Vector * Stack = vector_init(500000); // 500だと５倍くらい遅い！なぜ？
     //Vector * C, * CC ; 
     Vector * Ret = vector_init(500); 
     Vector * Env = vector_init(5); 
     Vector * EEnv = vector_init(50); 
     G = Hash_init(256); // must be 2^n 
-    GLOBAL_VAR=Hash_init(256);
+    GLOBAL_VAR = Hash_init(256);
     //
     clock_t s1_time,s2_time,e_time;
     struct timespec S1_T,S2_T,E_T;

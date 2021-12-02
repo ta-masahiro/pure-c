@@ -1678,6 +1678,7 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_UFUNC: sprintf(buf,"<UserFunction: %lx>",(long)value);return buf;
         case OBJ_PFUNC: sprintf(buf,"<PrimitiveFunction: %lx>",(long)value);return buf;
         case OBJ_IO   : sprintf(buf,"<I/O_file: %lx>",(long)value);return buf;
+        case OBJ_DICT : sprintf(buf,"<Dictionary: %lx>",(long)value);return buf;
         default:printf("RntimeError:Illegal print args!\n");Throw(3);
     }
 }

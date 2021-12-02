@@ -193,7 +193,13 @@ ast * is_factor(TokenBuff *S) {
         }
         printf("SyntaxError:Not a exper list or ']' error\n");
         Throw(1);
-    } else if (t=='{') { 
+    } else if (t=='{') {
+        if (get_token(S)->type == '}') { // {}の場合
+            v=vector_init(1);
+            push(v,(void*)0);
+            return new_ast(AST_PAIR_LIST,OBJ_NONE,v);
+        }
+        unget_token(S);  
         if ((a=is_pair_list(S)) && get_token(S)->type=='}') return a;
         else {
             unget_token(S);

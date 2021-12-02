@@ -45,7 +45,7 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
-        1,    0,     0,    0,    1,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
+        1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0 };
 
 Vector *tosqs(Vector*code, const void** table) {
@@ -757,9 +757,9 @@ _LDH:
     else push(S, (void * )( * g));
     goto * dequeue(C);
 _HSET:
-    v = pop(S);
     sym = (Symbol *)pop(S);
     h = (Hash * )pop(S);
+    v = pop(S);
     Hash_put(h, sym, v);
     push(S, v);
     goto * dequeue(C);
@@ -1387,10 +1387,12 @@ _WHILE:
     }
     goto *dequeue(C);
 _DIC:
-    n=(long)pop(S);
+    n=(long)dequeue(C);
+    h=Hash_init(n*2);
     for(i=0;i<n;i++) {
-        v=pop(S);Hash_put(G,(Symbol*)pop(S),v);
+        v = pop(S);Hash_put(h, (Symbol*)pop(S),v);
     } 
+    push(S,(void*)h);
     goto *dequeue(C);
 _ITOK:
 _FTOK:
