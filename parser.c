@@ -47,7 +47,9 @@ void ast_print(ast*a, int tablevel) {
         case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST:
             printf("type:%s\t", ast_type_str[t]);
             printf("objecttype: %d\n",a->o_type);
-            for(i = 0; i<a->table->_sp; i ++) ast_print((ast*)(a ->table->_table[i]), tablevel + 1);
+            for(i = 0; i<a->table->_sp; i ++) {
+                if (a->table->_table[i] != NULL) ast_print((ast*)(a ->table->_table[i]), tablevel + 1);
+            }
             break;
         case AST_LIT:
             printf("type:LIT\t");
@@ -211,9 +213,27 @@ ast * is_pair(TokenBuff * S) {
     Vector * v;
     int token_p = S->buff ->_cp;
 
-    if ((a1=is_expr(S)) && (t=get_token(S))->type == ':'  && (a2=is_expr(S))) {
+    //if ((a1=is_expr(S)) && (t=get_token(S))->type == ':'  && (a2=is_expr(S))) {
+    //    v = vector_init(2);
+    //    push(v,a1);push(v,a2);
+    //    return new_ast(AST_PAIR,OBJ_NONE,v); 
+    // }
+    if ((t=get_token(S))->type == ':' && (a1=is_expr(S))) {
+        v=vector_init(2);
+        push(v,(void*)0);push(v,a1);        
+        return new_ast(AST_PAIR,OBJ_NONE,v); 
+    }
+    unget_token(S);
+    if ((a1=is_expr(S)) && (t=get_token(S))->type == ':') {
         v = vector_init(2);
-        push(v,a1);push(v,a2);
+        push(v,a1);
+        if ((t=get_token(S))->type == ',' || t->type == ']') {
+            unget_token(S);
+            push(v,(void*)0);
+        } else {
+            unget_token(S);
+            if (a2=is_expr(S))  push(v,a2);
+        }
         return new_ast(AST_PAIR,OBJ_NONE,v); 
     }
     S->buff -> _cp = token_p;

@@ -471,9 +471,9 @@ code_ret *codegen_vref(ast *vref_ast, Vector*env, int tail) {  // AST_VREF [AST_
         return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
     }
 }
-
+/*
 code_ret*codegen_sls(ast*sls_ast, Vector*env, int tail) {   // AST_SLS [AST_vect,AST_PAIR_LIST [AST_PAIR[car_ast,cdr_ast],AST_PAIR[...],...]]
-                //          <0>      <1>            <1,0>    <1,0,0> <1,0,1>          <1,1>
+                                                            //          <0>      <1>            <1,0>    <1,0,0> <1,0,1>          <1,1>
     code_ret *code_vect = codegen(((ast*)vector_ref(sls_ast->table,0)), env,FALSE);    // vector指示部をコンパイル
     Vector *code = code_vect->code; 
     code_type *ct=code_vect->ct;
@@ -495,6 +495,54 @@ code_ret*codegen_sls(ast*sls_ast, Vector*env, int tail) {   // AST_SLS [AST_vect
     } else {
         push(code,(void*)OSLS);
         return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
+    }
+}
+*/
+code_ret*codegen_sls(ast*sls_ast, Vector*env, int tail) {   // AST_SLS [AST_vect,AST_PAIR_LIST [AST_PAIR[car_ast,cdr_ast],AST_PAIR[...],...]]
+                                                            //          <0>      <1>            <1,0>    <1,0,0> <1,0,1>          <1,1>
+    ast * vect_ast=(ast*)vector_ref(sls_ast->table,0);
+    ast * pair_list_ast = (ast*)vector_ref(sls_ast->table,1);
+    ast * pair_ast = (ast*)vector_ref(pair_list_ast->table,0);
+    ast * sls_start_ast = (ast*)vector_ref(pair_ast->table,0);
+    ast * sls_end_ast = (ast*)vector_ref(pair_ast->table,1);
+
+    code_ret *code_vect = codegen(vect_ast, env,FALSE);    // vector指示部をコンパイル
+    code_type *vect_ct = code_vect->ct;
+    obj_type vect_type = vect_ct->type;
+    if (vect_type != OBJ_VECT && vect_type != OBJ_SYM && vect_type != OBJ_GEN) {printf("Syntax Error:must be vector!\n");Throw(0);}
+
+    Vector *code = code_vect->code;
+
+    code_ret * sls_s_code, * sls_e_code;
+    // make slice start code
+    if (sls_start_ast != NULL) {
+        sls_s_code = codegen(sls_start_ast, env,FALSE);
+        code = vector_append(code, sls_s_code->code);
+        if (sls_s_code->ct->type != OBJ_INT) push(code,(void*)conv_op[sls_s_code->ct->type][OBJ_INT]);
+    }
+    // make slice end code
+    if (sls_end_ast != NULL) {
+        sls_e_code = codegen(sls_end_ast, env,FALSE);
+        code = vector_append(code, sls_e_code->code);
+        if (sls_e_code->ct->type != OBJ_INT) push(code,(void*)conv_op[sls_e_code->ct->type][OBJ_INT]);
+    }
+    //disassy(code,0,stdout);//ok
+    if (sls_start_ast) {
+        if (sls_end_ast) {
+            if (vect_type == OBJ_VECT) {push(code, (void*)VSLS);return new_code(code,new_ct(OBJ_VECT,OBJ_NONE,(void*)0,FALSE));}
+            else if (vect_type == OBJ_SYM) {push(code, (void*)SSLS);return new_code(code,new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));}
+            else {push(code, (void*)OSLS); return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));}
+        } else {
+            if (vect_type == OBJ_VECT) {push(code, (void*)VSLS_);return new_code(code,new_ct(OBJ_VECT,OBJ_NONE,(void*)0,FALSE));}
+            else if (vect_type == OBJ_SYM) {push(code, (void*)SSLS_);return new_code(code,new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));}
+            else {push(code, (void*)OSLS_);return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));}
+        }
+    } else {
+        if (sls_end_ast) {
+            if (vect_type == OBJ_VECT) {push(code, (void*)V_SLS);return new_code(code,new_ct(OBJ_VECT,OBJ_NONE,(void*)0,FALSE));}
+            else if (vect_type == OBJ_SYM) {push(code, (void*)S_SLS);return new_code(code,new_ct(OBJ_SYM,OBJ_NONE,(void*)0,FALSE));}
+            else {push(code, (void*)O_SLS);return new_code(code,new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));} 
+        }
     }
 }
 
@@ -882,13 +930,29 @@ code_ret * codegen_loop(ast *loop_ast, Vector *env, int tail){
 code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[cond_expr,true_expr,false_expr]
 
     code_ret *code_s1 = codegen(vector_ref(a -> table, 0),env,FALSE);
-    Vector *code=code_s1->code;                                             // make cond_code 
-    code_s1 = codegen(vector_ref(a->table,1),env,TRUE);             // make true_code
-    Vector *code1=code_s1->code;code_type *ct1=code_s1->ct;
-    code_s1 = codegen(vector_ref(a->table,2),env,TRUE);             // make false_code
-    Vector *code2=code_s1->code;code_type *ct2=code_s1->ct;
-    if (tail) push(code,(void*)TSEL); else push(code,(void*)SEL);   
+    Vector *code = code_s1->code;                                             // make cond_code 
+    //code_s1 = codegen(vector_ref(a->table,1),env,tail);             // make true_code
+    //Vector *code1=code_s1->code;code_type *ct1=code_s1->ct;
+    //code_s1 = codegen(vector_ref(a->table,2),env,tail);             // make false_code
+    //Vector *code2=code_s1->code;code_type *ct2=code_s1->ct;
+    //if (tail) push(code,(void*)TSEL); else push(code,(void*)SEL);
+    Vector *code1, *code2;
+    code_type *ct1, *ct2;
 
+    if (tail) {
+        code_s1 = codegen(vector_ref(a->table,1),env,TRUE);             // make true_code
+        code1=code_s1->code; ct1=code_s1->ct;
+        code_s1 = codegen(vector_ref(a->table,2),env,TRUE);             // make false_code
+        code2=code_s1->code; ct2=code_s1->ct;
+        push(code,(void*)TSEL);
+
+    } else { 
+        code_s1 = codegen(vector_ref(a->table,1),env,FALSE);             // make true_code
+        code1=code_s1->code; ct1=code_s1->ct;
+        code_s1 = codegen(vector_ref(a->table,2),env,FALSE);             // make false_code
+        code2=code_s1->code; ct2=code_s1->ct;
+        push(code,(void*)SEL);
+    }
     if (ct1->type == ct2->type || ct1->type==OBJ_NONE || ct2->type==OBJ_NONE) { // 暫定処置
         if (tail) {push(code1,(void*)RTN);push(code2,(void*)RTN);}
         else {push(code1,(void*)JOIN);push(code2,(void*)JOIN);}
@@ -1226,7 +1290,7 @@ int main(int argc, char*argv[]) {
     mp_set_memory_functions((void *)GC_malloc, (void * )_realloc, (void * ) GC_free);
     mpfr_set_default_prec(256);
     Vector * t; 
-    Vector * Stack = vector_init(500); 
+    Vector * Stack = vector_init(500000); 
     //Vector * C, * CC ; 
     Vector * Ret = vector_init(500); 
     Vector * Env = vector_init(5); 
@@ -1289,7 +1353,7 @@ int main(int argc, char*argv[]) {
                 value = eval(Stack,Env,code,Ret,EEnv,G);
                 e_time = clock();clock_gettime(CLOCK_REALTIME,&E_T);
                 //printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)1000*(s2_time-s1_time)/CLOCKS_PER_SEC,(double)1000*(e_time-s2_time)/CLOCKS_PER_SEC);
-                printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)(S2_T.tv_sec-S1_T.tv_sec)+(double)(S2_T.tv_nsec-S1_T.tv_nsec)/(1000*1000*1000),(double)(E_T.tv_sec-S2_T.tv_sec)+(double)(E_T.tv_nsec-S2_T.tv_nsec)/(1000*1000*1000));
+                printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)(S2_T.tv_sec-S1_T.tv_sec)*1000+(double)(S2_T.tv_nsec-S1_T.tv_nsec)/(1000*1000),(double)(E_T.tv_sec-S2_T.tv_sec)+(double)(E_T.tv_nsec-S2_T.tv_nsec)/(1000*1000*1000));
                 printf("%s ok\n", objtype2str(type,value));
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {

@@ -400,7 +400,7 @@ object * objIPOW(long x, long y) {
     mpz_ptr L=(mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init_set_si(L,x);
     if (y>=0) mpz_pow_ui(L,L,y);
-    else mpz_set_si(L,0);
+    else mpz_set_ui(L,0);
     if (!mpz_fits_slong_p(L)) {o->data.ptr=(object*)L; o->type=OBJ_LINT;}
     else {o->data.intg=mpz_get_si(L);o->type=OBJ_INT;}
     return o;
