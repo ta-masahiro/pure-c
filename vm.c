@@ -753,7 +753,7 @@ _HASH:
 _LDH:
     sym = (Symbol *)pop(S);
     h = (Hash * )pop(S);
-    if ((g = Hash_get(h, sym)) == NULL) printf("Unknown Key: %s\n", sym -> _table);
+    if ((g = Hash_get(h, sym)) == NULL) {printf("Unknown Key: %s\n", sym -> _table);Throw(3);}
     else push(S, (void * )( * g));
     goto * dequeue(C);
 _HSET:

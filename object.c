@@ -1644,6 +1644,8 @@ char * objtype2str(obj_type type, void* value) {
     mp_exp_t e;
     int i,n;
     long lval;
+    unsigned long li;
+    Symbol * key;
     if ((type != OBJ_INT && type != OBJ_FLT) && value == NULL) return NONE;
     switch(type){
         case OBJ_NONE:  return NONE;
@@ -1678,7 +1680,18 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_UFUNC: sprintf(buf,"<UserFunction: %lx>",(long)value);return buf;
         case OBJ_PFUNC: sprintf(buf,"<PrimitiveFunction: %lx>",(long)value);return buf;
         case OBJ_IO   : sprintf(buf,"<I/O_file: %lx>",(long)value);return buf;
-        case OBJ_DICT : sprintf(buf,"<Dictionary: %lx>",(long)value);return buf;
+        case OBJ_DICT : //sprintf(buf,"<Dictionary: %lx>",(long)value);return buf;
+                        strcpy(buf, "{ ");
+                        for(li = 0;  li < (((Hash*)value)->size); li ++ ) {
+                            key = ((Hash*)value)->hashTable[li].key;
+                            if (key != NULL) { 
+                                //printf("i:%ld key:%s hash:%ld, val:%ld\n",i , key ->_table, hash(key->_table,key->_size, h->initval) & (h->size -1), (long)(h ->hashTable[i].val));  
+                                strcat(buf,key->_table);strcat(buf," :");strcat(buf,objtostr((object*)(((Hash*)value) ->hashTable[li].val)));
+                                strcat(buf,", ");
+                            }
+                        }
+                        strcat(buf,"}");
+                        return buf;
         default:printf("RntimeError:Illegal print args!\n");Throw(3);
     }
 }

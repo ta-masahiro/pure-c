@@ -114,6 +114,21 @@ void  **Hash_get(Hash * hashT, Symbol *key) {
     return NULL;
 }
 
+void Hash_del(Hash * hashT, Symbol *key) {
+    Symbol * k;
+    unsigned long n, h = hash(key ->_table, key ->_size, hashT ->initval) & (hashT->size -1);
+    for (n = 0; n < hashT ->size; n++) {
+        unsigned long ix = (h + n) & (hashT->size  - 1);
+        if ((k = hashT ->hashTable[ix].key) == NULL) {   // 登録なし
+            if (hashT->hashTable[ix].val == NULL) return;
+        } else if (memcmp(k->_table, key ->_table, key ->_size) == 0) {// 登録あり
+            hashT ->hashTable[ix].key = NULL;
+            return;
+        }
+        //printf("!!!!\n");
+    }
+}
+
 void print_hashTable(Hash * h) {
     unsigned long i; 
     Symbol * key;

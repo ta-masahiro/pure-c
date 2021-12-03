@@ -47,6 +47,7 @@ void ast_print(ast*a, int tablevel) {
         case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST:
             printf("type:%s\t", ast_type_str[t]);
             printf("objecttype: %d\n",a->o_type);
+            if (a->table==NULL) break;
             for(i = 0; i<a->table->_sp; i ++) {
                 if (a->table->_table[i] != NULL) ast_print((ast*)(a ->table->_table[i]), tablevel + 1);
             }
@@ -195,9 +196,9 @@ ast * is_factor(TokenBuff *S) {
         Throw(1);
     } else if (t=='{') {
         if (get_token(S)->type == '}') { // {}の場合
-            v=vector_init(1);
-            push(v,(void*)0);
-            return new_ast(AST_PAIR_LIST,OBJ_NONE,v);
+            //v=vector_init(1);
+            //push(v,(void*)0);
+            return new_ast(AST_PAIR_LIST,OBJ_NONE,(void*)0);
         }
         unget_token(S);  
         if ((a=is_pair_list(S)) && get_token(S)->type=='}') return a;
