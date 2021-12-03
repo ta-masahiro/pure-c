@@ -8,8 +8,9 @@ unsigned long ilog2(unsigned long x) {
 
 Hash * Hash_init(unsigned long size) {
     Hash * h = (Hash * )malloc(sizeof(Hash));
-    h ->initval = 0;  
-    h ->size = (unsigned long)2<<ilog2(size);
+    h ->initval = 0;
+    if (size<32) h->size = 32;  
+    else h ->size = (unsigned long)2<<ilog2(size);
     h ->hashTable = (Data * )calloc(h -> size, sizeof(Data));
     h ->entries = 0;
     return h; 

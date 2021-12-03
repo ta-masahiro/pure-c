@@ -18,6 +18,8 @@ Vector * vector_copy(Vector * v) ;
 Vector * vector_append(Vector*v1,Vector*v2);
 void vector_resize(Vector * s);
 void vector_print(Vector * s) ;
+void vector_delete(Vector * v, int index); 
+void vector_insert(Vector * v, int index, void * value); 
  
 #ifndef INLINE
 #define INLINE

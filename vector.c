@@ -68,6 +68,17 @@ Vector * vector_append(Vector*v1,Vector*v2) {
     return v;
 }
 
+void vector_delete(Vector * v, int index) {
+    memmove(v->_table + index, v->_table + index +1, sizeof(void*)*(v->_sp - index));
+    v->_sp--;
+}
+
+void vector_insert(Vector * v, int index, void * value) {
+    memmove(v->_table + index + 1, v->_table + index, sizeof(void*)*(v->_sp - index));
+    v->_table[index]=value;
+    v->_sp++;
+}
+
 void vector_print(Vector * s) {
     int i;
     if (s==NULL) {printf("None\n");return;}
