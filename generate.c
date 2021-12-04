@@ -57,7 +57,7 @@ enum CODE op1_2[18][6] =
                };
 obj_type op1_3[]={0,0,OBJ_INT,0,0,OBJ_GEN};
 enum CODE conv_op[18][19] = 
-                        {{0,  0,    ITOL,    ITOR,    ITOF,  0,     ITOO   },    //OBJ_NONEには0が入っているのでINTとみなす
+                        {{0,  0,    ITOL, ITOR, ITOF,  0,    ITOO,  ITOO },    //OBJ_NONEには0が入っているのでINTとみなす
                     //  NONE  INT   LONG  RAT   FLOAT LFLOAT CMPLX  GEN    SYSFUNC PFUNC UFUNC CNT   VECT DICT PAIR SYM   ARRAY IO  KEY
                         {0,   0,    ITOL, ITOR, ITOF, ITOLF, ITOC,  ITOO,  0,      0,    0,    0,    0,   0,   0,   ITOS, 0,    0,  ITOK  },
                         {0,   LTOI, 0   , LTOR, LTOF, LTOLF, LTOC,  LTOO,  0,      0,    0,    0,    0,   0,   0,   LTOS, 0,    0,  0  },
