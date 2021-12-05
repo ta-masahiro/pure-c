@@ -124,6 +124,7 @@ void Hash_del(Hash * hashT, Symbol *key) {
             if (hashT->hashTable[ix].val == NULL) return;
         } else if (memcmp(k->_table, key ->_table, key ->_size) == 0) {// 登録あり
             hashT ->hashTable[ix].key = NULL;
+            hashT->entries--;
             return;
         }
         //printf("!!!!\n");

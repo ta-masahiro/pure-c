@@ -356,7 +356,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_VECT,OBJ_INT,OBJ_INT},                     // vswap
                                 {OBJ_VECT},                                     // sort
                                 {OBJ_GEN, OBJ_GEN},                             // cmp
-                                {OBJ_DICT,OBJ_SYM},                             // ddel
+                                {OBJ_DICT,OBJ_KEY},                             // ddel
                                 {OBJ_VECT,OBJ_INT},                             // vdel
                                 {OBJ_VECT,OBJ_INT,OBJ_GEN},                     // vins
                                 {OBJ_LINT, OBJ_INT},                            // is_prime

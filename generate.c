@@ -42,14 +42,14 @@ enum CODE op1_2[18][6] =
                 {RNEG, 0,    0,    0,    0   , 0   },   // RAT
                 {FNEG, 0,    0,    0,    0   , 0   },   // FLOAT
                 {LFNEG,0,    0,    0,    0   , 0   },   // LFLOAT
-                {CNEG,0,    0,    0,    0   , 0   },    // CMPLX 
+                {CNEG, 0,    0,    0,    0   , 0   },    // CMPLX 
                 {ONEG, OBNOT,OLEN, OINC, ODEC, OPOP},     // GEN
                 {0,    0,    0,    0,    0   , 0   },     // SYSFUNC
                 {0,    0,    0,    0,    0   , 0   },     // PFUNC
                 {0,    0,    0,    0,    0   , 0   },     // UFUNC
                 {0,    0,    0,    0,    0   , 0   },     // CNT
                 {0,    0,    VLEN, 0,    0   , VPOP},     // VECT
-                {0,    0,    0,    0,    0   , 0   },     // DICT
+                {0,    0,    DLEN, 0,    0   , 0   },     // DICT
                 {0,    0,    0,    0,    0   , 0   },     // PAIR
                 {0,    0,    SLEN, 0,    0   , SPOP},     // SYM
                 {0,    0,    0,    0,    0   , 0   },     // ARRAY
