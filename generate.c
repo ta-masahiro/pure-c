@@ -1261,6 +1261,8 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
         case AST_VECT:      return  codegen_vect    (a, env, tail);
         case AST_PAIR_LIST: return  codegen_dict    (a, env, tail);
         case AST_WHILE:     return  codegen_while   (a, env, tail);
+//        case AST_CLASS_VAR: return  codegen_cl_var  (a, env, tail);
+//        case AST_CLASS:     return  codegen_class   (a, env, tail);
         default: printf("syntaxError:Unknown AST!\n");Throw(0);
     } 
 }

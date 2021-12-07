@@ -22,7 +22,7 @@ ast * new_ast(ast_type type, obj_type o_type,Vector * table) {
 char* ast_type_str[] = {"None","MultiFunction","If","Set","Lambda","While","Class","Operator2",
                         "Opraor1","VectorRef","VectorSlice","Literal","Variable","Vector",
                         "Dictionary","ApplyFunction","FunctionCall","Exprlist","CallC/C","Propaeity",
-                        "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","\0"};
+                        "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","\0"};
 
 void ast_print(ast*a, int tablevel) {
     int i;
@@ -44,7 +44,7 @@ void ast_print(ast*a, int tablevel) {
         // ast list type
         case AST_WHILE: case AST_IF: case AST_CLASS: case AST_VREF: case AST_SLS: case AST_VECT: case AST_DICT:
         case AST_DCL:case AST_APPLY: case AST_LAMBDA:case AST_EXP_LIST: case AST_EXP_LIST_DOTS: case AST_ARG_LIST: 
-        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST:
+        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR:
             printf("type:%s\t", ast_type_str[t]);
             printf("objecttype: %d\n",a->o_type);
             if (a->table==NULL) break;
@@ -88,6 +88,7 @@ void ast_print(ast*a, int tablevel) {
         //    printf("objecttype: %d\n",a->o_type);
         //    for(i=0;i<a->table->_sp;i++) ast_print((ast*)a->table->_table[i],tablevel+1);
         //    break;
+        default:printf("Unknown AST\n");Throw(1);
     }
 }
 ast *  is_lit(TokenBuff*S) {
@@ -308,13 +309,15 @@ ast*is_arg_list(TokenBuff * S);
 
 ast * is_expr_0(TokenBuff *S) {    // expr_0以降が形式上左辺式に使える
     // exp_0        : APPLY '(' expr_list ')'
-    //              | factor '(' arg_list '..' ')'
-    //              | fator  '(' arg_list ')'
-    //              | factor '(' expr_list '..' ')'
-    //              | factor '(' expr_list ')'
-    //              | factor '(' ')'
-    //              | factor '[' expr_list ']'
-    //              | factor '[' pair_list ']'
+    //              | factor
+    //              | exp_0 '(' arg_list '..' ')'
+    //              | exp_0 '(' arg_list ')'
+    //              | exp_0 '(' expr_list '..' ')'
+    //              | exp_0 '(' expr_list ')'
+    //              | exp_0 '(' ')'
+    //              | exp_0 '[' expr_list ']'
+    //              | exp_0 '[' pair_list ']'
+    //              | exp_0 '.' exp_0                   // class 
     ast * a1, * a2;
     token*t;
     tokentype t1,t2;
@@ -336,10 +339,18 @@ ast * is_expr_0(TokenBuff *S) {    // expr_0以降が形式上左辺式に使え
         while (TRUE) {
             //token_print(S);
             t1 = get_token(S)->type;
-            if (t1 !='(' && t1 != '[') {
+            if (t1 !='(' && t1 != '[' && t1 != '.') {
                 unget_token(S);
                 return a1;
-            } // factorの後に'('または'['が続く場合
+            } // factorの後に'.'、'('または'['が続く場合
+            if (t1 == '.') { // class
+                if (a2 = is_expr_0(S)) {
+                    v = vector_init(2);
+                    push(v, (void*)a1); push(v, (void*)a2);
+                    a1 =  new_ast(AST_CLASS_VAR, OBJ_NONE, v);                 // クラス変数
+                    continue;        
+                }
+            }
             t2 = get_token(S) -> type;
             if (t1=='(' && t2 == ')'){
                 v = vector_init(2);
