@@ -24,7 +24,7 @@ char * code_name[] =
      "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","CADD", "CSUB", "CMUL", "CDIV", "CPOW",
      "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE", "LOOP_SET",
      "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","VSLS_","V_SLS","SSLS_","S_SLS",
-     "OSLS_", "O_SLS","DLEN", "$$$" };
+     "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -46,7 +46,7 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
         1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0 };
+        0,    0,     0,    0,    0,    0,   0,   0 };
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -110,7 +110,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO,&&_CADD, &&_CSUB, &&_CMUL, &&_CDIV ,&&_CPOW, \
             &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE,&&_LOOP_SET,\
             &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR,&&_VSLS_,&&_V_SLS,&&_SSLS_,&&_S_SLS,\
-            &&_OSLS_, &&_O_SLS,&&_DLEN };
+            &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 };
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -829,20 +829,17 @@ _2ROT:
 _CALLS: // small call Eレジスタを使用せず、スタックのみをローカル変数として用いる
     n = (long)dequeue(C);
     push(R, (void * )C);
-    // C = vector_copy1((Vector * )pop(S));
     C = (Vector * )pop(S); C -> _cp = 0;
     push(ssp,(void*)SSP);
     push(ssp,(void*)(long)S->_sp-n);
-    SSP = S->_sp;//for(i=SSP-n;i<SSP;i++) printf(" %ld",(long)S->_table[i]);printf(":S%ld\n",SSP);vector_print(S);
+    SSP = S->_sp;
     goto * dequeue(C);
 _TCALLS:// tail small call
     n=(long)dequeue(C);
-    // push(R, (void * )C);
-    // C = vector_copy1((Vector * )pop(S));
     C = (Vector * )pop(S); C -> _cp = 0;
-    //push(ssp,(void*)SSP);
-    //push(ssp,(void*)(long)S->_sp-n);
-    SSP=S->_sp;//for(i=SSP-n;i<SSP;i++) printf(" %ld",(long)S->_table[i]);printf(":TS%ld\n",SSP);vector_print(S);
+    SSP=S->_sp;
+    //memcpy((S->_table)+(SSP-n)*sizeof(void*),(S->_table)+(S->_sp-n)*sizeof(void*),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
+    //S->_sp -= n;                                                                      //　スタックを増やさない
     goto * dequeue(C);
 _RTNS: //small call用のRTN
     //E = (Vector * )pop(EE);
@@ -860,7 +857,22 @@ _LDP://small call用の関数をロードする
     goto * dequeue(C);
 _LDL://small call 内のローカル変数ロード
     n=(long)dequeue(C);
-    push(S, S->_table[SSP-n-1]);//nがマイナスの場合の庶路追加要！
+    push(S, S->_table[SSP-n-1]);//nがマイナスの場合の処置は？？？
+    goto * dequeue(C);
+_LDL0:
+    push(S, S->_table[SSP-1]);
+    goto * dequeue(C);
+_LDL1:
+    push(S, S->_table[SSP-2]);
+    goto * dequeue(C);
+_LDL2:
+    push(S, S->_table[SSP-3]);
+    goto * dequeue(C);
+_LDL3:
+    push(S, S->_table[SSP-4]);
+    goto * dequeue(C);
+_LDL4:
+    push(S, S->_table[SSP-5]);
     goto * dequeue(C);
 _VTOO:
     push(S,(void*)newVECT((Vector*)pop(S)));

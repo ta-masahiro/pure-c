@@ -4,36 +4,36 @@
     [
     LDF
     [
-        LD  [0 0]
+        LD00
         LDC 0
         EQ
         TSEL
         [
-            LD  [0 2]
+            LD02
             RTN
         ]
         [
-            LD [0 0]
+            LD00
             DEC
-            LD  [0 1]
-            LD  [0 2]
+            LD01
+            LD02
             LADD
-            LD  [0 1]
+            LD01
             ; LPR
-            LD  [1 0]
+            LD10
             TCALL 3
             RTN
         ]
         RTN
     ]
-    set [0 0]
+    set00
     drop 
-    ld [1 0]
+    ld10
     ldc 1
     itol
     ldc 0
     itol
-    ld [0 0]
+    ld00
     tcall 3
     rtn
     ]
