@@ -821,6 +821,9 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
 
     }
 }
+code_ret *codegen_cl_var(ast * ast_cl_var, Vector * env, int tail) {
+    // AST_CL_VAR [left_ast, right_astn]
+}
 
 code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                        // AST_DCL [AST_EXPR_LIST [exp1,exp2...]]
                                                                                     //          <0>            <0,0>,<0,1>
@@ -1395,7 +1398,7 @@ int main(int argc, char*argv[]) {
                 value = eval(Stack,Env,code,Ret,EEnv,G);
                 e_time = clock();clock_gettime(CLOCK_REALTIME,&E_T);
                 //printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)1000*(s2_time-s1_time)/CLOCKS_PER_SEC,(double)1000*(e_time-s2_time)/CLOCKS_PER_SEC);
-                printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)(S2_T.tv_sec-S1_T.tv_sec)*1000+(double)(S2_T.tv_nsec-S1_T.tv_nsec)/(1000*1000),(double)(E_T.tv_sec-S2_T.tv_sec)+(double)(E_T.tv_nsec-S2_T.tv_nsec)/(1000*1000*1000));
+                printf("compile time[sec]:%f\tevalueate time[sec]:%f\n",(double)(S2_T.tv_sec-S1_T.tv_sec)+(double)(S2_T.tv_nsec-S1_T.tv_nsec)/(1000*1000*1000),(double)(E_T.tv_sec-S2_T.tv_sec)+(double)(E_T.tv_nsec-S2_T.tv_nsec)/(1000*1000*1000));
                 printf("%s ok\n", objtype2str(type,value));
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {

@@ -297,7 +297,8 @@ int main(int argc, char * argv[]) {
     mp_set_memory_functions((void *)GC_malloc, (void * )_realloc, (void * ) GC_free);
 
     Vector  * code,  * t; 
-    Vector * S = vector_init(500000); 
+    //Vector * S = vector_init(500000); 
+    Vector * S = vector_init(400000); 
     Vector * E = vector_init(5); 
     Vector * C, * CC ; 
     Vector * R = vector_init(500); 
@@ -329,7 +330,8 @@ int main(int argc, char * argv[]) {
                 //code_optimize(C,G);
                 disassy(C,0);
                 v = (long)eval(S, E, C, R, EE, G);
-                printf("%ld\n", v);    
+                printf("%ld\n", v);
+                //printf("stack size:%d\n",S->_sp);    
                 break;   
             } else if (isblank(c)) continue;  
             else if (c == '\n') { 

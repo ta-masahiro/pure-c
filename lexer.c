@@ -326,8 +326,16 @@ token * is_STR(Stream*S,tokenstate s, char* buff) {
     char c = get_char(S);
     switch (s) {
         case TOKEN_NONE:
-            if (c == '"') return is_STR(S, TOKEN_STR, buff);
-            else { 
+            if (c == '"') {
+                if (get_char(S)=='"') {
+                    if (get_char(S)=='"') {
+                        return is_STR(S,TOKEN_RAW_STR, buff);
+                    }
+                    unget_char(S);
+                }
+                unget_char(S);
+                return is_STR(S, TOKEN_STR, buff);
+            } else { 
                 unget_char(S);
                 return NULL;
             }
@@ -344,6 +352,28 @@ token * is_STR(Stream*S,tokenstate s, char* buff) {
                 *(buff++) = c; 
                 return is_STR(S, s, buff);
             }
+        case TOKEN_RAW_STR:
+            if (c == '"') {
+                if (get_char(S)=='"') {
+                    if (get_char(S)=='"') {
+                        return new_token(TOKEN_STR, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+                    }
+                    unget_char(S);
+                    *(buff++)=c; *(buff++)=c;
+                    return is_STR(S,s,buff);
+                }
+                unget_char(S);
+                *(buff++) = c;
+                return is_STR(S, s, buff);
+            } else if (c=='\n') {
+                *(buff++) = '\\'; *(buff++)='n';
+                re_load(S);
+                return is_STR(S,s,buff);
+            } else { 
+                *(buff++) = c; 
+                return is_STR(S, s, buff);
+            }
+
     }
 }
 

@@ -826,7 +826,7 @@ _2ROT:
     S->_table[S->_sp - 3] = S->_table[S->_sp - 4];
     S->_table[S->_sp - 4] = v;
     goto * dequeue(C);
-_CALLS: // small call Eレジスタを使用せず、スタックのみをローカル変数として用いる
+_CALLS: // small call : Eレジスタを使用せず、スタックのみをローカル変数として用いる
     n = (long)dequeue(C);
     push(R, (void * )C);
     C = (Vector * )pop(S); C -> _cp = 0;
@@ -837,20 +837,16 @@ _CALLS: // small call Eレジスタを使用せず、スタックのみをロー
 _TCALLS:// tail small call
     n=(long)dequeue(C);
     C = (Vector * )pop(S); C -> _cp = 0;
-    SSP=S->_sp;
-    //memcpy((S->_table)+(SSP-n)*sizeof(void*),(S->_table)+(S->_sp-n)*sizeof(void*),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
-    //S->_sp -= n;                                                                      //　スタックを増やさない
+    //SSP=S->_sp;
+    memcpy((S->_table)+(SSP-n),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
+    S->_sp -= n;                                                              //　スタックを増やさないので結局早い
     goto * dequeue(C);
 _RTNS: //small call用のRTN
-    //E = (Vector * )pop(EE);
     C = (Vector * )pop(R);
-    v = S->_table[S->_sp-1];//printf("RTNS:%ld %ld", (long)S->_table[S->_sp-1],SSP);
+    v = S->_table[S->_sp-1];
     S->_sp=(long)pop(ssp);
-    SSP=(long)pop(ssp);//printf("->%ld\n",SSP);
-    //S->_table[SSP]=v;
-    //S->_sp=SSP+1;
+    SSP=(long)pop(ssp);
     push(S,v);
-    //vector_print(S);
     goto * dequeue(C);
 _LDP://small call用の関数をロードする
     push(S, dequeue(C));
@@ -1221,7 +1217,7 @@ _LFMOD:
     lfy=(mpfr_ptr)pop(S);lfx=(mpfr_ptr)pop(S);
     lfz = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(lfz);
-    mpfr_modf(lfz,lfx,lfy,MPFR_RNDN);
+    mpfr_fmod(lfz,lfx,lfy,MPFR_RNDN);
     push(S,(void*)lfz);
     goto * dequeue(C);
 _LFPOW:

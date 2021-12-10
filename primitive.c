@@ -186,13 +186,14 @@ void * p_vswap(Vector *v) {
     return (void*)0;
 }
 //  sorting !!うまく動いていない
-int cmp(const void* x,const void* y) {return objcmp((object*)x,(object*)y);}
+int __cmp(const void* x,const void* y) {return objcmp((object*)x,(object*)y);}
 void *p_sort(Vector *vv) {
     Vector *v=(Vector *)vector_ref(vv,0);
     int data_size=v->_sp;
-    void ** data_pt=v->_table;
+    void * data_pt=v->_table;
     //qsort(v->_table, v->_sp, sizeof(void*), cmp);
-    qsort(v->_table, v->_sp, 8, cmp);
+    qsort(v->_table, v->_sp, 8, __cmp);
+    //qsort(v->_table, v->_sp, 8, objcmp);
     return (void*)0;
 }
 void * p_ddel(Vector * v) {Hash_del((Hash*)vector_ref(v,0), (Symbol*)vector_ref(v,1));return NULL;}

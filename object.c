@@ -754,7 +754,7 @@ object*objLFMOD(mpfr_ptr x, mpfr_ptr y) {
     //mpfr_trunc(F,F);
     //mpfr_mul(F,F,y);
     //mpfr_sub(F,x,F);
-    mpfr_modf(F, x, y, MPFR_RNDN);
+    mpfr_fmod(F, x, y, MPFR_RNDN);
     o->data.ptr=(void*)F;
     o->type=OBJ_LFLT;
     return o;

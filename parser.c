@@ -121,7 +121,7 @@ ast *  is_lit(TokenBuff*S) {
             push(v, (void*)(long)t->type); push(v, (void*)t->source);
             a=new_ast(AST_LIT,OBJ_LFLT,v);
             return a;
-        case TOKEN_STR:
+        case TOKEN_STR: case TOKEN_RAW_STR:
             v = vector_init(3);
             push(v, (void*)(long)t->type); push(v, (void*)t->source);
             a=new_ast(AST_LIT,OBJ_SYM,v);
