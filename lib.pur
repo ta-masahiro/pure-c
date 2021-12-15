@@ -117,3 +117,6 @@ none qs(vector v)={vector ii;if @v<=1:None:if @v==2:if v[0]<v[1]:vswap(v,0,1):No
 
 vector partition3(vector v)={vector p=[],q=[],r=[];int i=-1,M=@v,w1;var w;while (i+=1)<M:{w=v[i];w1=cmp(w,v[0]);if w1>0:p<-w:if w1==0:q<-w:r<-w};[p,q,r]};
 vector Qsort(vector v)={vector w;if @v<=1:v:{w=partition3(v);Qsort(w[0])+w[1]+Qsort(w[2])}};
+int hi_part(int i)=i>>32;
+int lo_part(int i)=i&0xFFFFFFFF;
+

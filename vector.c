@@ -74,6 +74,7 @@ void vector_delete(Vector * v, int index) {
 }
 
 void vector_insert(Vector * v, int index, void * value) {
+    if (v->_size <= v->_sp) vector_resize(v);
     memmove(v->_table + index + 1, v->_table + index, sizeof(void*)*(v->_sp - index));
     v->_table[index]=value;
     v->_sp++;

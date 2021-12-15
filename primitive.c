@@ -206,7 +206,10 @@ void * p_lis_prime(Vector *v) {int reps=(v->_sp<=1)?20:(int)(long)vector_ref(v,1
 void * p_lnext_prime(Vector *v) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)vector_ref(v,0));return (void*)r;}
 // 乱数
 static unsigned long _X=123456789,_Y=362436069,_Z=521288629,_W=88675123;
-void * p_init_irand(Vector * v) {_Z ^=(unsigned long)vector_ref(v,0);_Z ^= _Z >>21;_Z ^= _Z<< 35; _Z ^= _Z >>4; _Z *=2685821657736338717L;return (void*)0;}
+//void * p_init_irand(Vector * v) {_Z ^=(unsigned long)vector_ref(v,0);_Z ^= _Z >>21;_Z ^= _Z<< 35; _Z ^= _Z >>4; _Z *=2685821657736338717L;return (void*)0;}
+void * p_init_irand(Vector * v) {_W ^=(unsigned long)vector_ref(v,0);_W ^= _W >>21;_W ^= _W<< 35; _W ^= _W >>4; _W *=2685821657736338717L;return (void*)0;}
+//void * p_init_irand(Vector * v) {unsigned long t;_W ^=(unsigned long)vector_ref(v,0);_W ^= _W >>21;_W ^= _W<< 35; _W ^= _W >>4; _W *=2685821657736338717L;
+//    for(int i=0;i<3;i++) {t=(_X ^ (_X << 11));_X=_Y;_Y=_Z;_Z=_W;(_W = (_W ^ (_W >>19)) ^ (t ^ (t >>8)));};return (void*)0;}
 void * p_init_lrand(Vector * v) { gmp_randseed(RAND_STATE, (mpz_ptr)vector_ref(v, 0));return (void*)0;}
 void * p_irand(Vector * v) {unsigned long t=(_X ^ (_X << 11));_X=_Y;_Y=_Z;_Z=_W;return (void*) (_W = (_W ^ (_W >>19)) ^ (t ^ (t >>8)));}
 void * p_lrand(Vector *v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(r); mpz_urandomm(r, RAND_STATE, (mpz_ptr)vector_ref(v, 0));return (void *)r;}
@@ -231,6 +234,11 @@ void * p_pollard_pm1(Vector *v) {
     return NULL;
 }
 void * p_str(Vector *v) {return (void*)obj2symbol((object*)vector_ref(v,0));}
+//void * p_hex_str(Vector *v) {long d,rem,val=(long)vector_ref(v,0);char*s=(char*)malloc(18*sizeof(char));if (val<0) {val=-val;s[0]='-';} else s[0]=' ';int i;for(i=1;i<17;i++) {d=val/16;rem=val-d*16;s[17-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[17]='\0';return (void*)new_symbol(s,17);}
+void * p_hex_str(Vector *v) {unsigned long d,rem,val=(long)vector_ref(v,0);char*s=(char*)malloc(17*sizeof(char));int i;for(i=0;i<16;i++) {d=val/16;rem=val-d*16;s[15-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[16]='\0';return (void*)new_symbol(s,17);}
+void * p_as_float(Vector *v) {return vector_ref(v,0);}
+void * p_as_int(Vector *v) {return vector_ref(v,0);}
+
 void * p_copy(Vector *v) {return (void*)objcpy((object*)vector_ref(v,0));}
 void * p_num(Vector *v) {};
 void * p_den(Vector *v) {};
@@ -263,7 +271,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
-                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_str, p_copy, NULL};
+                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_hex_str, p_as_float, p_as_int, p_str, p_copy, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -274,7 +282,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
-                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "str", "copy",NULL};
+                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "hexstr", "asfloat", "asint", "str", "copy",NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT,OBJ_LFLT},                                      // set_prec
@@ -368,6 +376,9 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_LINT},                                     // lrand
                                 {OBJ_LINT,OBJ_LINT,OBJ_LINT,OBJ_INT,OBJ_INT},   // pollard_rho
                                 {OBJ_LINT,OBJ_INT,OBJ_INT},                     // pollard_pm1
+                                {OBJ_INT},                                      // hexstr
+                                {OBJ_INT},                                      // asfloat
+                                {OBJ_FLT},                                      // asint
                                 {OBJ_GEN},                                      // str
                                 {OBJ_GEN},                                      // copy
                                 };
@@ -465,6 +476,9 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_LINT, 1, FALSE},   // lrand
                                 {OBJ_LINT, 5, FALSE},   // pollard_rho
                                 {OBJ_LINT, 3, FALSE},   // pollard_pm1
+                                {OBJ_SYM,  1, FALSE},   // hex_str
+                                {OBJ_FLT,  1, FALSE},   // asfloat
+                                {OBJ_INT,  1, FALSE},   // asint
                                 {OBJ_SYM,  1, FALSE},   // str
                                 {OBJ_GEN,  1, FALSE},   // copy
                                  };
