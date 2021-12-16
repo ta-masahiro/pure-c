@@ -243,6 +243,14 @@ object*newVECT(Vector*v) {
     return o;
 }
 
+object*newDICT(Hash * h) {
+    if (h==NULL) none_error();
+    object*o=(object*)malloc(sizeof(object));
+    o->type=OBJ_DICT;
+    o->data.ptr=(void*)h;
+    return o;
+}
+
 object*newOBJ(obj_type t, void* v) {
     if (v==NULL) none_error();
     switch(t) {
@@ -254,7 +262,8 @@ object*newOBJ(obj_type t, void* v) {
         case OBJ_SYM:return newSTR((Symbol*)v);
         case OBJ_CMPLX:return newCMPLX((complex*)v);
         case OBJ_VECT:return newVECT((Vector*)v);
-        default:printf("RuntimeError:Illegal Object!\n");Throw(3);
+        case OBJ_DICT:return newDICT((Hash*)v);
+        default:printf("RuntimeError:Illegal Object Type!\n");Throw(3);
     }
 }
 

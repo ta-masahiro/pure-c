@@ -1,5 +1,6 @@
-#include "vector.h"
-#include "symbol.h"
+//#include "vector.h"
+//#include "symbol.h"
+#include "hash.h"
 //#include <float.h>
 //#include <math.h>
 
@@ -51,7 +52,8 @@ object * newRAT_i(long i, long j) ;
 object * newFLT(double d) ;
 object * newLFLT(mpfr_ptr F) ;
 object * newLFFT_f(double f) ;
-object * newVECT(Vector*v);
+object * newVECT(Vector * v);
+object * newDICT(Hash * h);
 object * newCMPLX(complex *c);
 object * newSTR(Symbol*s);
 long obj2int(object*o);

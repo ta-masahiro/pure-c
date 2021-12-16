@@ -6,6 +6,8 @@ typedef struct Symbol {
     unsigned char *_table;
 } Symbol;
 */
+#ifndef HASH_DEF
+#define HASH_DEF
 typedef struct Data {
     Symbol  *key;
     void    *val;
@@ -25,3 +27,4 @@ void  ** Hash_get(Hash * h, Symbol *key);
 void  * eval(Vector * S, Vector * E, Vector * C, Vector * R, Vector * EE, Hash * G); 
 void print_hashTable(Hash* h); 
 void Hash_del(Hash * hashT, Symbol *key);
+#endif
