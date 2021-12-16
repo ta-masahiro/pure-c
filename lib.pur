@@ -119,4 +119,4 @@ vector partition3(vector v)={vector p=[],q=[],r=[];int i=-1,M=@v,w1;var w;while 
 vector Qsort(vector v)={vector w;if @v<=1:v:{w=partition3(v);Qsort(w[0])+w[1]+Qsort(w[2])}};
 int hi_part(int i)=i>>32;
 int lo_part(int i)=i&0xFFFFFFFF;
-
+int toint(x)=x;float tofloat(x)=x;long tolong(x)=x;lfloat tolfloat(x)=x;rational torat(x)=x;complex tocmplx(x)=x;var togeneral(x)=x;

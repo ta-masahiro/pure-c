@@ -321,7 +321,7 @@ long obj2int(object*o) {
 complex *obj2c(object *o) {
     if (o==NULL) none_error();
     switch(o->type) {
-        case OBJ_INT:  return itoc(o->data.flt);
+        case OBJ_INT:  return itoc(o->data.intg);
         case OBJ_LINT: return litoc((mpz_ptr)o->data.ptr);
         case OBJ_RAT:  return rtoc((mpq_ptr)o->data.ptr); 
         case OBJ_FLT:  return ftoc(o->data.flt);
