@@ -305,9 +305,12 @@ ast * is_expr_list(TokenBuff * S) {
     return NULL;
 }
 
-ast*is_arg_list(TokenBuff * S);
+ast * is_arg_list(TokenBuff * S);
 
-ast * is_expr_0(TokenBuff *S) {    // expr_0以降が形式上左辺式に使える
+ast * is_expr_0(TokenBuff *S) {
+    //
+    // ※expr_0以下が形式上左辺式に使える
+    //
     // exp_0        : APPLY '(' expr_list ')'
     //              | factor
     //              | exp_0 '(' arg_list '..' ')'
