@@ -1531,16 +1531,31 @@ object * objnot(object *x) {
 
 object * objabs(object *x) {
     if (x==NULL) none_error();
-    mpz_ptr L; mpq_ptr Q; mpfr_ptr F;
-    object * o = objcpy(x);complex*c;
+    //mpz_ptr L; mpq_ptr Q; mpfr_ptr F;
+    object * o = objcpy(x);//complex*c;
     switch(x->type) {
         case OBJ_INT : o->data.intg = labs(o->data.intg); return o;
-        case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_abs(L,L); o->data.ptr=(void*)L;return o;
-        case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpq_abs(Q, Q); o->data.ptr=(void*)Q;return o;
+        //case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_abs(L,L); o->data.ptr=(void*)L;return o;
+        case OBJ_LINT: mpz_abs((mpz_ptr)o->data.ptr, (mpz_ptr)x->data.ptr); return o;
+        case OBJ_RAT : mpq_abs((mpq_ptr)o->data.ptr, (mpq_ptr)x->data.ptr); return o;
         case OBJ_FLT : o->data.flt = fabs(o->data.flt); return o;
-        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_abs(F,F,MPFR_RNDN); o->data.ptr=(void*)F;return o;
-        case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=cabs((*c));return o;
+        case OBJ_LFLT: mpfr_abs((mpfr_ptr)o->data.ptr, (mpfr_ptr)x->data.ptr, MPFR_RNDN); return o;
+        case OBJ_CMPLX:*(complex*)o->data.ptr = cabs(*(complex*)x->data.ptr);return o;
         default:printf("runtime error illegal ABS op\n");return NULL;
+    }
+}
+
+object * objfloor(object *x) {
+    if (x==NULL) none_error();
+    object * o = objcpy(x);;
+    void * v;
+    switch(x->type) {
+        case OBJ_INT :  case OBJ_LINT: return o;
+        case OBJ_RAT : v = malloc(sizeof(MP_INT)); mpz_init((mpz_ptr)v);mpz_fdiv_q((mpz_ptr)v, mpq_numref((mpq_ptr)x->data.ptr), mpq_denref((mpq_ptr)x->data.ptr)); mpq_set_z((mpq_ptr)o->data.ptr,(mpz_ptr)v); return o;
+        case OBJ_FLT : o->data.flt = floor(o->data.flt); return o;
+        case OBJ_LFLT: v = malloc(sizeof(MP_INT)); mpz_init((mpz_ptr)v);mpfr_get_z((mpz_ptr)v,(mpfr_ptr)x->data.ptr,MPFR_RNDD); mpfr_set_z((mpfr_ptr)o->data.ptr, (mpz_ptr)v,MPFR_RNDD); return o;
+        //case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=cabs((*c));return o;
+        default:printf("runtime error illegal FLOOR op\n");return NULL;
     }
 }
 
@@ -1575,15 +1590,17 @@ object*objdec(object *x) {
 }
 object * objsqrt(object *x) {
     if (x==NULL) none_error();
-    mpz_ptr L; mpq_ptr Q; mpfr_ptr F;
-    object * o = objcpy(x);complex *c;
+    //mpz_ptr L; mpq_ptr Q; mpfr_ptr F;
+    void * v;
+    object * o = objcpy(x);
     switch(x->type) {
         case OBJ_INT : o->data.intg = (long)sqrt((double)o->data.intg); return o;
-        case OBJ_LINT: L=(mpz_ptr)o->data.ptr; mpz_sqrt(L,L); o->data.ptr=(void*)L;return o;
-        case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpfr_init_set_q(F,Q,MPFR_RNDN);mpfr_sqrt(F, F,MPFR_RNDN); o->data.ptr=(void*)F;o->type=OBJ_LFLT;return o; // BUG!!!!
+        case OBJ_LINT: mpz_sqrt((mpz_ptr)o->data.ptr, (mpz_ptr)x->data.ptr); return o;
+        //case OBJ_RAT : Q=(mpq_ptr)o->data.ptr; mpfr_init_set_q(F,Q,MPFR_RNDN);mpfr_sqrt(F, F,MPFR_RNDN); o->data.ptr=(void*)F;o->type=OBJ_LFLT;return o; // BUG!!!!
+        case OBJ_RAT : v = malloc(sizeof(__mpfr_struct)); mpfr_init_set_q((mpfr_ptr)v, (mpq_ptr)x->data.ptr, MPFR_RNDN); mpfr_sqrt((mpfr_ptr)v, (mpfr_ptr)v, MPFR_RNDN); o->data.ptr = v; o->type=OBJ_LFLT; return o; 
         case OBJ_FLT : o->data.flt = sqrt(o->data.flt); return o;
-        case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_sqrt(F,F,MPFR_RNDN); o->data.ptr=(void*)F;return o;
-        case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=csqrt((*c));return o; // BUG!!!!
+        case OBJ_LFLT: mpfr_sqrt((mpfr_ptr)o->data.ptr, (mpfr_ptr)x->data.ptr, MPFR_RNDN); return o;
+        case OBJ_CMPLX:*(complex*)o->data.ptr = csqrt(*(complex*)x->data.ptr); return o;
         default:printf("runtime error illegal SQRT op\n");return NULL;
     }
 }

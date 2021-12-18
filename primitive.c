@@ -159,6 +159,7 @@ void *p_oasinh(Vector *v) {return (void*)objasinh((object*)vector_ref(v,0));}
 void *p_oacosh(Vector *v) {return (void*)objacosh((object*)vector_ref(v,0));}
 void *p_oatanh(Vector *v) {return (void*)objatanh((object*)vector_ref(v,0));}
 //void *p_osqrt(Vector *v) {return (void*)objsqrt((object *)vector_ref(v,0));}
+void *p_ofloor(Vector * v) {return (void *)objfloor((object*)vector_ref(v,0));}
 // constnt
 void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_pi(r,MPFR_RNDA);return (void*)r;}
 void *p_llog2(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_log2(r,MPFR_RNDA);return (void*)r;}
@@ -270,7 +271,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lfsin, p_lfcos, p_lftan,p_lfasin, p_lfacos, p_lfatan,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
-                                 p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh,
+                                 p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_hex_str, p_as_float, p_as_int, p_str, p_type, p_copy, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
@@ -281,7 +282,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lfsin","lfcos", "lftan","lfasin","lfacos","lfatan",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
-                                "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh",
+                                "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "hexstr", "asfloat", "asint", "str","type", "copy",NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
@@ -353,6 +354,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},                                      // asinh
                                 {OBJ_GEN},                                      // acosh
                                 {OBJ_GEN},                                      // atanh
+                                {OBJ_GEN},                                      // floor
                                 //{OBJ_GEN}                                     // sqrt
                                 {OBJ_INT},                                      // pi
                                 {OBJ_INT},                                      // log2
@@ -454,6 +456,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE},   // asinh
                                 {OBJ_GEN,  1, FALSE},   // acosh
                                 {OBJ_GEN,  1, FALSE},   // atanh
+                                {OBJ_GEN,  1, FALSE},   // floor
                                 //{OBJ_GEN,  1, FALSE}  // sqrt
                                 {OBJ_LFLT, 1, FALSE},   // pi
                                 {OBJ_LFLT, 1, FALSE},   // log2

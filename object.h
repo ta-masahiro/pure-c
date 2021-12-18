@@ -116,6 +116,7 @@ int      objcmp(object * x, object * y);
 object * objneg(object * x) ;
 object * objnot(object * x) ;
 object * objabs(object * x) ;
+object * objfloor(object * x) ;
 object * objinc(object * x) ;
 object * objdec(object * x) ;
 object * objsqrt(object * x) ;
