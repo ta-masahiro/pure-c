@@ -109,14 +109,87 @@ var fold_n(var f(x,y..),a,v..)={int i=-1,M=@v[0];while (i+=1)<M:a=apply(f,a,vmap
 int xor(int x,int y)=~(x&y) & (x|y);
 vector range(int n,opt..)={vector v=[];int start=0,end=n,step=1;if @opt>=1:{start=n;end=opt[0]}:None;if @opt==2:step=opt[1]:None;if step>=0:while start<end:{v<-start;start+=step}:while start >end:{v<-start;start+=step};v};
 vector iota(int n,opt..)={vector v=[];int start=0,step=1;if @opt>=1:start=opt[0]:None;if @opt==2:step=opt[1]:None;while (n-=1)>=0:{v<-start;start+=step};v};
-vector bsort(vector v)={int i=@v,j=0,j1;while i>=0:{j=0;while j<i-1:{j1=j+1;if v[j]<v[j1]:vswap(v,j,j1):None;j+=1};i-=1};v};//buble sort in place
+//vector bsort(vector v)={int i=@v,j=0,j1;while i>=0:{j=0;while j<i-1:{j1=j+1;if v[j]<v[j1]:vswap(v,j,j1):None;j+=1};i-=1};v};//buble sort in place
+vector bsort(vector v)={
+	int i=@v,j=0,j1;
+	while i>=0:{
+		j=0;
+		while j<i-1:{
+			j1=j+1;
+			if v[j]<v[j1]:
+				vswap(v,j,j1)
+			:
+				None;
+			j+=1
+		};
+		i-=1
+	};
+v};//buble sort in place
 int fpartition(int f(x),vector v) = {int p=0,i=0;while i<@v:{if f(v[i]):{vswap(v,p,i);p+=1}:None;i+=1};p};//条件を満たすものを前半にそうでないものを後半に入れなおし、区切りのポイントを返す
 //
 vector fpartition3(var x,vector v)={int i,p,q,w;while i<@v:{w=cmp(v[i],x);if w<0:None:if w==0:{vswap(v,q,i);q+=1}:{vswap(v,p,i);vswap(v,q,i);p+=1;q+=1};i+=1};[p,q]};//partition3 in place
 none qs(vector v)={vector ii;if @v<=1:None:if @v==2:if v[0]<v[1]:vswap(v,0,1):None:{ii=fpartition3(v[0],v);qs(v[:ii[0]]);qs(v[ii[1]:])}};//quick sort in place
 
-vector partition3(vector v)={vector p=[],q=[],r=[];int i=-1,M=@v,w1;var w;while (i+=1)<M:{w=v[i];w1=cmp(w,v[0]);if w1>0:p<-w:if w1==0:q<-w:r<-w};[p,q,r]};
-vector Qsort(vector v)={vector w;if @v<=1:v:{w=partition3(v);Qsort(w[0])+w[1]+Qsort(w[2])}};
+//vector partition3(vector v)={vector p=[],q=[],r=[];int i=-1,M=@v,w1;var w;while (i+=1)<M:{w=v[i];w1=cmp(w,v[0]);if w1>0:p<-w:if w1==0:q<-w:r<-w};[p,q,r]};
+//vector Qsort(vector v)={vector w;if @v<=1:v:{w=partition3(v);Qsort(w[0])+w[1]+Qsort(w[2])}};
+vector partition3(vector v)={
+	vector p=[],q=[],r=[];
+	int i=-1,M=@v,w1;
+	var w;
+	while (i+=1)<M:{
+		w=v[i];
+		w1=cmp(w,v[0]);
+		if w1>0:
+			p<-w
+		:if w1==0:
+			q<-w
+		:
+			r<-w
+	};
+	[p,q,r]
+};
+vector Qsort(vector v)={
+	vector w;
+	if @v<=1:
+		v
+	:{
+		w=partition3(v);
+		Qsort(w[0])+w[1]+Qsort(w[2])
+	}
+};
 int hi_part(int i)=i>>32;
 int lo_part(int i)=i&0xFFFFFFFF;
 int toint(x)=x;float tofloat(x)=x;long tolong(x)=x;lfloat tolfloat(x)=x;rational torat(x)=x;complex tocmplx(x)=x;var togeneral(x)=x;
+//none downheap(vector v, int p) = {int n=@v,idx=p;int l_c=2*p+1,r_c=2*p+2;if l_c<n:if v[p]<v[l_c]:idx=l_c:None:None;if r_c<n:if v[idx]<v[r_c]:idx=r_c:None:None;if p != idx :{vswap(v,p,idx);downheap(v,idx)}:None};
+//none heap_sort(vector v) = {int n=@v,i=@v/2;while (i-=1)>=0:downheap(v,i);while (n-=1)>0:{vswap(v,0,n);downheap(v[:n],0)}};
+none downheap(vector v, int p) = {
+	int n=@v,idx=p;
+	int l_c=2*p+1,r_c=2*p+2;
+	if l_c<n:
+		if v[p]<v[l_c]:
+			idx=l_c
+		:
+			None
+	:
+		None;
+	if r_c<n:
+		if v[idx]<v[r_c]:
+			idx=r_c
+		:
+			None
+	:
+		None;
+	if p != idx :{
+		vswap(v,p,idx);downheap(v,idx)
+	}:
+		None
+};
+none heap_sort(vector v) = {
+	int n=@v,i=@v/2;
+	while (i-=1)>=0:
+		downheap(v,i);
+	while (n-=1)>0:{
+		vswap(v,0,n);
+		downheap(v[:n],0)
+	}
+};
