@@ -121,7 +121,13 @@ code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot ) {
     ct->type=type;ct->functon_ret_type=frt;ct->arg_type=at,ct->dotted=dot;
     return ct;
 }
-
+/*
+code_type * new_ct(obj_type type, code_type frt, Vector*at,int dot ) {
+    code_type* ct=(code_type*)malloc(sizeof(code_type));
+    ct->type = type; ct->functon_ret_type = frt; ct->arg_type = at, ct->dotted = dot;
+    return ct;
+}
+*/
 void* code_type_print(code_type*ct) {
     printf("Type: %s",dcl_string[ct->type]);
     if (ct->type == OBJ_UFUNC) {

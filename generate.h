@@ -11,12 +11,12 @@ extern Hash* PRIMITIVE_FUNC;
 
 typedef struct {
     obj_type type;
-    obj_type functon_ret_type;
-    Vector  *arg_type;
+    obj_type functon_ret_type;  // todo -> code_typeを返すようにする
+    Vector  *arg_type;          // todo -> arg_typeにはobj_typeでなくcode_typeを入れるようにする
     int dotted;
 } code_type;
 
-code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot ) ;
+//code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot ) ;
 
 typedef struct {
     Vector      *code;              // intermediate code
