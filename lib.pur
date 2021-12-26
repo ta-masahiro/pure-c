@@ -168,21 +168,14 @@ none downheap(vector v, int p) = {
 	if l_c<n:
 		if v[p]<v[l_c]:
 			idx=l_c
-		:
-			None
-	:
-		None;
+	;
 	if r_c<n:
 		if v[idx]<v[r_c]:
 			idx=r_c
-		:
-			None
-	:
-		None;
+	;
 	if p != idx :{
 		vswap(v,p,idx);downheap(v,idx)
-	}:
-		None
+	}
 };
 none heap_sort(vector v) = {
 	int n=@v,i=@v/2;

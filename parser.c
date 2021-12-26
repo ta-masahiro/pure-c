@@ -651,7 +651,7 @@ ast*is_if_expr(TokenBuff *S) {
                     if (get_token(S)->type==':') {
                         if (a3=is_expr(S)) {
                             v=vector_init(3);
-                            //if (a2->o_type != a3->o_type) {printf("Syntax error :IFtype\n");return NULL;}
+                            //if (a2->o_type != a3->o_type) {printf("Syntax() error :IFtype\n");return NULL;}
                             push(v,(void*)a1);push(v,(void*)a2);push(v,(void*)a3);
                             return new_ast(AST_IF,a2->o_type,v);
                         } else {
@@ -659,8 +659,15 @@ ast*is_if_expr(TokenBuff *S) {
                             Throw(1);
                         }
                     } else {
-                        printf("Syntax error! Must be ':'\n");
-                        Throw(1);
+                        //printf("Syntax error! Must be ':'\n");
+                        //Throw(1);
+                        // False節なしのif式を認める
+                        unget_token(S);
+                        v = vector_init(1); push(v,(void*)new_symbol("None",4));    // "None"を返したと同じにする 
+                        a3 = new_ast(AST_VAR, OBJ_NONE, v);                         //
+
+                        v = vector_init(3); push(v, (void*)a1); push(v, (void*)a2); push(v, a3);
+                        return new_ast(AST_IF, a2->o_type, v);
                     }
                 } else {
                     printf("Syntax error! must be TRUE expression\n");
