@@ -1412,9 +1412,12 @@ int main(int argc, char*argv[]) {
                     //exit(0);
                     fclose(fp);
                     fp=stdin;S=new_tokenbuff(fp);
-                }
+                } else {
+                    printf("SyntaxErroor:Not a exprssion!\n");
+                    Throw(1);
                 // tokenbuff->_cp=token_p;
                 //tokenbuff=vector_init(100);
+                }
             } 
         } Catch(e) {
             switch(e) {

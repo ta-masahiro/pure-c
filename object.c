@@ -275,6 +275,7 @@ long obj2int(object*o) {
         case OBJ_RAT:  return rtoi((mpq_ptr)o->data.ptr); 
         case OBJ_FLT:  return ftoi(o->data.flt);
         case OBJ_LFLT: return lftoi((mpfr_ptr)o->data.ptr);
+        case OBJ_SYM:  return (long)symbol2objtype((Symbol*)(o->data.ptr), OBJ_INT);
     }
     printf("RuntimeErroe:CanotConverToInteger!\n");Throw(3);
 }
@@ -287,6 +288,7 @@ long obj2int(object*o) {
         case OBJ_RAT:  return rtoli((mpq_ptr)o->data.ptr); 
         case OBJ_FLT:  return ftoli(o->data.flt);
         case OBJ_LFLT: return lftol((mpfr_ptr)o->data.ptr);
+        case OBJ_SYM:  return (mpz_ptr)symbol2objtype((Symbol*)(o->data.ptr), OBJ_LINT);
     }
     printf("RuntimeErroe:CanotConverToLONGInteger!\n");Throw(3);
 }
@@ -299,11 +301,13 @@ long obj2int(object*o) {
         case OBJ_RAT:  return (mpq_ptr)o->data.ptr; 
         case OBJ_FLT:  return ftor(o->data.flt);
         case OBJ_LFLT: return lftor((mpfr_ptr)o->data.ptr);
+        case OBJ_SYM:  return (mpq_ptr)symbol2objtype((Symbol*)(o->data.ptr), OBJ_RAT);
     }
     printf("RuntimeErroe:CanotConverToRational!\n");Throw(3);
 }
 
  double obj2flt(object*o) {
+    long l;
     if (o==NULL) none_error();
     switch(o->type) {
         case OBJ_INT:  return itof(o->data.intg);
@@ -311,6 +315,7 @@ long obj2int(object*o) {
         case OBJ_RAT:  return rtof((mpq_ptr)o->data.ptr); 
         case OBJ_FLT:  return o->data.flt;
         case OBJ_LFLT: return lftof((mpfr_ptr)o->data.ptr);
+        case OBJ_SYM:  l = (long)symbol2objtype((Symbol*)(o->data.ptr), OBJ_FLT);return *(double*)(&l);
     }
     printf("RuntimeErroe:CanotConverToFloat!\n");Throw(3);
 }
@@ -323,6 +328,7 @@ long obj2int(object*o) {
         case OBJ_RAT:  return rtolf((mpq_ptr)o->data.ptr); 
         case OBJ_FLT:  return ftolf(o->data.flt);
         case OBJ_LFLT: return (mpfr_ptr)o->data.ptr;
+        case OBJ_SYM:  return (mpfr_ptr)symbol2objtype((Symbol*)(o->data.ptr), OBJ_LFLT);
     }
     printf("RuntimeErroe:CanotConverToLFloat!\n");Throw(3);
  }
@@ -336,6 +342,7 @@ complex *obj2c(object *o) {
         case OBJ_FLT:  return ftoc(o->data.flt);
         case OBJ_LFLT: return lftoc((mpfr_ptr)o->data.ptr);
         case OBJ_CMPLX:return (complex*)o->data.ptr;
+        case OBJ_SYM:  return (complex*)symbol2objtype((Symbol*)(o->data.ptr), OBJ_CMPLX);
     }
     printf("RuntimeErroe:CanotConverToComplex!\n");Throw(3);
 }
@@ -1736,7 +1743,8 @@ void*symbol2objtype(Symbol*s,obj_type t){
     void*w;
     double d,q;
     char*endp1,*endp2;
-    complex c;
+    complex c, *cp;
+    //complex c;
 
     switch (t) {
         case OBJ_INT:
@@ -1763,17 +1771,26 @@ void*symbol2objtype(Symbol*s,obj_type t){
             mpfr_init_set_str((mpfr_ptr)w,s->_table,10,MPFR_RNDN);
             return w;
         case OBJ_CMPLX:
-            w = malloc(sizeof(complex));c=*(complex*)w;
+            cp = (complex*)malloc(sizeof(complex));
+            //w = (void*)malloc(sizeof(complex));
             d =strtod(s->_table,&endp1);
-            if (*endp1 != '\0') { 
+            if (*endp1 != '\0') {
+                if (*endp1 == 'i' || *endp1 == 'I') {
+                    *cp = d*I;
+                    return (void*)cp;
+                } 
                 q=strtod(endp1,&endp2);
-                if (*endp2 =='i') {
-                    c=d+q*I;
-                    return w;
+                if (*endp2 =='i' || *endp2 == 'I') {
+                    *cp     = d+q*I;
+                    //*(complex*)w     = d+q*I;
+                    //return w;
+                    return (void*)cp;
                 } 
             }
-            c=(complex)d;
-            return w;
+            *cp = d+0*I;
+            //*(complex*)w = d+0*I;
+            return (void*)cp;
+            //return w;
         default:printf("RntimeError:CanotConvert Symbol to Complex! %s\n",s->_table);Throw(3);
     }
 
