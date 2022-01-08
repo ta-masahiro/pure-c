@@ -1,4 +1,4 @@
-#include "general.h"
+#include "vector.h"
 #include <cblas.h>
 
 typedef struct {
@@ -48,7 +48,7 @@ array_2 * array_2_init(unsigned int xsize, unsigned int ysize) {
     a->table = table;
     return a;
 }
-array_n * array_n__init(unsigned int dim, unsigned int * sizes) {
+array_n * array_n_init(unsigned int dim, unsigned int * sizes) {
     unsigned int size  = 1; 
     for(int i = 0; i < dim; i ++ ) {
         size *= sizes[i]; 
@@ -75,16 +75,36 @@ void * array_n_ref(array_n * a, int * ind) {
     return a -> table[index]; 
 }
 
-array_2 * matrix_mul(array_2 * A, array_2 * B) {
+array_2 * array_2_matrix_mul(array_2 * A, array_2 * B) {
     if (A->ysp != B->xsp) return NULL;
     array_2 * C = array_2_init(A->xsize, B->ysize);
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        A->xsize, B->xsize, C->xsize, 1.0, (double *)A, A->xsp, (double*)B, B->xsp, 0.0, (double*)C, C->xsp);
+        A->xsize, B->xsize, C->xsize, 1.0, (double*)(A->table), A->xsp, (double*)(B->table), B->xsp, 0.0, (double*)(C->table), C->xsp);
     // dgemm_(order, TransA, TransB, M, N, K, alpha, A, LDA, B, LDB, beta, C, LDC)
 	// C = alpha * A * B + beta * C
 	// A=M*K, B=K*N, C=M*N
     // order: CblasRowMajor/CblasColMajor
 	// Trans: CblasNoTrans/CblasTrans/CblasConjTrans
 	// LDA = number of row of A
+    C->xsp = A->xsp; C->ysp = B->ysp;
     return C;
 }
+
+
+array_n * array_n_matrix_mul(array_n * A, array_n * B) {
+    if (A->dim != 2 || B->dim != 2) return NULL;
+    if (A->sps[1] != B->sps[0]) return NULL;
+    unsigned int sizes[2]; sizes[0] = A->sizes[0]; sizes[1] =B->sizes[1];
+    array_n * C = array_n_init(A->dim, sizes);
+    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
+        A->sizes[0], B->sizes[0], C->sizes[0], 1.0, (double*)(A->table), A->sps[0], (double*)(B->table), B->sps[0], 0.0, (double*)(C->table), C->sps[0]);
+    // dgemm_(order, TransA, TransB, M, N, K, alpha, A, LDA, B, LDB, beta, C, LDC)
+	// C = alpha * A * B + beta * C
+	// A=M*K, B=K*N, C=M*N
+    // order: CblasRowMajor/CblasColMajor
+	// Trans: CblasNoTrans/CblasTrans/CblasConjTrans
+	// LDA = number of row of A
+    C->sps[0] = A->sps[0]; C->sps[1] = B->sps[1];
+    return C;
+}
+
