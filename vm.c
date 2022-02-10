@@ -1367,7 +1367,8 @@ _RTOC:
     goto *dequeue(C);
 _FTOC:
     cz=(complex*)malloc(sizeof(complex));
-    *cz=*(double*)pop(S)+0.0*I;
+    i = (long)pop(S);
+    *cz=*(double*)(&i)+0.0*I;
     push(S, (void*)cz);
     goto *dequeue(C);
 _LFTOC:
