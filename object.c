@@ -1833,9 +1833,11 @@ object*objref(object*t,long i) {
     printf("RntimeError:Illegal ref Method!\n");Throw(3);
 }
 void objset(object*t,long i,object*v) {
+    //printf("type:%d\n",t->type);
     if (t==NULL) none_error();
-    if (t->type==OBJ_VECT) vector_set((Vector*)t->data.ptr,i,(void*)v);
-    if (t->type==OBJ_SYM)  symbol_set((Symbol*)t->data.ptr,i,(Symbol*)v->data.ptr);
+    if (t->type==OBJ_VECT) {vector_set((Vector*)t->data.ptr,i,(void*)v);return;}
+    if (t->type==OBJ_SYM)  {symbol_set((Symbol*)t->data.ptr,i,(Symbol*)v->data.ptr);return;}
+    if (t->type==OBJ_GEN)  {printf("!!!!!!objset!!!\n");objset((object*)t->data.ptr,i,v);return;}
     printf("RntimeError:Illegal set Method!\n");Throw(3);
 }
 
