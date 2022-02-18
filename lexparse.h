@@ -99,7 +99,8 @@ typedef enum {
     AST_PAIR,           //24:AST_PAIR,[car_ast,cdrast]
     AST_PAIR_LIST,      //25:AST_PAIR_LIST,[pair_ast,pair_ast,...]
     AST_LOOP,           //26:AST_LOOP,[count_ast,ast]
-    AST_CLASS_VAR       //27:AST_CLASS_VAR,[class_ast,var_ast]
+    AST_CLASS_VAR,      //27:AST_CLASS_VAR,[class_ast,var_ast]
+    AST_FOR             //28:AST_FOR,[init ast,cond ast,loop ast]
 } ast_type; 
 
 

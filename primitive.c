@@ -198,7 +198,7 @@ void *p_sort(Vector *vv) {
     return (void*)0;
 }
 void * p_ddel(Vector * v) {Hash_del((Hash*)vector_ref(v,0), (Symbol*)vector_ref(v,1));return NULL;}
-void * p_vdel(Vector * v) {vector_delete(vector_ref(v,0), (long)vector_ref(v,1)); return NULL;}
+void * p_vdel(Vector * v) {long index=(long)vector_ref(v,1);Vector*vv=(Vector*)vector_ref(v,0);if (index<0) index=vv->_sp+index;vector_delete(vv, index); return NULL;}
 void * p_vins(Vector * v) {vector_insert(vector_ref(v,0), (long)vector_ref(v,1), vector_ref(v,2)); return NULL;}
 
 void * p_cmp(Vector * v) {return (void*)(long)objcmp((object*)vector_ref(v,0), (object*)vector_ref(v,1));}

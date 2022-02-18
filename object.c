@@ -1686,7 +1686,8 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_LINT:  return mpz_get_str(NULL, 10, (mpz_ptr)value);
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);
         //case OBJ_FLT:   sprintf(buf,"%.16g",*(double*)value); return buf;
-        case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.17g",*(double*)(&lval)); return buf;
+        //case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.17g",*(double*)(&lval)); return buf;
+        case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.16f",*(double*)(&lval)); return buf;
         case OBJ_CMPLX: sprintf(buf,"%.16g%+.16gI",creal(*(complex*)value),cimag(*(complex*)value)); return buf;
         case OBJ_LFLT:  //mpfr_sprintf(buf,"%.Rg", (mpfr_ptr)value);return buf;
                         mpfr_sprintf(buf,set_lf_format((mpfr_ptr)value),(mpfr_ptr)value);return buf;
@@ -1740,10 +1741,15 @@ object*symbol2obj(Symbol*s,obj_type t) {
 
 void*symbol2objtype(Symbol*s,obj_type t){
     if (s==NULL) none_error();
+    int mflg=FALSE;
     void*w;
     double d,q;
-    char*endp1,*endp2;
+    char *endp1, *endp2;
+    char ch, *intp,*decp, *powp;//整数部開始位置、少数部開始位置、指数部開始位置
     complex c, *cp;
+    char *ss;
+    mpz_ptr i_part,d_part,p_part;
+    int phase=0;
     //complex c;
 
     switch (t) {
@@ -1756,10 +1762,40 @@ void*symbol2objtype(Symbol*s,obj_type t){
             w=malloc(sizeof(MP_INT));
             mpz_init_set_str((mpz_ptr)w,s->_table,10);
             return w;
-        case OBJ_RAT:
+        case OBJ_RAT:// 許容されるのは "整数/整数" "浮動小数点表記"のいずれか
             w=malloc(sizeof(MP_RAT));
-            mpq_init((mpq_ptr)w);mpq_set_str((mpq_ptr)w,s->_table,10);mpq_canonicalize((mpq_ptr)w);
-            return w;
+            mpq_init((mpq_ptr)w);
+            if (mpq_set_str((mpq_ptr)w,s->_table,10) == 0) {mpq_canonicalize((mpq_ptr)w);return w;} // "整数/整数"であった
+            else {
+                strcpy(ss, s->_table);
+                if (*ss=='-') {mflg=TRUE;ss++;}
+                intp = ss;
+                while ((ch=*ss) != '\0') {
+                    if (ch=='.') {
+                        if (phase != 0) {mpq_init((mpq_ptr)w);return w;}
+                        phase =1;
+                        if (intp == ss) mpz_init_set_ui(i_part,0);//先頭に'.'があった場合
+                        else mpz_init_set_str(i_part,ss,10);
+                        *ss = '\0';
+                        ss++;
+                        decp=ss;
+                    } else if (c == 'e' || c== 'E' || c== 'f' || c=='F') {
+                        if (phase == 0) {*ss='\0';mpz_init_set_str(i_part, intp,10);mpz_init_set_si(d_part,0);}  // '.'がなくて指数部がある場合
+                        else if (phase == 2) {mpq_init((mpq_ptr)w);return w;} // 'e~fが２つ以上あった場合は不正なので0
+                        else {}
+                        phase = 2;
+                        if (decp==ss) { mpz_init_set_ui(d_part,0);}//先頭に'.'があった場合
+
+                        *ss='\0';
+                        ss++;
+                        powp=ss;
+                    } else if (isdigit(ch)) ss++;
+                }
+                if (ss==powp) pz_init_set_si(p_part,0);
+                mpz_init_set_str(p_part,powp,10);
+                mpq_init((mpq_ptr)w);
+
+            }
         case OBJ_FLT:
             //w=malloc(sizeof(double));
             //sscanf(s->_table,"%lg",(double*)w);
@@ -1775,7 +1811,7 @@ void*symbol2objtype(Symbol*s,obj_type t){
             //w = (void*)malloc(sizeof(complex));
             d =strtod(s->_table,&endp1);
             if (*endp1 != '\0') {
-                if (*endp1 == 'i' || *endp1 == 'I') {
+                if (*endp1 == 'i' || *endp1 == 'I') {   
                     *cp = d*I;
                     return (void*)cp;
                 } 
@@ -1832,9 +1868,11 @@ object*objref(object*t,long i) {
     printf("RntimeError:Illegal ref Method!\n");Throw(3);
 }
 void objset(object*t,long i,object*v) {
+    //printf("type:%d\n",t->type);
     if (t==NULL) none_error();
-    if (t->type==OBJ_VECT) vector_set((Vector*)t->data.ptr,i,(void*)v);
-    if (t->type==OBJ_SYM)  symbol_set((Symbol*)t->data.ptr,i,(Symbol*)v->data.ptr);
+    if (t->type==OBJ_VECT) {vector_set((Vector*)t->data.ptr,i,(void*)v);return;}
+    if (t->type==OBJ_SYM)  {symbol_set((Symbol*)t->data.ptr,i,(Symbol*)v->data.ptr);return;}
+    if (t->type==OBJ_GEN)  {printf("!!!!!!objset!!!\n");objset((object*)t->data.ptr,i,v);return;}
     printf("RntimeError:Illegal set Method!\n");Throw(3);
 }
 

@@ -44,7 +44,7 @@ void ast_print(ast*a, int tablevel) {
         // ast list type
         case AST_WHILE: case AST_IF: case AST_CLASS: case AST_VREF: case AST_SLS: case AST_VECT: case AST_DICT:
         case AST_DCL:case AST_APPLY: case AST_LAMBDA:case AST_EXP_LIST: case AST_EXP_LIST_DOTS: case AST_ARG_LIST: 
-        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR:
+        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR:
             printf("type:%s\t", ast_type_str[t]);
             printf("objecttype: %d\n",a->o_type);
             if (a->table==NULL) break;
@@ -493,7 +493,7 @@ int* is_in(int*s,void* v) {
         i++;
     }
 }
-int op_type[][7]={  {0}, {0}, {0}, {0}, {'<'*256+'-'},
+int op_type[][7]={  {0}, {0}, {0}, {0}, {'<'*256+'-',0},
     {'*','/','/'*256+'/','%',0},      {'+','-',0}, {'<'*256+'<','>'*256+'>',0},
     {'&',0}, {'^',0}, {'|',0},        {'<','<'*256+'=','>','>'*256+'=','!'*256+'=','='*256+'=',0},
     {'!'*256+'!',0},  {'&'*256+'&',0},{'|'*256+'|',0}
@@ -686,6 +686,48 @@ ast*is_if_expr(TokenBuff *S) {
     return NULL;
 }
 
+ast*is_for_expr(TokenBuff *S) {
+    // if_expr  : if expr : expr : expr
+    ast*a1,*a2,*a3;
+    token*t;
+    Vector*v;
+    int token_p = S->buff->_cp;
+
+    t=get_token(S);
+    if (t->type==TOKEN_SYM && strcmp("for",t->source->_table)==0) {
+        if (a1=is_expr(S)) {
+            if (get_token(S)->type==':' ) {
+                if (a2=is_expr(S)) {
+                    if (get_token(S)->type==':') {
+                        if (a3=is_expr(S)) {
+                            v=vector_init(3);
+                            //if (a2->o_type != a3->o_type) {printf("Syntax() error :IFtype\n");return NULL;}
+                            push(v,(void*)a1);push(v,(void*)a2);push(v,(void*)a3);
+                            return new_ast(AST_FOR,a2->o_type,v);
+                        } else {
+                            printf("Syntax error! must be FALSE expression\n");
+                            Throw(1);
+                        }
+                    } else {
+                        printf("Syntax error! Must be ':'\n");
+                        Throw(1);
+                    }
+                } else {
+                    printf("Syntax error! must be TRUE expression\n");
+                    Throw(1);
+                }
+            } else {
+                printf("Syntax error! Must be ':'\n");
+                Throw(1);
+            }
+        } else {
+            printf("Syntax error! Must be cond expression!\n");
+            Throw(1);
+        }
+    }
+    S->buff->_cp=token_p;
+    return NULL;
+}
 ast*is_while_expr(TokenBuff *S) {
     // while_expr  : while expr : expr
     ast*a1,*a2,*a3;
@@ -805,6 +847,7 @@ ast * is_expr(TokenBuff *S) {
     if (a = is_if_expr(S)) return a;
     if (a = is_lambda_expr(S)) return a;
     if (a = is_while_expr(S)) return a;
+    if (a = is_for_expr(S)) return a;
     if (a = is_loop_expr(S)) return a;
     //if (a = is_expr_6(S)) return a;
     if (a = is_expr_2n(S,14)) return a;

@@ -957,6 +957,26 @@ code_ret * codegen_while(ast *while_ast, Vector *env, int tail){
     //
     return new_code(code, new_ct(OBJ_NONE, OBJ_NONE, (void*)0, FALSE));
 }
+
+code_ret * codegen_for(ast *for_ast, Vector *env, int tail){
+    // init astの処理
+    code_ret *code_s = codegen(vector_ref(for_ast->table, 0), env, tail);  // init ast
+    Vector *code = code_s->code;push(code, (void*)DROP);
+    // cond astの処理
+    code_s = codegen(vector_ref(for_ast->table, 1), env, FALSE);  // cond ast
+    if (code_s->ct->type != OBJ_INT ) {printf("SyntaxError:Must be Cond code!\n");Throw(0);}
+    //Vector * code = code_s->code; long n = vector_length(code);
+    long n = vector_length(code_s->code);//push(code, code_s->code);
+    code = vector_append(code, code_s->code);
+    // loop astの処理
+    code_s = codegen(vector_ref(for_ast->table, 2), env, FALSE);    // loop ast
+    Vector *loop_code =code_s->code;
+    push(loop_code, (void*)DROP); push(loop_code, (void*)JOIN);
+    //
+    push(code, (void*)WHILE); push(code, (void*)n); push(code, (void*)loop_code);
+    //
+    return new_code(code, new_ct(OBJ_NONE, OBJ_NONE, (void*)0, FALSE));
+}
 /*
 code_ret * codegen_loop(ast *loop_ast, Vector *env, int tail){
     code_ret *code_s = codegen(vector_ref(loop_ast->table, 0), env, FALSE);
@@ -1270,6 +1290,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
         case AST_VECT:      return  codegen_vect    (a, env, tail);
         case AST_PAIR_LIST: return  codegen_dict    (a, env, tail);
         case AST_WHILE:     return  codegen_while   (a, env, tail);
+        case AST_FOR:       return  codegen_for     (a, env, tail);
 //        case AST_CLASS_VAR: return  codegen_cl_var  (a, env, tail);
 //        case AST_CLASS:     return  codegen_class   (a, env, tail);
         default: printf("syntaxError:Unknown AST!\n");Throw(0);
