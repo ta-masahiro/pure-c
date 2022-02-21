@@ -1812,7 +1812,9 @@ void*symbol2objtype(Symbol*s,obj_type t){
         case OBJ_RAT:// 許容されるのは "整数/整数" "浮動小数点表記"のいずれか
             w=malloc(sizeof(MP_RAT));
             mpq_init((mpq_ptr)w);
-            if (mpq_set_str((mpq_ptr)w,s->_table,10) == 0) {mpq_canonicalize((mpq_ptr)w);return w;} // "整数/整数"表記を変換
+            if (mpq_set_str((mpq_ptr)w,s->_table,10) == 0) {
+                if (mpz_sgn(mpq_denref((mpq_ptr)w)) == 0) {printf("RuntimeError:IllegalRationalNumber!\n");Throw(3);}
+                mpq_canonicalize((mpq_ptr)w);return w;} // "整数/整数"表記を変換
             else return (void*)decsym2rat(s);   // 浮動小数表記を分数に変換
         case OBJ_FLT:
             //w=malloc(sizeof(double));

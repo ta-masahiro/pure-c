@@ -372,7 +372,7 @@ code_ret *codegen_lit(ast*lit_ast,Vector*env,int tail) {
         case TOKEN_RAT:
             q = (mpq_ptr)malloc(sizeof(MP_RAT));
             mpq_init(q);
-            if (mpq_set_str(q,str_symbol->_table,10) !=0 || mpz_sgn(mpq_denref(q))==0) {printf("SyntaxError:IllegalRationalNumber!\n");Throw(1);}
+            if (mpq_set_str(q,str_symbol->_table,10) !=0 || mpz_sgn(mpq_denref(q))==0) {printf("SyntaxError:IllegalRationalNumber!\n");Throw(0);}
             mpq_canonicalize(q);
             push(code,(void*)q);
             return new_code(code,new_ct(OBJ_RAT,OBJ_NONE,(void*)0,FALSE));
