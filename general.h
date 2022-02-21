@@ -3,6 +3,7 @@
 #include <string.h>
 #include <float.h>
 #include <math.h>
+#include <ctype.h>
 #include <complex.h>
 #include <limits.h>
 #include <signal.h>

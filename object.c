@@ -1687,7 +1687,7 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);
         //case OBJ_FLT:   sprintf(buf,"%.16g",*(double*)value); return buf;
         //case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.17g",*(double*)(&lval)); return buf;
-        case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.16f",*(double*)(&lval)); return buf;
+        case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.16g",*(double*)(&lval)); return buf;
         case OBJ_CMPLX: sprintf(buf,"%.16g%+.16gI",creal(*(complex*)value),cimag(*(complex*)value)); return buf;
         case OBJ_LFLT:  //mpfr_sprintf(buf,"%.Rg", (mpfr_ptr)value);return buf;
                         mpfr_sprintf(buf,set_lf_format((mpfr_ptr)value),(mpfr_ptr)value);return buf;
@@ -1739,17 +1739,64 @@ object*symbol2obj(Symbol*s,obj_type t) {
     return newOBJ(t,symbol2objtype(s,t));
 }
 
+mpq_ptr decsym2rat(Symbol * S) {
+    char * s = (char *)malloc((S->_size +1)*sizeof(char));
+    strcpy(s, S->_table);
+    int minus = FALSE, p_minus = FALSE;
+    char c, *intp, *decp, *powp;
+    mpz_ptr i_part = (mpz_ptr)malloc(sizeof(MP_INT)), d_part=(mpz_ptr)malloc(sizeof(MP_INT)), powz=(mpz_ptr)malloc(sizeof(MP_INT)), work=(mpz_ptr)malloc(sizeof(MP_INT));
+    mpq_ptr r = (mpq_ptr)malloc(sizeof(MP_RAT)); 
+    long p_part;int phase = 0;
+    mpz_t z10;
+    mpz_init_set_ui(z10, 10);
+    //
+    mpq_init(r);
+    if (*s == '-') {
+        s++; minus = TRUE;
+    }
+    intp = s;
+    while ((c=*s) != '\0') {
+        if isdigit(c) {
+            s++;
+        } else if (phase == 0 && c=='.') {
+            *(s++) = '\0';
+            decp =s;
+            phase =1;
+            if (decp == intp) mpz_init_set_ui(i_part, 0);
+            else mpz_init_set_str(i_part,intp,10);
+        } else if (phase == 1 && (c == 'e' || c == 'E' || c == 'f' || c == 'F')) {
+            *s = '\0';
+            if (*(++s) == '-')  {p_minus = TRUE; s++;}
+            powp = s;
+            phase =2;
+            if (powp == decp) mpz_init_set_ui(d_part, 0);
+            else mpz_init_set_str(d_part,decp,10);
+        } else {
+            mpq_set_ui(r,0,1);
+            return r;
+        }
+    }
+    if (phase == 2) {p_part = strtol(powp,NULL,10);}
+    else if (phase == 1) {mpz_init_set_str(d_part,decp,10); p_part = 0;}
+    else if (phase == 0) {mpz_init_set_str(i_part,intp,10); mpz_init_set_ui(d_part,0);p_part = 0;}
+    // return minus*(i_part+d_part/(10^(decp-intp)))*10^p_part
+    //printf("A.B 10^C: A=%s B=%s C=%ld\n",mpz_get_str(NULL,10,i_part), mpz_get_str(NULL,10,d_part), p_part);
+    mpz_init(powz); mpz_pow_ui(powz, z10, p_part);mpz_mul_si(powz, powz, minus ?-1:1);
+    mpz_init(work); mpz_pow_ui(work, z10, strlen(decp));
+    mpz_mul(i_part, i_part, work);mpz_add(i_part, i_part, d_part);
+    if (p_minus) mpz_mul(work, work, powz);
+    else mpz_mul(i_part, i_part, powz);
+    mpq_set_num(r, i_part); mpq_set_den(r, work); mpq_canonicalize(r);
+    return r;
+}
+
 void*symbol2objtype(Symbol*s,obj_type t){
     if (s==NULL) none_error();
     int mflg=FALSE;
     void*w;
     double d,q;
     char *endp1, *endp2;
-    char ch, *intp,*decp, *powp;//整数部開始位置、少数部開始位置、指数部開始位置
     complex c, *cp;
-    char *ss;
-    mpz_ptr i_part,d_part,p_part;
-    int phase=0;
     //complex c;
 
     switch (t) {
@@ -1765,37 +1812,8 @@ void*symbol2objtype(Symbol*s,obj_type t){
         case OBJ_RAT:// 許容されるのは "整数/整数" "浮動小数点表記"のいずれか
             w=malloc(sizeof(MP_RAT));
             mpq_init((mpq_ptr)w);
-            if (mpq_set_str((mpq_ptr)w,s->_table,10) == 0) {mpq_canonicalize((mpq_ptr)w);return w;} // "整数/整数"であった
-            else {
-                strcpy(ss, s->_table);
-                if (*ss=='-') {mflg=TRUE;ss++;}
-                intp = ss;
-                while ((ch=*ss) != '\0') {
-                    if (ch=='.') {
-                        if (phase != 0) {mpq_init((mpq_ptr)w);return w;}
-                        phase =1;
-                        if (intp == ss) mpz_init_set_ui(i_part,0);//先頭に'.'があった場合
-                        else mpz_init_set_str(i_part,ss,10);
-                        *ss = '\0';
-                        ss++;
-                        decp=ss;
-                    } else if (c == 'e' || c== 'E' || c== 'f' || c=='F') {
-                        if (phase == 0) {*ss='\0';mpz_init_set_str(i_part, intp,10);mpz_init_set_si(d_part,0);}  // '.'がなくて指数部がある場合
-                        else if (phase == 2) {mpq_init((mpq_ptr)w);return w;} // 'e~fが２つ以上あった場合は不正なので0
-                        else {}
-                        phase = 2;
-                        if (decp==ss) { mpz_init_set_ui(d_part,0);}//先頭に'.'があった場合
-
-                        *ss='\0';
-                        ss++;
-                        powp=ss;
-                    } else if (isdigit(ch)) ss++;
-                }
-                if (ss==powp) pz_init_set_si(p_part,0);
-                mpz_init_set_str(p_part,powp,10);
-                mpq_init((mpq_ptr)w);
-
-            }
+            if (mpq_set_str((mpq_ptr)w,s->_table,10) == 0) {mpq_canonicalize((mpq_ptr)w);return w;} // "整数/整数"表記を変換
+            else return (void*)decsym2rat(s);   // 浮動小数表記を分数に変換
         case OBJ_FLT:
             //w=malloc(sizeof(double));
             //sscanf(s->_table,"%lg",(double*)w);

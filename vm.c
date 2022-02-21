@@ -509,7 +509,8 @@ _RNEQ:
     push(S,(void*)(long)(mpq_cmp(qx, qy)!=0));
     goto*dequeue(C);
 _OLEQ:
-    push(S, (void * )(long)objle((object*)pop(S), (object*)pop(S)));
+    o = (object*)pop(S);
+    push(S, (void * )(long)objle((object*)pop(S), o));
     goto * dequeue(C);
 _LEQ:
 _ILEQ:
@@ -528,7 +529,8 @@ _RLEQ:
     push(S,(void*)(long)(mpq_cmp(qx, qy)>=0));
     goto*dequeue(C);
 _OLT:
-    push(S, (void * )(long)objlt((object*)pop(S), (object*)pop(S)));
+    o = (object*)pop(S);
+    push(S, (void * )(long)objlt((object*)pop(S), o));
     goto * dequeue(C);
 _LT:
 _ILT:
@@ -547,7 +549,8 @@ _RLT:
     push(S,(void*)(long)(mpq_cmp(qx, qy)>0));
     goto*dequeue(C);
 _OGT:
-    push(S, (void * )(long)objgt((object*)pop(S), (object*)pop(S)));
+    o = (object*)pop(S);
+    push(S, (void * )(long)objgt((object*)pop(S), o));
     goto * dequeue(C);
 _GT:
 _IGT:
@@ -566,7 +569,8 @@ _RGT:
     push(S,(void*)(long)(mpq_cmp(qx, qy)<0));
     goto*dequeue(C);
 _OGEQ:
-    push(S, (void * )(long)objge((object*)pop(S), (object*)pop(S)));
+    o = (object*)pop(S);
+    push(S, (void * )(long)objge((object*)pop(S), o));
     goto * dequeue(C);
 _GEQ:
 _IGEQ:
