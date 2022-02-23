@@ -14,7 +14,7 @@ enum CODE op2_2[18][19] = {
                 {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,IBXOR,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_NONEはINTと同じに   
               //{ADD,  SUB,  MUL,  DIV,  MOD,  POW,  PUSH, BOR,  BAND, BXOR, SR,  SL,  GT,  LT,  EQ,  NEQ,  GEQ,  LEQ , 0},
                 {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,IBXOR,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_INT
-                {LADD, LSUB, LMUL, LDIV, LMOD, LPOW, 0,    LBOR, LBAND,LBXOR,LSR, LSL, LGT, LLT, LEQ, LNEQ, LGEQ, LLEQ, 0},   // OBJ_LINT
+                {LADD, LSUB, LMUL, LDIV, LMOD, LPOW, 0,    LBOR, LBAND,LBXOR,LSR, LSL, LGT, LLT, L_EQ,LNEQ, LGEQ, LLEQ, 0},   // OBJ_LINT
                 {RADD, RSUB, RMUL, RDIV, RMOD, RPOW, 0,    0,    0,    0,    0,   0,   RGT, RLT, REQ, RNEQ, RGEQ, RLEQ, 0},   // OBJ_RAT
                 {FADD, FSUB, FMUL, FDIV, FMOD, FPOW, 0,    0,    0,    0,    0,   0,   FGT, FLT, FEQ, FNEQ, FGEQ, FLEQ, 0},   // OBJ_FLT
                 {LFADD,LFSUB,LFMUL,LFDIV,LFMOD,LFPOW,0,    0,    0,    0,    0,   0,   LFGT,LFLT,LFEQ,LFNEQ,LFGEQ,LFLEQ,0},   // OBJ_LFLT

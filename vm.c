@@ -11,7 +11,7 @@ char * code_name[] =
      "TCALLS","RTNS", "LDP",  "LDL",  "FADD", "FSUB", "FMUL", "FDIV", "FPR",  "ITOF", "LCPY", "OADD", "OSUB", "OMUL",
      "ODIV",  "OEQ",  "OLEQ", "ITOO", "OPR",  "ODEC", "OINC", "IADD", "ISUB", "IMUL", "IDIV", "IEQ",  "ILEQ", "IDEC",
      "IINC",  "LTOO", "FTOO", "IJTOO","SPR",  "LDIV", "OLT",  "LT"  , "ILT",  "GT",   "IGT",  "OGT",  "GEQ",  "IGEQ",
-     "OGEQ",  "NEG",  "INEG", "ONEG", "BNOT", "APL",  "TAPL", "FEQ",  "FLEQ", "FGEQ", "FLT",  "FGT",  "LEQ",  "LLEQ",
+     "OGEQ",  "NEG",  "INEG", "ONEG", "BNOT", "APL",  "TAPL", "FEQ",  "FLEQ", "FGEQ", "FLT",  "FGT",  "L_EQ", "LLEQ",
      "LGEQ",  "LLT",  "LGT",  "RADD", "RSUB", "RMUL", "RDIV", "REQ",  "RLEQ", "RGEQ", "RLT",  "RGT",  "ITOR", "OTOF",
      "LTOR",  "LTOF", "RTOF", "RTOO", "LTOI", "RTOI", "RTOL", "FTOI", "FTOL", "FTOR", "LNEG", "RNEG", "FNEG", "LINC",
      "LDEC",  "NEQ",  "INEQ", "LNEQ", "RNEQ", "FNEQ", "ONEQ", "OTOI", "OTOL", "OTOR", "VTOO", "STOO", "IPOW", "LPOW",
@@ -97,7 +97,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_TCALLS,&&_RTNS, &&_LDP,  &&_LDL,  &&_FADD, &&_FSUB, &&_FMUL, &&_FDIV ,&&_FPR,  &&_ITOF, &&_LCPY, &&_OADD, &&_OSUB, &&_OMUL, \
             &&_ODIV,  &&_OEQ,  &&_OLEQ, &&_ITOO, &&_OPR , &&_ODEC, &&_OINC, &&_IADD, &&_ISUB, &&_IMUL, &&_IDIV, &&_IEQ,  &&_ILEQ, &&_IDEC, \
             &&_IINC,  &&_LTOO, &&_FTOO, &&_IJTOO,&&_SPR , &&_LDIV, &&_OLT,  &&_LT,   &&_ILT , &&_GT,   &&_IGT,  &&_OGT,  &&_GEQ,  &&_IGEQ, \
-            &&_OGEQ,  &&_NEG,  &&_INEG, &&_ONEG, &&_BNOT, &&_APL,  &&_TAPL, &&_FEQ,  &&_FLEQ, &&_FGEQ, &&_FLT,  &&_FGT,  &&_LEQ,  &&_LLEQ, \
+            &&_OGEQ,  &&_NEG,  &&_INEG, &&_ONEG, &&_BNOT, &&_APL,  &&_TAPL, &&_FEQ,  &&_FLEQ, &&_FGEQ, &&_FLT,  &&_FGT,  &&_L_EQ,  &&_LLEQ, \
             &&_LGEQ,  &&_LLT,  &&_LGT,  &&_RADD, &&_RSUB, &&_RMUL, &&_RDIV, &&_REQ,  &&_RLEQ, &&_RGEQ, &&_RLT,  &&_RGT,  &&_ITOR, &&_OTOF, \
             &&_LTOR,  &&_LTOF, &&_RTOF, &&_RTOO, &&_LTOI, &&_RTOI, &&_RTOL, &&_FTOI, &&_FTOL, &&_FTOR, &&_LNEG, &&_RNEG, &&_FNEG, &&_LINC, \
             &&_LDEC,  &&_NEQ,  &&_INEQ, &&_LNEQ, &&_RNEQ, &&_FNEQ, &&_ONEQ, &&_OTOI, &&_OTOL, &&_OTOR, &&_VTOO, &&_STOO, &&_IPOW, &&_LPOW, \
@@ -570,7 +570,7 @@ _RGT:
     goto*dequeue(C);
 _OGEQ:
     o = (object*)pop(S);
-    push(S, (void * )(long)objge((object*)pop(S), o));
+    push(S, (void * )(long)objge((object*)pop(S), (object*)pop(S)));
     goto * dequeue(C);
 _GEQ:
 _IGEQ:

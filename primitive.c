@@ -261,6 +261,7 @@ void * p_as_int(Vector *v) {return vector_ref(v,0);}
 void * p_type(Vector *v) {return (void*)(long)((object *)vector_ref(v,0))->type;}
 
 void * p_copy(Vector *v) {return (void*)objcpy((object*)vector_ref(v,0));}
+void * p_system(Vector *v) { system(((Symbol*)vector_ref(v,0))->_table); return NULL;}
 void * p_num(Vector *v) {};
 void * p_den(Vector *v) {};
 void * p_real(Vector *v) {};
@@ -292,7 +293,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
-                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_factor, p_hex_str, p_as_float, p_as_int, p_str, p_type, p_copy, NULL};
+                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_factor, p_hex_str, p_as_float, p_as_int, p_str, p_type, p_copy, p_system,NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -303,7 +304,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
-                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "factor", "hexstr", "asfloat", "asint", "str","type", "copy",NULL};
+                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "factor", "hexstr", "asfloat", "asint", "str","type", "copy", "system", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT,OBJ_LFLT},                                      // set_prec
@@ -405,6 +406,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},                                      // str
                                 {OBJ_GEN},                                      // type
                                 {OBJ_GEN},                                      // copy
+                                {OBJ_SYM},                                      // system
                                 };
 
 int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
@@ -508,6 +510,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_SYM,  1, FALSE},   // str
                                 {OBJ_INT,  1, FALSE},   // type
                                 {OBJ_GEN,  1, FALSE},   // copy
+                                {OBJ_NONE, 1, FALSE},   // system
                                  };
 
 void * make_primitive() {
