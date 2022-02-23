@@ -223,7 +223,9 @@ void * p_pollard_rho(Vector *v) {
     if (pollard_rho((mpz_ptr)n, r, (mpz_ptr)vector_ref(v,1), (mpz_ptr)vector_ref(v,2), (long)vector_ref(v,3), (long)vector_ref(v,4))) {
         return (void*)r;
     }
-    return NULL;
+    mpz_ptr iz=(mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_init_set_ui(iz,0);
+    return (void*)iz;
 }
 void * p_pollard_pm1(Vector *v) {
     mpz_ptr r= (mpz_ptr)malloc(sizeof(MP_INT));
@@ -232,8 +234,25 @@ void * p_pollard_pm1(Vector *v) {
     if (pollard_pm1(n, r, (long)vector_ref(v,1), (long)vector_ref(v,2))) {
         return (void*)r;
     }
-    return NULL;
+    mpz_ptr iz=(mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_init_set_ui(iz,0);
+    return (void*)iz;
 }
+//
+#include "ecm.h"
+void * p_factor(Vector *v) {
+    void* n= vector_ref(v,0);
+    //ecm_params p;
+    mpz_ptr f = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(f);
+    //ecm_init (p);
+    long B1 = (long)vector_ref(v,1);
+    int i;
+    //if ((i=ecm_factor (f, (mpz_ptr)n, *(double*)&B1, p)) == 0) return n;
+    if ((i=ecm_factor (f, (mpz_ptr)n, *(double*)&B1, NULL)) == 0) return n;
+    if (i<0) {mpz_set_ui(f,0);return (void*)f;}
+    return (void*)f;
+}
+//
 void * p_str(Vector *v) {return (void*)obj2symbol((object*)vector_ref(v,0));}
 //void * p_hex_str(Vector *v) {long d,rem,val=(long)vector_ref(v,0);char*s=(char*)malloc(18*sizeof(char));if (val<0) {val=-val;s[0]='-';} else s[0]=' ';int i;for(i=1;i<17;i++) {d=val/16;rem=val-d*16;s[17-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[17]='\0';return (void*)new_symbol(s,17);}
 void * p_hex_str(Vector *v) {unsigned long d,rem,val=(long)vector_ref(v,0);char*s=(char*)malloc(17*sizeof(char));int i;for(i=0;i<16;i++) {d=val/16;rem=val-d*16;s[15-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[16]='\0';return (void*)new_symbol(s,17);}
@@ -273,7 +292,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
-                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_hex_str, p_as_float, p_as_int, p_str, p_type, p_copy, NULL};
+                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_factor, p_hex_str, p_as_float, p_as_int, p_str, p_type, p_copy, NULL};
 char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -284,7 +303,7 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
-                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "hexstr", "asfloat", "asint", "str","type", "copy",NULL};
+                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "factor", "hexstr", "asfloat", "asint", "str","type", "copy",NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},
                                 {OBJ_INT,OBJ_LFLT},                                      // set_prec
@@ -379,6 +398,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_LINT},                                     // lrand
                                 {OBJ_LINT,OBJ_LINT,OBJ_LINT,OBJ_INT,OBJ_INT},   // pollard_rho
                                 {OBJ_LINT,OBJ_INT,OBJ_INT},                     // pollard_pm1
+                                {OBJ_LINT,OBJ_FLT},                             // factor
                                 {OBJ_INT},                                      // hexstr
                                 {OBJ_INT},                                      // asfloat
                                 {OBJ_FLT},                                      // asint
@@ -481,6 +501,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_LINT, 1, FALSE},   // lrand
                                 {OBJ_LINT, 5, FALSE},   // pollard_rho
                                 {OBJ_LINT, 3, FALSE},   // pollard_pm1
+                                {OBJ_LINT, 2, FALSE},   // factor
                                 {OBJ_SYM,  1, FALSE},   // hex_str
                                 {OBJ_FLT,  1, FALSE},   // asfloat
                                 {OBJ_INT,  1, FALSE},   // asint
