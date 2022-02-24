@@ -218,3 +218,4 @@ string r2decstr(rational r,int size)={
 	};
 	s
 };
+vector factorint(long n)={vector v=[];int max;long q;if n<=2L**64:max=100000:max=1000000;while n>1L:{q=pollard_rho(n,2L,1L,max,10);if q !=0:{v<-q;n/=q}:n=1};v};
