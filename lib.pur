@@ -221,4 +221,4 @@ string r2decstr(rational r,int size)={
 vector factorint(long n)={vector v=[];int max;long q;if n<=2L**64:max=100000:max=1000000;while n>1L:{q=pollard_rho(n,2L,1L,max,10);if q !=0:{v<-q;n/=q}:n=1};v};
 vector PRIME_LIST_16=filter(lambda(x) lis_prime(tolong(x))!=0,range(1,2**16));
 vector trial_div(long n)={long p=n;vector V=[],v=[];while @(v=filter(lambda(x) p%tolong(x)==0,PRIME_LIST_16))!=0:{V=V+v;p/=tolong(fold1(lambda(x,y) x*y,1,v))};[V,p]};
-X
+
