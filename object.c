@@ -496,7 +496,7 @@ object * objLDIV(mpz_ptr x, mpz_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(L);
-    if (mpz_sgn(y)) zero_division_error();
+    if (mpz_sgn(y) == 0) zero_division_error();
     mpz_tdiv_q (L, x, y);
     o -> data.ptr = (void * )L;
     o -> type = OBJ_LINT;
@@ -517,7 +517,7 @@ object * objLMOD(mpz_ptr x, mpz_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(L);
-    if (mpz_sgn(y)) zero_division_error();
+    if (mpz_sgn(y) == 0) zero_division_error();
     mpz_tdiv_r (L, x, y);
     o -> data.ptr = (void * )L;
     o -> type = OBJ_LINT;
