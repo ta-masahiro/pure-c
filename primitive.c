@@ -261,19 +261,25 @@ void * p_as_int(Vector *v) {return vector_ref(v,0);}
 void * p_type(Vector *v) {return (void*)(long)((object *)vector_ref(v,0))->type;}
 
 void * p_copy(Vector *v) {return (void*)objcpy((object*)vector_ref(v,0));}
-void * p_system(Vector *v) { system(((Symbol*)vector_ref(v,0))->_table); return NULL;}
+void * p_system(Vector *v) { if (system(((Symbol*)vector_ref(v,0))->_table) == 0 ) perror("canot exec command"); return NULL;}
 void * p_popen(Vector *v) {
     FILE * fp;
-    char buff[8192];
+    char *buff;
     char * cmdline = ((Symbol *)vector_ref(v,0))->_table;
     if ( (fp=popen(cmdline,"r")) ==NULL) {
 		perror ("can not exec commad");
 		return NULL;
 	}
+    buff = (char*)malloc(8192*sizeof(char));
+	fgets(buff, sizeof(buff), fp);
+	Symbol * s = new_symbol(buff,strlen(buff));
 	while (!feof(fp)) {
+        buff = (char*)malloc(8192*sizeof(char));
 		fgets(buff, sizeof(buff), fp);
-		return (void *)new_symbol(buff,sizeof(buff));
+		s = symbol_append(s, new_symbol(buff,strlen(buff)));
 	}
+    pclose(fp);
+    return (void*)s;
 }
 void * p_num(Vector *v) {};
 void * p_den(Vector *v) {};
