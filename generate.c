@@ -1359,6 +1359,7 @@ int main(int argc, char*argv[]) {
     code_ret *code_s;
     obj_type type; 
     code_type* ct;
+    if (mpfr_mp_memory_cleanup () != 0) {printf("MemoryAssignment Error!\n");exit(0);}
     mp_set_memory_functions((void *)GC_malloc, (void * )_realloc, (void * ) GC_free);
     mpfr_set_default_prec(256);
     Vector * t; 

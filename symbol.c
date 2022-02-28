@@ -76,6 +76,12 @@ Symbol * symbol_pop(Symbol *s) {
     return r;
 }
 
+long symbol_search(Symbol * s, Symbol * c) {
+    char * ad = strstr(s->_table, c->_table);
+    if (ad == NULL) return -1;
+    return  (long)ad - (long)s->_table;
+}
+
 void*symbol_push(Symbol *t,Symbol *s) {
     
 }

@@ -14,4 +14,5 @@ Symbol*symbol_cpy(Symbol*s) ;
 Symbol*symbol_cpy_n(Symbol*s,long i,long j) ;
 Symbol*symbol_set(Symbol*t,unsigned long pos,Symbol*s);
 Symbol*symbol_pop(Symbol*s);
+long symbol_search(Symbol *s, Symbol *c);
 #endif
