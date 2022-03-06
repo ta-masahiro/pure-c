@@ -1406,8 +1406,8 @@ int main(int argc, char*argv[]) {
         tokencp = S->buff->_cp;tokensp=S->buff->_sp;
         //token_print(tokenbuff);
         Try {
-            //if (fp==stdin) putchar('>');
-            if (fp==stdin) write(1,PROMPT,1);
+            if (fp==stdin) putchar('>');
+            //if (fp==stdin) write(1,PROMPT,1);
             if ((a=is_expr(S)) && get_token(S)->type==';') {
                 if (DEBUG) ast_print(a,0);
                 s1_time = clock();clock_gettime(CLOCK_REALTIME,&S1_T);
@@ -1425,15 +1425,18 @@ int main(int argc, char*argv[]) {
                 s2_time = clock();clock_gettime(CLOCK_REALTIME,&S2_T);
                 value = eval(Stack,Env,code,Ret,EEnv,G);
                 e_time = clock();clock_gettime(CLOCK_REALTIME,&E_T);
-                //printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)1000*(s2_time-s1_time)/CLOCKS_PER_SEC,(double)1000*(e_time-s2_time)/CLOCKS_PER_SEC);
-                printf("compile time[sec]:%f\tevalueate time[sec]:%f\n",(double)(S2_T.tv_sec-S1_T.tv_sec)+(double)(S2_T.tv_nsec-S1_T.tv_nsec)/(1000*1000*1000),(double)(E_T.tv_sec-S2_T.tv_sec)+(double)(E_T.tv_nsec-S2_T.tv_nsec)/(1000*1000*1000));
-                printf("%s ok\n", objtype2str(type,value));
+                if (fp==stdin) {
+                    //printf("compile time[ms]:%f\tevalueate time[ms]:%f\n",(double)1000*(s2_time-s1_time)/CLOCKS_PER_SEC,(double)1000*(e_time-s2_time)/CLOCKS_PER_SEC);
+                    printf("compile time[sec]:%f\tevalueate time[sec]:%f\n",(double)(S2_T.tv_sec-S1_T.tv_sec)+(double)(S2_T.tv_nsec-S1_T.tv_nsec)/(1000*1000*1000),(double)(E_T.tv_sec-S2_T.tv_sec)+(double)(E_T.tv_nsec-S2_T.tv_nsec)/(1000*1000*1000));
+                    printf("%s ok\n", objtype2str(type,value));
+                }
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {
                 if (a==NULL) {//printf("file end!!\n");
                     //exit(0);
                     fclose(fp);
                     fp=stdin;S=new_tokenbuff(fp);
+                    if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");
                 } else {
                     printf("SyntaxErroor:Not a exprssion!\n");
                     Throw(1);
