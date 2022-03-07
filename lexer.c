@@ -15,13 +15,13 @@ Stream  * new_stream(FILE * f) {
     return S; 
 }
 
-Stream  * new_str_stream(char * str) {
+Stream  * new_str_stream(Symbol * str) {
     Stream * S = (Stream * )malloc(sizeof(Stream) );
     S ->_pos = 0;
     S ->_line = 0;
-    S ->_buff = str;  
+    S ->_buff = str->_table;  
     S -> _fp = NULL;
-    S->_max=strlen(str);
+    S->_max = str->_size;
     return S; 
 }
 
@@ -75,6 +75,13 @@ token * new_token(int type, Symbol * s, void * val, Stream * S) {
 TokenBuff * new_tokenbuff(FILE *f) {
     TokenBuff * tokens = (TokenBuff*)malloc(sizeof(TokenBuff));
     tokens->S = new_stream(f);
+    tokens->buff = vector_init(10);
+    return tokens;
+}
+
+TokenBuff * new_str_tokenbuff(Symbol *f) {
+    TokenBuff * tokens = (TokenBuff*)malloc(sizeof(TokenBuff));
+    tokens->S = new_str_stream(f);
     tokens->buff = vector_init(10);
     return tokens;
 }

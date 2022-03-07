@@ -120,11 +120,12 @@ ast * new_ast(ast_type type, Vector * table) {
 extern char * dcl_string[];
 //char get_char(Stream*S);
 Stream *new_stream(FILE * f);  
-Stream *new_str_stream(char * str);  
+Stream *new_str_stream(Symbol * str);  
 //void unget_char(Stream *S);
 //Symbol * new_symbol(unsigned char * str, unsigned long size);  
 token * new_token(int type, Symbol * s, void * val, Stream * S); 
 TokenBuff * new_tokenbuff(FILE *f);
+TokenBuff * new_str_tokenbuff(Symbol *f);
 token * _get_token(Stream *S); 
 token * get_token(TokenBuff *t) ; 
 void    unget_token(TokenBuff *t); 
