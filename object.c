@@ -1549,7 +1549,8 @@ object * objabs(object *x) {
         case OBJ_RAT : mpq_abs((mpq_ptr)o->data.ptr, (mpq_ptr)x->data.ptr); return o;
         case OBJ_FLT : o->data.flt = fabs(o->data.flt); return o;
         case OBJ_LFLT: mpfr_abs((mpfr_ptr)o->data.ptr, (mpfr_ptr)x->data.ptr, MPFR_RNDN); return o;
-        case OBJ_CMPLX:*(complex*)o->data.ptr = cabs(*(complex*)x->data.ptr);return o;
+        //case OBJ_CMPLX:*(complex*)o->data.ptr = cabs(*(complex*)x->data.ptr);return o;
+        case OBJ_CMPLX:o->data.flt = cabs(*(complex*)x->data.ptr);o->type=OBJ_FLT;return o;
         default:printf("runtime error illegal ABS op\n");return NULL;
     }
 }
