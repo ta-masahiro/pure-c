@@ -252,10 +252,11 @@ object*newDICT(Hash * h) {
 }
 
 object*newOBJ(obj_type t, void* v) {
+    long l=(long)v;
     if (v==NULL) none_error();
     switch(t) {
         case OBJ_INT:return newINT((long)v);
-        case OBJ_FLT:return newFLT(*(double*)v);
+        case OBJ_FLT:return newFLT(*(double*)(&l));
         case OBJ_LFLT:return newLFLT((mpfr_ptr)v);
         case OBJ_LINT:return newLINT((mpz_ptr)v);
         case OBJ_RAT:return newRAT((mpq_ptr)v);
@@ -263,6 +264,7 @@ object*newOBJ(obj_type t, void* v) {
         case OBJ_CMPLX:return newCMPLX((complex*)v);
         case OBJ_VECT:return newVECT((Vector*)v);
         case OBJ_DICT:return newDICT((Hash*)v);
+        case OBJ_GEN:return (object*)v;
         default:printf("RuntimeError:Illegal Object Type!\n");Throw(3);
     }
 }
@@ -1713,6 +1715,7 @@ char * objtype2str(obj_type type, void* value) {
                         return buf;
         case OBJ_UFUNC: sprintf(buf,"<UserFunction: %lx>",(long)value);return buf;
         case OBJ_PFUNC: sprintf(buf,"<PrimitiveFunction: %lx>",(long)value);return buf;
+        case OBJ_CNT:   sprintf(buf,"<UserCode: %lx>",(long)value);return buf;
         case OBJ_IO   : sprintf(buf,"<I/O_file: %lx>",(long)value);return buf;
         case OBJ_DICT : //sprintf(buf,"<Dictionary: %lx>",(long)value);return buf;
                         strcpy(buf, "{ ");

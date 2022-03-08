@@ -1349,6 +1349,24 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
     return GC_realloc(ptr, new_size); 
 }
 
+code_ret * str_compile(Symbol * s) {
+    TokenBuff * SS = new_str_tokenbuff(s);
+    ast * a = is_expr(SS);
+    Vector * env = vector_init(10);
+    return codegen(a,env,FALSE);
+}
+
+object * code_eval(code_ret * code_s) {
+    Vector * code   = code_s->code;push(code,(void*)STOP);
+    Vector * Ret    = vector_init(500); 
+    Vector * Env    = vector_init(5); 
+    Vector * EEnv   = vector_init(50); 
+    Vector * Stack  = vector_init(500);
+    
+    void * value = eval(Stack,Env,code,Ret,EEnv,G);
+    return newOBJ(code_s->ct->type, value); 
+}
+
 int main(int argc, char*argv[]) {
     void* value;
     ast *a;

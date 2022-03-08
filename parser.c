@@ -535,7 +535,7 @@ ast * is_expr_2n(TokenBuff * S,int n) {
 
 char*dcl_string[]=     {"none",     "int",      "long",     "rational", "float",    "lfloat",   "complex",  "var",\
     //                  OBJ_NONE,   OBJ_INT,    OBJ_LINT,   OBJ_RAT,    OBJ_FLT,    OBJ_LFLT,   OBJ_CMPLX,  OBJ_GEN,
-                        "__function",   "_function",    "function", "cont",\
+                        "__function",   "_function",    "function", "code",\
     //                  OBJ_SYSFUNC,    OBJ_PFUNC,      OBJ_UFUNC,  OBJ_CNT
                         "vector",   "dict",   "pair",   "string",   "array",    \
     //                   OBJ_VECT,  OBJ_DICT,  OBJ_PAIR,OBJ_SYM,    OBJ_ARRAY

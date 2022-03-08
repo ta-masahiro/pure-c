@@ -55,6 +55,7 @@ object * newLFFT_f(double f) ;
 object * newVECT(Vector * v);
 object * newDICT(Hash * h);
 object * newCMPLX(complex *c);
+object * newOBJ(obj_type t,void* v);
 object * newSTR(Symbol*s);
 long     obj2int(object*o);
 mpz_ptr  obj2long(object*o);
