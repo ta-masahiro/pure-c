@@ -151,6 +151,15 @@ complex *lftoc(mpfr_ptr F) {
     complex *c = (complex*)malloc(sizeof(complex));
     *c=mpfr_get_d(F,MPFR_RNDN)+0.0*I;
 }
+//#define newINT(n)   newOBJ(OBJ_INT,  n)
+#define newLINT(n)  newOBJ(OBJ_LINT, (void*)n)
+#define newRAT(n)   newOBJ(OBJ_RAT,  (void*)n)
+//#define newFLT(n)   newOBJ(OBJ_FLT,  n)
+#define newLFLT(n)  newOBJ(OBJ_LFLT, (void*)n)
+#define newCMPLX(n) newOBJ(OBJ_CMPLX,(void*)n)
+#define newSTR(n)   newOBJ(OBJ_SYM,  (void*)n)
+#define newVECT(n)  newOBJ(OBJ_VECT, (void*)n)
+#define newDICT(n)  newOBJ(OBJ_DICT, (void*)n)
 
 object * newINT(long n) {
     object * o = (object * )malloc(sizeof(object));
@@ -158,6 +167,7 @@ object * newINT(long n) {
     o -> data.intg = n;
     return o;
 }
+/*
 object * newLINT(mpz_ptr L) {
     if (L==NULL) none_error();
     object * o = (object * )malloc(sizeof(object));
@@ -165,6 +175,7 @@ object * newLINT(mpz_ptr L) {
     o ->data.ptr = (void * )L;
     return o;
 }
+*/
 object * newLINT_i(long n) {
     object * o = (object * )malloc(sizeof(object));
     o -> type = OBJ_LINT;
@@ -180,6 +191,7 @@ object * newLINT_s(char * s) {
     o ->data.ptr = (void * )L;
     return o;
 }
+/*
 object * newRAT(mpq_ptr Q) {
     if (Q==NULL) none_error();
     object * o = (object * )malloc(sizeof(object));
@@ -187,7 +199,7 @@ object * newRAT(mpq_ptr Q) {
     o ->data.ptr = (void * )Q;
     return o;
 }
-
+*/
 object * newRAT_i(long i, long j) {
     object * o = (object * )malloc(sizeof(object));
     mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));
@@ -198,12 +210,14 @@ object * newRAT_i(long i, long j) {
     o ->data.ptr = (void * )Q;
     return o;
 }
+
 object*newFLT(double d) {
     object * o = (object * )malloc(sizeof(object));
     o -> type = OBJ_FLT;
     o ->data.flt = d;
     return o;
 }
+/*
 object * newLFLT(mpfr_ptr F) {
     if (F==NULL) none_error();
     object * o = (object * )malloc(sizeof(object));
@@ -211,6 +225,7 @@ object * newLFLT(mpfr_ptr F) {
     o ->data.ptr = (void * )F;
     return o;
 }
+*/
 object * newLFFT_f(double f) {
     object * o = (object * )malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
@@ -219,7 +234,7 @@ object * newLFFT_f(double f) {
     o ->data.ptr = (void * )F;
     return o;
 }
-
+/*
 object *newCMPLX(complex*c) {
     object * o = (object * )malloc(sizeof(object));
     o -> type = OBJ_CMPLX;
@@ -250,7 +265,8 @@ object*newDICT(Hash * h) {
     o->data.ptr=(void*)h;
     return o;
 }
-
+*/
+/*
 object*newOBJ(obj_type t, void* v) {
     long l=(long)v;
     if (v==NULL) none_error();
@@ -268,7 +284,19 @@ object*newOBJ(obj_type t, void* v) {
         default:printf("RuntimeError:Illegal Object Type!\n");Throw(3);
     }
 }
-
+*/
+object * newOBJ(obj_type t, void *v) {
+    if (t==OBJ_GEN) return (object *) v;
+    object * o = (object *)malloc(sizeof(object));
+    o->type = t;
+    long l = (long)v;
+    switch(t) {
+        case OBJ_INT:o->data.intg = l;return o;
+        case OBJ_FLT:o->data.flt = *(double *)&l;
+        //case OBJ_GEN: return (object*)v;
+        default: o->data.ptr = v;return o;
+    }
+}
 long obj2int(object*o) {
     if (o==NULL) none_error();
     switch(o->type) {

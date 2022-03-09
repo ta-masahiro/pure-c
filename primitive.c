@@ -5,7 +5,8 @@ unsigned long mulmod(unsigned long a,unsigned long b,unsigned long c);
 //extern Hash * PRIMITIVE_FUNC;
 void * p_exit() {exit(0);}
 void * p_forget(Vector *v) {
-
+    Hash_del(G, (Symbol*)vector_ref(v,0));
+    return NULL;
 }
 void * p_set_prec(Vector *v) {
     if (v->_sp==1) mpfr_set_default_prec((long)vector_ref(v,0));
@@ -311,7 +312,7 @@ void * eval_str(Symbol * s) {
 
 }
 */
-Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
+Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_puts,p_getc, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,
                                  p_log10, p_logE, p_log, p_exp, p_iabs, p_fabs, p_isqrt, p_fsqrt,
@@ -323,7 +324,7 @@ Funcpointer primitive_func[]  = {p_exit, p_set_prec,p_get_prec,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_factor, p_hex_str, p_as_float, p_as_int, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
                                  p_compile, p_dis_assy, p_eval, p_num, p_den, p_real, p_imag, p_arg, NULL };
-char*primitive_function_name[]={"exit", "set_prec","get_prec",
+char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
                                 "log10", "logE", "log", "exp", "iabs", "fabs", "isqrt", "fsqrt",
@@ -336,9 +337,10 @@ char*primitive_function_name[]={"exit", "set_prec","get_prec",
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "factor", "hexstr", "asfloat", "asint", "str", "str_search", "type", "copy", "system", "popen",
                                 "compile", "dis_assy", "eval", "num", "den", "real", "imag", "arg", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
-                                {OBJ_NONE},
-                                {OBJ_INT,OBJ_LFLT},                                      // set_prec
-                                {OBJ_INT},                                     // get_prec
+                                {OBJ_NONE},                                     // exit
+                                {OBJ_SYM},                                      // forget
+                                {OBJ_INT,OBJ_LFLT},                             // set_prec
+                                {OBJ_INT},                                      // get_prec
                                 {OBJ_GEN},                                      // print
                                 {OBJ_SYM,OBJ_GEN},                              // printf
                                 {OBJ_SYM,OBJ_SYM},                              // open
@@ -447,6 +449,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
 
 int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
                                 {OBJ_NONE,0, FALSE},    // exit
+                                {OBJ_NONE,1, FALSE},    // forget
                                 {OBJ_NONE,2, TRUE},     // set_proc
                                 {OBJ_INT, 1, TRUE},     // get_proc
                                 {OBJ_NONE,1, TRUE},     // print

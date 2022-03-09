@@ -1356,6 +1356,13 @@ code_ret * str_compile(Symbol * s) {
     return codegen(a,env,FALSE);
 }
 
+code_ret * file_compile(FILE *f) {
+    TokenBuff * SS = new_tokenbuff(f);
+    ast * a = is_expr(SS);
+    Vector * env = vector_init(10);
+    return codegen(a,env,FALSE);
+}
+
 object * code_eval(code_ret * code_s) {
     Vector * code   = code_s->code;push(code,(void*)STOP);
     Vector * Ret    = vector_init(500); 
@@ -1366,6 +1373,7 @@ object * code_eval(code_ret * code_s) {
     void * value = eval(Stack,Env,code,Ret,EEnv,G);
     return newOBJ(code_s->ct->type, value); 
 }
+#include <unistd.h>
 
 int main(int argc, char*argv[]) {
     void* value;
@@ -1412,7 +1420,7 @@ int main(int argc, char*argv[]) {
         //    }
         //}
     }
-    if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");
+    if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");fflush(stdout);
     //DEBUG=TRUE;
     S = new_tokenbuff(fp);
     //tokenbuff=vector_init(100);
@@ -1424,7 +1432,7 @@ int main(int argc, char*argv[]) {
         tokencp = S->buff->_cp;tokensp=S->buff->_sp;
         //token_print(tokenbuff);
         Try {
-            if (fp==stdin) putchar('>');
+            if (fp==stdin) putchar('>');fflush(stdout);
             //if (fp==stdin) write(1,PROMPT,1);
             if ((a=is_expr(S)) && get_token(S)->type==';') {
                 if (DEBUG) ast_print(a,0);

@@ -43,20 +43,30 @@ mpq_ptr  ftor(double d);
 mpfr_ptr ftolf(double f) ;
 long     lftoi(mpfr_ptr F) ;
 //
+//#define newINT(n)   newOBJ(OBJ_INT,  n)
+#define newLINT(n)  newOBJ(OBJ_LINT, (void*)n)
+#define newRAT(n)   newOBJ(OBJ_RAT,  (void*)n)
+//#define newFLT(n)   newOBJ(OBJ_FLT,  n)
+#define newLFLT(n)  newOBJ(OBJ_LFLT, (void*)n)
+#define newCMPLX(n) newOBJ(OBJ_CMPLX,(void*)n)
+#define newSTR(n)   newOBJ(OBJ_SYM,  (void*)n)
+#define newVECT(n)  newOBJ(OBJ_VECT, (void*)n)
+#define newDICT(n)  newOBJ(OBJ_DICT, (void*)n)
+
 object * newINT(long n) ;
-object * newLINT(mpz_ptr L) ;
+//object * newLINT(mpz_ptr L) ;
 object * newLINT_i(long n) ;
 object * newLINT_s(char * s) ;
-object * newRAT(mpq_ptr Q) ;
+//object * newRAT(mpq_ptr Q) ;
 object * newRAT_i(long i, long j) ;
 object * newFLT(double d) ;
-object * newLFLT(mpfr_ptr F) ;
+//object * newLFLT(mpfr_ptr F) ;
 object * newLFFT_f(double f) ;
-object * newVECT(Vector * v);
-object * newDICT(Hash * h);
-object * newCMPLX(complex *c);
+//object * newVECT(Vector * v);
+//object * newDICT(Hash * h);
+//object * newCMPLX(complex *c);
 object * newOBJ(obj_type t,void* v);
-object * newSTR(Symbol*s);
+//object * newSTR(Symbol*s);
 long     obj2int(object*o);
 mpz_ptr  obj2long(object*o);
 mpq_ptr  obj2rat(object*o);
