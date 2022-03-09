@@ -4,7 +4,8 @@ OBJS := hash.o vector.o symbol.o vm.o object.o lexer.o  parser.o generate.o prim
 CC := gcc
 #FLAGS := -g -O0
 FLAGS := -O3
-LDLIBS :=  -lgc -lgmp -lmpfr -lm  -lecm
+#LDLIBS :=  -lgc -lgmp -lmpfr -lm  -lecm
+LDLIBS :=  -lgc -lgmp -lmpfr -lm
 
 $(PROGRAM): $(OBJS)
 	$(CC) -o $(PROGRAM) $(FLAGS) $^ $(LDLIBS)

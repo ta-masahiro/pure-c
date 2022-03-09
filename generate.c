@@ -1348,7 +1348,8 @@ extern void make_primitive();
 void * _realloc(void * ptr, size_t old_size, size_t new_size) {
     return GC_realloc(ptr, new_size); 
 }
-
+// 式1つをコンパイルしてコードと型を返す
+// ※2つ以上の式があった場合どうするか？今は無視
 code_ret * str_compile(Symbol * s) {
     TokenBuff * SS = new_str_tokenbuff(s);
     ast * a = is_expr(SS);
@@ -1356,13 +1357,7 @@ code_ret * str_compile(Symbol * s) {
     return codegen(a,env,FALSE);
 }
 
-code_ret * file_compile(FILE *f) {
-    TokenBuff * SS = new_tokenbuff(f);
-    ast * a = is_expr(SS);
-    Vector * env = vector_init(10);
-    return codegen(a,env,FALSE);
-}
-
+// 式一つを評価して結果をobjectにして返す
 object * code_eval(code_ret * code_s) {
     Vector * code   = code_s->code;push(code,(void*)STOP);
     Vector * Ret    = vector_init(500); 
@@ -1372,6 +1367,17 @@ object * code_eval(code_ret * code_s) {
     
     void * value = eval(Stack,Env,code,Ret,EEnv,G);
     return newOBJ(code_s->ct->type, value); 
+}
+
+void code_load(FILE *f) {
+    ast *a;Vector * env = vector_init(10);
+    TokenBuff * SS = new_tokenbuff(f);
+    while (TRUE) {
+        if ((a = is_expr(SS)) && get_token(SS)->type == ';' ){
+            //Vector * env = vector_init(10);
+            code_eval(codegen(a,env,FALSE));
+        } else break;
+    }
 }
 #include <unistd.h>
 
