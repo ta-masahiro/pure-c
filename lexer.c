@@ -534,13 +534,14 @@ token * _get_token(Stream * S) {
 token * get_token(TokenBuff * tokens) {
     // token bufferからtokenを取り出し返す
     // bufferが空なら_get_ktokenでBuffに読み込み、それを返す
-    // EOFの時はNULLが返る 
+    // EOFの時はNULLが返る->!!bug!!の元 
     Vector * tokenbuff =tokens->buff;
     Stream * S = tokens->S;
     token * t;
     //token_print(tokens);
     if (!is_queu_empty(tokenbuff)) return (token*)dequeue(tokenbuff);
     t=_get_token(S);//printf("%s\n",t->source->_table);
+    if (t == NULL) {printf("UnexpectedEOF!\n");Throw(0);}
     push(tokenbuff,(void*)t);(tokenbuff->_cp)++;
     return  t; // if EOF return NULL
 }
