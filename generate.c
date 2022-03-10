@@ -1352,9 +1352,10 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
 // ※2つ以上の式があった場合どうするか？今は無視
 code_ret * str_compile(Symbol * s) {
     TokenBuff * SS = new_str_tokenbuff(s);
-    ast * a = is_expr(SS);
+    ast * a ;
     Vector * env = vector_init(10);
-    return codegen(a,env,FALSE);
+    if ((a = is_expr(SS)) && get_token(SS)->type == ';') return codegen(a,env,FALSE);
+    else return NULL;
 }
 
 // 式一つを評価して結果をobjectにして返す
