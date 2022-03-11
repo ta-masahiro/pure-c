@@ -520,7 +520,8 @@ token * _get_token(Stream * S) {
             c=get_char(S);                     
             if (!isblank(c) || c != '\n') break;            // 空白と改行を読み飛ばして
         }
-        if (c=='\0') return NULL;                           // NULL文字なら終了
+        //if (c=='\0') return NULL;                           // NULL文字なら終了
+        if (c=='\0') return new_token(TOKEN_EOF,NULL,NULL,S);
         unget_char(S);
         is_comm(S,TOKEN_NONE,0);                            // コメントを読み飛ばす
         if (t = is_NUM(S, TOKEN_NONE, STR_BUFF)) return t;  // 数値ならそれをtokenに入れて返す  

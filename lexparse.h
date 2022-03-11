@@ -17,9 +17,9 @@ typedef struct {
 } Stream;
 
 typedef enum {
-    TOKEN_NONE, TOKEN_INT, TOKEN_LINT, TOKEN_RAT, TOKEN_FLT, TOKEN_EFLT, TOKEN_LEFLT, TOKEN_SYM, TOKEN_STR, TOKEN_CHR,TOKEN_HEX,TOKEN_OCT,TOKEN_BIN,TOKEN_COMM,TOKEN_LCOMM,TOKEN_RAW_STR
+    TOKEN_NONE, TOKEN_INT, TOKEN_LINT, TOKEN_RAT, TOKEN_FLT, TOKEN_EFLT, TOKEN_LEFLT, TOKEN_SYM, TOKEN_STR, TOKEN_CHR,TOKEN_HEX,TOKEN_OCT,TOKEN_BIN,TOKEN_COMM,TOKEN_LCOMM,TOKEN_RAW_STR, TOKEN_EOF
     
-//  初期状態、整数、分数、小数、指数付き少数、シンボル、文字列、RAW文字列、文字、コメント、1行コメント
+//  初期状態、整数、分数、小数、指数付き少数、シンボル、文字列、RAW文字列、文字、コメント、1行コメント、RAW文字列、EOF
 } tokenstate; 
 
 typedef tokenstate tokentype; 

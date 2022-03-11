@@ -840,7 +840,8 @@ ast * is_dcl_expr(TokenBuff*S) {
 
 ast * is_expr(TokenBuff *S) {
     ast * a;
-    if (get_token(S) == NULL) return NULL;  // tokenがない場合
+    //if (get_token(S) == NULL) return NULL;  // tokenがない場合
+    if (get_token(S)->type == TOKEN_EOF) return NULL;  // tokenがない場合
     unget_token(S);
     if (a = is_dcl_expr(S)) return a;
     if (a = is_set_expr(S)) return a;

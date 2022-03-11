@@ -288,7 +288,7 @@ extern code_ret * str_compile(Symbol *s);
 extern object * code_eval(code_ret *s);
 extern void disassy(Vector * code, int indent, FILE*fp);
 extern void code_load(FILE *f);
-void * p_compile(Vector * v) {return (void*)str_compile((Symbol*)vector_ref(v,0));}
+void * p_compile(Vector * v) {void * vv = str_compile((Symbol*)vector_ref(v,0));if (vv) return vv;printf("Canot Compile!\n");Throw(3);}
 void * p_dis_assy(Vector *v) {disassy(((code_ret *)vector_ref(v,0))->code, 0, stdout);return NULL;}
 void * p_eval(Vector *v) {return (void*)code_eval((code_ret *)vector_ref(v,0));}
 void * p_load(Vector * v) {FILE * f = fopen(((Symbol*)vector_ref(v,0))->_table,"r");code_load(f);fclose(f);return NULL;}

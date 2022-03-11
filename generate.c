@@ -1411,6 +1411,7 @@ int main(int argc, char*argv[]) {
     char*PROMPT=">";
     make_primitive();    
     int i=1;
+    token * tk;
     CEXCEPTION_T e;
     Symbol *underbar_sym=new_symbol("_",1);
     while (i<argc) {
@@ -1441,7 +1442,7 @@ int main(int argc, char*argv[]) {
         Try {
             if (fp==stdin) putchar('>');fflush(stdout);
             //if (fp==stdin) write(1,PROMPT,1);
-            if ((a=is_expr(S)) && get_token(S)->type==';') {
+            if ((a=is_expr(S)) && (tk=get_token(S))->type==';') {
                 if (DEBUG) ast_print(a,0);
                 s1_time = clock();clock_gettime(CLOCK_REALTIME,&S1_T);
                 code_s = codegen(a,env,FALSE);//PR(121);
@@ -1465,7 +1466,8 @@ int main(int argc, char*argv[]) {
                 }
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);
             }  else {
-                if (a==NULL) {//printf("file end!!\n");
+                //if (a==NULL) {//printf("file end!!\n");
+                if (a == NULL || tk-> type == TOKEN_EOF ) {
                     //exit(0);
                     fclose(fp);
                     fp=stdin;S=new_tokenbuff(fp);
