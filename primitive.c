@@ -274,10 +274,12 @@ void * p_popen(Vector *v) {
 		return NULL;
 	}
     buff = (char*)malloc(8192*sizeof(char));
+	//if (fgets(buff, sizeof(buff), fp) == NULL) {printf("FileErroe!\n");Throw(3);}
 	fgets(buff, sizeof(buff), fp);
 	Symbol * s = new_symbol(buff,strlen(buff));
 	while (!feof(fp)) {
         buff = (char*)malloc(8192*sizeof(char));
+		//if (fgets(buff, sizeof(buff), fp) == NULL) {printf("FileErroe!\n");Throw(3);};
 		fgets(buff, sizeof(buff), fp);
 		s = symbol_append(s, new_symbol(buff,strlen(buff)));
 	}

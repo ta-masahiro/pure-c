@@ -570,7 +570,7 @@ _RGT:
     goto*dequeue(C);
 _OGEQ:
     o = (object*)pop(S);
-    push(S, (void * )(long)objge((object*)pop(S), (object*)pop(S)));
+    push(S, (void * )(long)objge((object*)pop(S), o));
     goto * dequeue(C);
 _GEQ:
 _IGEQ:

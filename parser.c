@@ -705,7 +705,7 @@ ast*is_for_expr(TokenBuff *S) {
                             push(v,(void*)a1);push(v,(void*)a2);push(v,(void*)a3);
                             return new_ast(AST_FOR,a2->o_type,v);
                         } else {
-                            printf("Syntax error! must be FALSE expression\n");
+                            printf("Syntax error! must be loop expression\n");
                             Throw(1);
                         }
                     } else {
@@ -713,7 +713,7 @@ ast*is_for_expr(TokenBuff *S) {
                         Throw(1);
                     }
                 } else {
-                    printf("Syntax error! must be TRUE expression\n");
+                    printf("Syntax error! must be finish expression\n");
                     Throw(1);
                 }
             } else {
@@ -721,7 +721,7 @@ ast*is_for_expr(TokenBuff *S) {
                 Throw(1);
             }
         } else {
-            printf("Syntax error! Must be cond expression!\n");
+            printf("Syntax error! Must be start expression!\n");
             Throw(1);
         }
     }
@@ -838,6 +838,25 @@ ast * is_dcl_expr(TokenBuff*S) {
     return NULL;
 }
 
+ast * is_class_def_expr(TokenBuff *S) {
+    ast * a;
+    int token_p = S->buff->_cp;
+    Vector * v;
+    token * t = get_token(S);
+    if (t->type==TOKEN_SYM && strcmp(t->source->_table, "class") == 0) {
+        if (a=is_arg_list(S)) {
+            v = vector_init(10);
+            push(v,(void*)a);
+            return new_ast(AST_CLASS, OBJ_NONE,v);
+        } else {
+            printf("Syntax error! Must be dclr expression!\n");
+            Throw(1);
+        }
+    }
+    S->buff->_cp=token_p;
+    return NULL;
+}
+
 ast * is_expr(TokenBuff *S) {
     ast * a;
     //if (get_token(S) == NULL) return NULL;  // tokenがない場合
@@ -850,6 +869,7 @@ ast * is_expr(TokenBuff *S) {
     if (a = is_while_expr(S)) return a;
     if (a = is_for_expr(S)) return a;
     if (a = is_loop_expr(S)) return a;
+    if (a = is_class_def_expr(S)) return a;
     //if (a = is_expr_6(S)) return a;
     if (a = is_expr_2n(S,14)) return a;
     /* ||

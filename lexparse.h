@@ -78,7 +78,7 @@ typedef enum {
     AST_SET,            // 3:AST_SET,[left_ast,right_ast]
     AST_LAMBDA,         // 4:AST_LAMBDA,[[ast_list],ast]
     AST_WHILE,          // 5:AST_WILE,[cond_ast,ast]
-    AST_CLASS,          // 6:AST_CLASS,[] 
+    AST_CLASS,          // 6:AST_CLASS,[dcl ast list] 
     AST_2OP,            // 7:AST_2OP,[op_type,left_ast,right_ast]
     AST_1OP,            // 8:AST_1OP,[op_type,ast] 
     AST_VREF,           // 9:AST_VREF [vect_ast,index_ast] 
