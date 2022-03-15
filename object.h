@@ -13,8 +13,8 @@ typedef enum { OBJ_NONE=0,
     OBJ_SYSFUNC, OBJ_PFUNC, OBJ_UFUNC, OBJ_CNT,
     //    12        13        14      15    16
     OBJ_VECT, OBJ_DICT, OBJ_PAIR,OBJ_SYM, OBJ_ARRAY,
-    // 17   18
-    OBJ_IO, OBJ_KEY
+    // 17   18       19
+    OBJ_IO, OBJ_KEY, OBJ_CLS_DEF
 } obj_type;
 
 typedef struct object {

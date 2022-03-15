@@ -1272,6 +1272,10 @@ code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list 
     }
 }
 
+code_ret * codegen_class(ast *a, Vector * env, int tail) {
+
+}
+
 code_ret * codegen(ast * a, Vector * env, int tail) {
     switch(a->type) {
         case AST_ML:        return  codegen_ml      (a, env, tail);
