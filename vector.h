@@ -3,6 +3,15 @@
 #ifndef VECTOR
 #define VECTOR
 
+typedef union {
+    char * i8;
+    short *i16;
+    int * i32;
+    long * i64;
+    double *f64;
+    void * ptr;
+}memblock;
+
 typedef struct Vector {
     int     _size;
     void ** _table;

@@ -1,5 +1,6 @@
 #include "object.h"
 #include "hash.h"
+//#include "array.h"
 
 void none_error() {
     printf("RuntimeError:'None'type not calculate!\n");
@@ -2151,6 +2152,45 @@ Symbol * objtype2hashkeySymbol(obj_type t, void *o) {
         default:printf("RntimeError:Illegal argument!\n");Throw(3);
     }
 }
+/*
+void get_vector_dims(Vector * v, int *dim, int * sizes, int *total_size) {
+    object * o;
+    int s = v->_cp;
+    if ((o = (object *)vector_ref(v,0))->type == OBJ_VECT) ;
+}
+void vector2array2(Vector * v, void ** a, int *ind) {
+    object *data;
+    for(int i=0;i<v->_sp;i++) {
+        if ((data = (object*)vector_ref(v,i))->type == OBJ_VECT) {
+            vector2array2((Vector *)data->data.ptr, a, ind);
+        }else {
+            a[(*ind)++] = data;
+        }
+    }
+}
+
+array * vector2array(Vector *v) {
+    object * data = (object*)vector_ref(v,0);
+    Vector * vv;
+    int i=0, size[10];
+    size[i++]=v->_sp;
+    while (data->type == OBJ_VECT) {
+       size[i++]=(vv = (Vector *)(data->data.ptr))->_sp;
+       data = (object *)vector_ref(vv, 0);
+    }
+    int * ss = (int *)malloc(i*sizeof(int));
+    for(int j=0;j<=i;j++) ss[j] = size[i-j-1];
+    array * r = array_init(data->type, i, ss);
+    //
+    int ind;
+    vector2array2(v, r->table, &ind);
+    return r;
+}
+
+Vector * array2vector(array *a) {
+
+}
+*/
 /*
    void * _realloc(void * ptr, size_t old_size, size_t new_size) {
    return GC_realloc(ptr, new_size);

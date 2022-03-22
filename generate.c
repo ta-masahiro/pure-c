@@ -779,7 +779,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
     if (code_s_function->ct->arg_type != NULL) {           // arg_typeがNULLでないこと！
         m = v->_sp;//PR(2);                             // 仮引数の個数　number of dummy parameters
         //n = a1->table->_sp;//PR(3);                   // 実引数の個数　number of actual parameters
-        if (!(doted=code_s_function->ct->dotted) && n != m) { printf("SyntaxError: Illegal parameter number!\n");Throw(0);}
+        if (!(doted=code_s_function->ct->dotted) && n != m) { printf("SyntaxError: Illegal parameter number! d=%d a= %d\n",m,n);Throw(0);}
         for(i = 0; i < n; i ++ ) {//PR(i);
             code_s_param = codegen((ast*)vector_ref(param_ast->table, i),env,FALSE);
             code_param = code_s_param->code; ct_param = code_s_param->ct; type_param = ct_param->type; // ct1/type1:actual parameter type

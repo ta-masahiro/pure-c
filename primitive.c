@@ -1,4 +1,5 @@
 #include "generate.h"
+#include <time.h>
 gmp_randstate_t  RAND_STATE;
 unsigned long mulmod(unsigned long a,unsigned long b,unsigned long c);
 
@@ -85,65 +86,82 @@ void * p_getc(Vector*v) {
     Symbol *s = new_symbol(&c,1);
     return (void*)s;    
 }
+void * p_get_time() {struct timespec Time;clock_gettime(CLOCK_REALTIME,&Time);double d = Time.tv_sec+Time.tv_nsec/(1.0e+9);return (void*)*(long *)&d;}
 // 数学関数
-//void *p_fsin(Vector *v)      {double *f = (double*)malloc(sizeof(double));*f = sin  (*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_fsin(Vector *v)      {long l = (long)vector_ref(v,0);double f =   sin(*(double*)&l); return (void*)*(long*)&f;}
-void *p_fcos(Vector *v)      {long l = (long)vector_ref(v,0);double f =   cos(*(double*)&l); return (void*)*(long*)&f;}
-void *p_ftan(Vector *v)      {long l = (long)vector_ref(v,0);double f =   tan(*(double*)&l); return (void*)*(long*)&f;}
-void *p_fasin(Vector *v)     {long l = (long)vector_ref(v,0);double f =  asin(*(double*)&l); return (void*)*(long*)&f;}
-void *p_facos(Vector *v)     {long l = (long)vector_ref(v,0);double f =  acos(*(double*)&l); return (void*)*(long*)&f;}
-void *p_fatan(Vector *v)     {long l = (long)vector_ref(v,0);double f =  atan(*(double*)&l); return (void*)*(long*)&f;}
-void *p_fsinh(Vector *v)     {long l = (long)vector_ref(v,0);double f =  sinh(*(double*)&l); return (void*)*(long*)&f;}
-void *p_fcosh(Vector *v)     {long l = (long)vector_ref(v,0);double f =  cosh(*(double*)&l); return (void*)*(long*)&f;}
-void *p_ftanh(Vector *v)     {long l = (long)vector_ref(v,0);double f =  tanh(*(double*)&l); return (void*)*(long*)&f;}
-void *p_fasinh(Vector *v)    {long l = (long)vector_ref(v,0);double f = asinh(*(double*)&l); return (void*)*(long*)&f;}
-void *p_facosh(Vector *v)    {long l = (long)vector_ref(v,0);double f = acosh(*(double*)&l); return (void*)*(long*)&f;}
-void *p_fatanh(Vector *v)    {long l = (long)vector_ref(v,0);double f = atanh(*(double*)&l); return (void*)*(long*)&f;}
-//
-void *p_log10(Vector *v)    {long l = (long)vector_ref(v,0);double f = log10(*(double*)&l); return (void*)*(long*)&f;}
-void *p_logE(Vector *v)    {long l = (long)vector_ref(v,0);double f = log(*(double*)&l); return (void*)*(long*)&f;}
-void *p_log1p(Vector *v)    {long l = (long)vector_ref(v,0);double f = log1p(*(double*)&l); return (void*)*(long*)&f;}
-void *p_log(Vector *v)    {long l = (long)vector_ref(v,0),ll = (long)vector_ref(v,1);double f = log(*(double*)&ll)/log(*(double*)&l); return (void*)*(long*)&f;}
-void *p_exp(Vector *v)    {long l = (long)vector_ref(v,0);double f = exp(*(double*)&l); return (void*)*(long*)&f;}
+// float
+#define math_func(g) void * p_f##g(Vector *v) {long l = (long)vector_ref(v,0);double f = g(*(double*)&l); return (void*)*(long*)&f;}
+math_func(sin)
+math_func(cos)
+math_func(tan)
+math_func(asin)
+math_func(acos)
+math_func(atan)
+math_func(sinh)
+math_func(cosh)
+math_func(tanh)
+math_func(asinh)
+math_func(acosh)
+math_func(atanh)
+math_func(log10)
+math_func(log1p)
+math_func(exp)
+void *p_flogE(Vector *v) {
+    long l = (long)vector_ref(v,0);
+    double f = log(*(double*)&l); 
+    return (void*)*(long*)&f;
+}
+void *p_flog(Vector *v) {
+    long l = (long)vector_ref(v,0),ll = (long)vector_ref(v,1);
+    double f = log(*(double*)&ll)/log(*(double*)&l); 
+    return (void*)*(long*)&f;
+}
+//abs
 void *p_iabs(Vector *v)     {return (void*)labs((long)vector_ref(v,0));}
-void *p_fabs(Vector *v)    {long l = (long)vector_ref(v,0);double f = fabs(*(double*)&l); return (void*)*(long*)&f;}
-void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
-void *p_fsqrt(Vector *v)    {long l = (long)vector_ref(v,0);double f = sqrt(*(double*)&l); return (void*)*(long*)&f;}
-//
+void *p_fabs(Vector *v)     {long l = (long)vector_ref(v,0);double f = fabs(*(double*)&l); return (void*)*(long*)&f;}
 void *p_labs(Vector *v)     {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_abs(L,L);return (void*)L;}
 void *p_rabs(Vector *v)     {mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_set(Q,(mpq_ptr)vector_ref(v,0));mpq_abs(Q,Q);return (void*)Q;}
 void *p_lfabs(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_abs(F,F,MPFR_RNDA);return (void*)F;}
-//void *p_cabs(Vector *v)     {complex *c = (complex*)malloc(sizeof(complex));*c = cabs(*(complex*)vector_ref(v,0)); return (void*)c;}
 void *p_cabs(Vector *v)     {double c = cabs(*(complex*)vector_ref(v,0)); return (void*)(*(long*)&c);}
+// sqrt
+void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
+void *p_fsqrt(Vector *v)    {long l = (long)vector_ref(v,0);double f = sqrt(*(double*)&l); return (void*)*(long*)&f;}
 void *p_lsqrt(Vector *v)    {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_sqrt(L,L);return (void*)L;}
-//void *p_rsqrt(Vector *v)     {mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_set(Q,(mpq_ptr)vector_ref(v,0));mpq_abs(Q,Q);return (void*)Q;}
 void *p_lfsqrt(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_sqrt(F,F,MPFR_RNDA);return (void*)F;}
 void *p_csqrt(Vector *v)    {complex *c = (complex*)malloc(sizeof(complex));*c = csqrt(*(complex*)vector_ref(v,0)); return (void*)c;}
 
+// long float
+void * lf_function(Vector *v, int (*function)(__mpfr_struct * f, const __mpfr_struct * g, mpfr_rnd_t r))  {
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);
+    function(F,F,MPFR_RNDA);
+    return (void*)F;
+}
 //
-void *p_lfsin(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_sin(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfcos(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_cos(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lftan(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_tan(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfasin(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_asin(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfacos(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_acos(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfatan(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_atan(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfsinh(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_sinh(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfcosh(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_cosh(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lftanh(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_tanh(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfasinh(Vector *v)  {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_asinh(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfacosh(Vector *v)  {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_acosh(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfatanh(Vector *v)  {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_atanh(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lflog10(Vector *v)  {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log10(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lflogE(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfsin  (Vector *v) {return lf_function(v, mpfr_sin  );}
+void *p_lfcos  (Vector *v) {return lf_function(v, mpfr_cos  );}
+void *p_lftan  (Vector *v) {return lf_function(v, mpfr_tan  );}
+void *p_lfasin (Vector *v) {return lf_function(v, mpfr_asin );}
+void *p_lfacos (Vector *v) {return lf_function(v, mpfr_acos );}
+void *p_lfatan (Vector *v) {return lf_function(v, mpfr_atan );}
+void *p_lfsinh (Vector *v) {return lf_function(v, mpfr_sinh );}
+void *p_lfcosh (Vector *v) {return lf_function(v, mpfr_cosh );}
+void *p_lftanh (Vector *v) {return lf_function(v, mpfr_tanh );}
+void *p_lfasinh(Vector *v) {return lf_function(v, mpfr_asinh);}
+void *p_lfacosh(Vector *v) {return lf_function(v, mpfr_acosh);}
+void *p_lfatanh(Vector *v) {return lf_function(v, mpfr_atanh);}
+void *p_lflog10(Vector *v) {return lf_function(v, mpfr_log10);}
+void *p_lflogE (Vector *v) {return lf_function(v, mpfr_log  );}
+void *p_lflog1p(Vector *v) {return lf_function(v, mpfr_log1p);}
+void *p_lfexp  (Vector *v) {return lf_function(v, mpfr_exp  );}
 void *p_lflog(Vector *v)    {
-    mpfr_ptr E = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    //mpfr_ptr E = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
+    mpfr_t E;
+    mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(E);mpfr_init(F);
     mpfr_log(E,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log(F,(mpfr_ptr)vector_ref(v,1),MPFR_RNDA);
     mpfr_div(F,F,E,MPFR_RNDA);
     return (void*)F;
 }
-void *p_lflog1p(Vector *v)  {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log1p(F,F,MPFR_RNDA);return (void*)F;}
-void *p_lfexp(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_exp(F,F,MPFR_RNDA);return (void*)F;}
 //
 void *p_oabs(Vector *v) {return (void*)objabs((object*)vector_ref(v,0));}
 void *p_osqrt(Vector *v) {return (void*)objsqrt((object*)vector_ref(v,0));}
@@ -255,6 +273,27 @@ void * p_factor(Vector *v) {
     return (void*)f;
 }
 */
+int lucasLehmerTest(int p) {
+    mpz_t m, s, sq; mpz_init(sq);
+    // m = 2^p -1　判定すべきメルセンヌ数
+    mpz_init_set_ui(m, 1); mpz_mul_2exp(m, m, p); mpz_sub_ui(m, m, 1);
+    // s = 4
+    mpz_init_set_ui(s, 4);
+    for (int i = 2; i < p; i ++ ) {
+        // s = (s*s & m) + (s*s)>>p     として、 s >= m なら s = s - m、 そうでないなら s = s - 2 とすれば
+        // 除算を使うことなく s = (s*s-2)%m が計算できる※mはpビットgべてが1dある数なので
+        mpz_mul(sq, s, s);
+        mpz_and(s, sq, m);
+        mpz_div_2exp(sq, sq, p);
+        mpz_add(s, s, sq);
+        // if s >= m then s-=m else s-=2
+        if (mpz_cmp(s, m)>=0) mpz_sub(s, s, m);
+        mpz_sub_ui(s, s, 2);
+    }
+    if (mpz_cmp_ui(s, 0) == 0) return TRUE;
+    return FALSE;
+}
+void * p_lucas(Vector * v) {return (void*)(long)lucasLehmerTest((int)(long)vector_ref(v,0));}
 //
 void * p_str(Vector *v) {return (void*)obj2symbol((object*)vector_ref(v,0));}
 //void * p_hex_str(Vector *v) {long d,rem,val=(long)vector_ref(v,0);char*s=(char*)malloc(18*sizeof(char));if (val<0) {val=-val;s[0]='-';} else s[0]=' ';int i;for(i=1;i<17;i++) {d=val/16;rem=val-d*16;s[17-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[17]='\0';return (void*)new_symbol(s,17);}
@@ -267,7 +306,7 @@ void * p_copy(Vector *v) {return (void*)objcpy((object*)vector_ref(v,0));}
 void * p_system(Vector *v) { if (system(((Symbol*)vector_ref(v,0))->_table) == 0 ) perror("canot exec command"); return NULL;}
 void * p_popen(Vector *v) {
     FILE * fp;
-    char *buff;
+    char *buff,*dummy;
     char * cmdline = ((Symbol *)vector_ref(v,0))->_table;
     if ( (fp=popen(cmdline,"r")) ==NULL) {
 		perror ("can not exec commad");
@@ -275,12 +314,12 @@ void * p_popen(Vector *v) {
 	}
     buff = (char*)malloc(8192*sizeof(char));
 	//if (fgets(buff, sizeof(buff), fp) == NULL) {printf("FileErroe!\n");Throw(3);}
-	fgets(buff, sizeof(buff), fp);
+	dummy = fgets(buff, sizeof(buff), fp);
 	Symbol * s = new_symbol(buff,strlen(buff));
 	while (!feof(fp)) {
         buff = (char*)malloc(8192*sizeof(char));
 		//if (fgets(buff, sizeof(buff), fp) == NULL) {printf("FileErroe!\n");Throw(3);};
-		fgets(buff, sizeof(buff), fp);
+		dummy = fgets(buff, sizeof(buff), fp);
 		s = symbol_append(s, new_symbol(buff,strlen(buff)));
 	}
     pclose(fp);
@@ -318,9 +357,9 @@ void * eval_str(Symbol * s) {
 }
 */
 Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
-                                 p_print, p_printf, p_open, p_close, p_gets, p_puts,p_getc, p_fsin, p_fcos, p_ftan, 
+                                 p_print, p_printf, p_open, p_close, p_gets, p_puts,p_getc, p_get_time, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,
-                                 p_log10, p_logE, p_log, p_exp, p_iabs, p_fabs, p_isqrt, p_fsqrt,
+                                 p_flog10, p_flogE, p_flog, p_fexp, p_iabs, p_fabs, p_isqrt, p_fsqrt,
                                  p_labs, p_rabs, p_lfabs, p_cabs, p_lsqrt, p_lfsqrt, p_csqrt,
                                  p_lfsin, p_lfcos, p_lftan,p_lfasin, p_lfacos, p_lfatan,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
@@ -328,10 +367,10 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, //p_factor, 
-                                 p_hex_str, p_as_float, p_as_int, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
+                                 p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
                                  p_compile, p_dis_assy, p_eval, p_load, p_num, p_den, p_real, p_imag, p_arg, NULL };
 char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
-                                "print", "printf", "open", "close", "gets", "puts","getc", "fsin", "fcos", "ftan", 
+                                "print", "printf", "open", "close", "gets", "puts","getc", "get_time", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
                                 "log10", "logE", "log", "exp", "iabs", "fabs", "isqrt", "fsqrt",
                                 "labs", "rabs", "flabs", "cabs", "lsqrt", "lfsqrt","csqrt",
@@ -341,7 +380,7 @@ char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", //"factor", 
-                                "hexstr", "asfloat", "asint", "str", "str_search", "type", "copy", "system", "popen",
+                                "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
                                 "compile", "dis_assy", "eval", "load", "num", "den", "real", "imag", "arg", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},                                     // exit
@@ -355,6 +394,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_IO},                                       // gets
                                 {OBJ_SYM,OBJ_SYM},                              // puts               
                                 {OBJ_IO},                                       // getc
+                                {OBJ_NONE},                                     // get_time
                                 {OBJ_FLT},                                      // sin
                                 {OBJ_FLT},                                      // cos 
                                 {OBJ_FLT},                                      // tan
@@ -442,6 +482,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_INT},                                      // hexstr
                                 {OBJ_INT},                                      // asfloat
                                 {OBJ_FLT},                                      // asint
+                                {OBJ_INT},                                      // lucas          
                                 {OBJ_GEN},                                      // str
                                 {OBJ_SYM, OBJ_SYM},                             // str_search
                                 {OBJ_GEN},                                      // type
@@ -467,6 +508,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_SYM, 1, FALSE},    // gets
                                 {OBJ_NONE,2, FALSE},    // puts
                                 {OBJ_SYM, 1, FALSE},    // getc
+                                {OBJ_FLT, 0, FALSE},    // get_time
                                 {OBJ_FLT, 1, FALSE},    // sin
                                 {OBJ_FLT, 1, FALSE},    // cos
                                 {OBJ_FLT, 1, FALSE},    // tan
@@ -554,6 +596,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_SYM,  1, FALSE},   // hex_str
                                 {OBJ_FLT,  1, FALSE},   // asfloat
                                 {OBJ_INT,  1, FALSE},   // asint
+                                {OBJ_INT,  1, FALSE},   // lucas
                                 {OBJ_SYM,  1, FALSE},   // str
                                 {OBJ_INT,  2, FALSE},   // str_search
                                 {OBJ_INT,  1, FALSE},   // type
