@@ -1,6 +1,6 @@
 #include "object.h"
 #include "hash.h"
-//#include "array.h"
+#include "array.h"
 
 void none_error() {
     printf("RuntimeError:'None'type not calculate!\n");
@@ -2158,6 +2158,7 @@ void get_vector_dims(Vector * v, int *dim, int * sizes, int *total_size) {
     int s = v->_cp;
     if ((o = (object *)vector_ref(v,0))->type == OBJ_VECT) ;
 }
+*/
 void vector2array2(Vector * v, void ** a, int *ind) {
     object *data;
     for(int i=0;i<v->_sp;i++) {
@@ -2178,19 +2179,26 @@ array * vector2array(Vector *v) {
        size[i++]=(vv = (Vector *)(data->data.ptr))->_sp;
        data = (object *)vector_ref(vv, 0);
     }
-    int * ss = (int *)malloc(i*sizeof(int));
-    for(int j=0;j<=i;j++) ss[j] = size[i-j-1];
-    array * r = array_init(data->type, i, ss);
+    array * r = array_init(data->type, i, size);
     //
-    int ind;
+    int ind = 0;
     vector2array2(v, r->table, &ind);
     return r;
 }
 
 Vector * array2vector(array *a) {
+    int ind=0;
+    
+    for(int i=0;i<a->dim;i++) {
+        Vector *v=vector_init(a->sizes[i]);
+        for(int j = 0 ;j<(a->sizes[i]);j++) {
+            push(v, a->table[ind++] );
 
+
+        }
+    }
 }
-*/
+
 /*
    void * _realloc(void * ptr, size_t old_size, size_t new_size) {
    return GC_realloc(ptr, new_size);
