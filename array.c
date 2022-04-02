@@ -229,8 +229,9 @@ array * solv_liner(array * A, array * Y) {
     int N = 1;for(int i=0;i<Y->dim;i++) N*=Y->sizes[i];
     cblas_dcopy(N, (double*)Y->table, 1, (double*)X->table,1 );
     int *pivot = (int *)malloc(A->sizes[0]*sizeof(int));
-    LAPACKE_dgesv(LAPACK_ROW_MAJOR, A->sizes[0], A->sizes[1], (double *)A->table, A->sps[0], pivot, (double *)X->table, (X->dim  == 1) ? 1: X->sps[1]);
-    //LAPACKE_dgesv(LAPACK_ROW_MAJOR, A->sizes[0], A->sizes[0], (double *)A->table, A->sizes[1], pivot, (double *)X->table, 1);
+    LAPACKE_dgesv(LAPACK_ROW_MAJOR, A->sizes[0], A->sizes[1], (double *)A->table, A->sps[0], pivot, (double *)X->table, (X->dim  == 1) ? X->sizes[0]: X->sps[1]);
+    //LAPACKE_dgesv(LAPACK_ROW_MAJOR, A->sizes[0], A->sizes[1], (double *)A->table, A->sizes[0], pivot, (double *)X->table,3);
+    //for(int i=0;i<A->sizes[0];i++) printf("%d\n",pivot[i]);
     // int LAPACK_dgesv(order, int n, int nrhs, double *a, int lda, int *ipiv, double *b, int ldb)
     return X;
 }
