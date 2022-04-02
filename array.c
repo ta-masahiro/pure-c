@@ -67,8 +67,8 @@ array * array_copy(array * a) {
 array * array_eye(int dim) {
     int  sizes[2];
     sizes[0] = dim; sizes[1] = dim;
-    array * r = array_init(4, dim, sizes);
-    for(int i=0;i<dim;i+=dim) r->table[i*dim+i] = (void*)0x3ff0000000000000;
+    array * r = array_init(4, 2, sizes);
+    for(int i=0;i<dim;i++) r->table[i*dim+i] = (void*)0x3ff0000000000000;
     return r;
 } 
 /*
@@ -227,9 +227,10 @@ array * solv_liner(array * A, array * Y) {
     // Y = A * X を解く
     array * X = array_init(Y->type, Y->dim, Y->sizes);
     int N = 1;for(int i=0;i<Y->dim;i++) N*=Y->sizes[i];
-    cblas_dcopy(N, (double*)X->table, 1, (double*)Y->table,1 );
+    cblas_dcopy(N, (double*)Y->table, 1, (double*)X->table,1 );
     int *pivot = (int *)malloc(A->sizes[0]*sizeof(int));
-    LAPACKE_dgesv(LAPACK_ROW_MAJOR, A->sizes[0], A->sizes[1], (double *)A->table, A->sps[1], pivot, (double *)X->table, (X->dim  == 1) ? X->sps[0]: X->sps[1]);
+    LAPACKE_dgesv(LAPACK_ROW_MAJOR, A->sizes[0], A->sizes[1], (double *)A->table, A->sps[0], pivot, (double *)X->table, (X->dim  == 1) ? 1: X->sps[1]);
+    //LAPACKE_dgesv(LAPACK_ROW_MAJOR, A->sizes[0], A->sizes[0], (double *)A->table, A->sizes[1], pivot, (double *)X->table, 1);
     // int LAPACK_dgesv(order, int n, int nrhs, double *a, int lda, int *ipiv, double *b, int ldb)
     return X;
 }

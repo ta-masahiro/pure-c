@@ -1719,8 +1719,7 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_INT:   sprintf(buf, "%ld", (long)value); return buf;
         case OBJ_LINT:  return mpz_get_str(NULL, 10, (mpz_ptr)value);
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);
-        //case OBJ_FLT:   sprintf(buf,"%.16g",*(double*)value); return buf;
-        //case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.17g",*(double*)(&lval)); return buf;
+        //case OBJ_FLT:   lval=(long)value;sprintf(buf,"%20.13g",*(double*)(&lval)); return buf;
         case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.16g",*(double*)(&lval)); return buf;
         case OBJ_CMPLX: sprintf(buf,"%.16g%+.16gI",creal(*(complex*)value),cimag(*(complex*)value)); return buf;
         case OBJ_LFLT:  //mpfr_sprintf(buf,"%.Rg", (mpfr_ptr)value);return buf;
