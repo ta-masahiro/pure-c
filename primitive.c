@@ -207,13 +207,13 @@ void * p_vswap(Vector *v) {
     return (void*)0;
 }
 //  sorting !!うまく動いていない
-int __cmp(const void* x,const void* y) {return objcmp((object*)x,(object*)y);}
+int __cmp__(const void* x,const void* y) {return objcmp((object*)x,(object*)y);}
 void *p_sort(Vector *vv) {
     Vector *v=(Vector *)vector_ref(vv,0);
     int data_size=v->_sp;
     void * data_pt=v->_table;
     //qsort(v->_table, v->_sp, sizeof(void*), cmp);
-    qsort(v->_table, v->_sp, 8, __cmp);
+    qsort(data_pt, v->_sp, 8, __cmp__);
     //qsort(v->_table, v->_sp, 8, objcmp);
     return (void*)0;
 }
@@ -339,6 +339,11 @@ void * p_den(Vector *v) {mpz_ptr l=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(l);m
 void * p_real(Vector *v) {double r=creal(*(complex*)vector_ref(v,0));return (void*)(*(long*)&r);}
 void * p_imag(Vector *v) {double r=cimag(*(complex*)vector_ref(v,0));return (void*)(*(long*)&r);}
 void * p_arg(Vector * v) {double r=carg(*(complex*)vector_ref(v,0));return (void*)(*(long*)&r);}
+//
+void *p_a2v(Vector * v) {int array_index=0;return (void *)array2vector((array*)vector_ref(v,0), &array_index, 0);}
+void *p_v2a(Vector * v) {return (void *)vector2array((Vector*)vector_ref(v,0));}
+void *p_solv_liner(Vector *v) {return (void *)solv_liner((array*)vector_ref(v,0), (array*)vector_ref(v,1));}
+void *p_make_eye(Vector *v) {return (void*)array_eye((int)(long)vector_ref(v,0));}
 /*
 void * p_load(Vector *v) {
     FILE * fp;
@@ -368,7 +373,7 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, //p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
-                                 p_compile, p_dis_assy, p_eval, p_load, p_num, p_den, p_real, p_imag, p_arg, NULL };
+                                 p_compile, p_dis_assy, p_eval, p_load, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_make_eye, NULL };
 char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "get_time", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -381,7 +386,7 @@ char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", //"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
-                                "compile", "dis_assy", "eval", "load", "num", "den", "real", "imag", "arg", NULL};
+                                "compile", "dis_assy", "eval", "load", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "make_eye", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},                                     // exit
                                 {OBJ_SYM},                                      // forget
@@ -494,6 +499,10 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_CNT},                                      // eval
                                 {OBJ_SYM},                                      // load
                                 {OBJ_RAT},{OBJ_RAT},{OBJ_CMPLX},{OBJ_CMPLX},{OBJ_CMPLX},    // num,den,real,imag,arg
+                                {OBJ_ARRAY},                                    // a2v
+                                {OBJ_VECT},                                     // v2a
+                                {OBJ_ARRAY, OBJ_ARRAY},                         // solv_liner
+                                {OBJ_INT},                                      // make_eye
                                 };
 
 int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
@@ -608,6 +617,10 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE},   // eval
                                 {OBJ_NONE, 1, FALSE},   // load
                                 {OBJ_LINT,1,FALSE},{OBJ_LINT,1,FALSE},{OBJ_FLT,1,FALSE},{OBJ_FLT,1,FALSE},{OBJ_FLT,1,FALSE},    // num,den,real,imag,arg
+                                {OBJ_VECT, 1, FALSE},   // atov
+                                {OBJ_ARRAY,1, FALSE},   // vtoa
+                                {OBJ_ARRAY,2, FALSE},   // solv_liner
+                                {OBJ_ARRAY,1, FALSE},   // make_eye
                                  };
 
 void * make_primitive() {

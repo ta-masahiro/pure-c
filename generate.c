@@ -588,9 +588,15 @@ code_ret*codegen_sls(ast*sls_ast, Vector*env, int tail) {   // AST_SLS [AST_vect
     }
 }
 
+void * aa_mul(Vector * v) {return (void*)array_array_mul((array*)vector_ref(v,0), (array*)vector_ref(v,1));}
+void * as_mul(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,0), vector_ref(v,1));}
+void * sa_mul(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,1), vector_ref(v,0));}
+void * aa_add(Vector * v) {return (void*)array_array_add((array*)vector_ref(v, 0), (array*)vector_ref(v, 1));}
+
 code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_type,AST_L_EXPR,AST_R_EXPR]
     obj_type r_type;
     int i,op_code;
+    Funcpointer fp; Vector * func_vect ;                        // for array operator
 
     Vector *code = vector_init(3);
     code_ret *code_r_left = codegen((ast*)vector_ref(_2op_ast->table,1),env,FALSE);   //左辺式をコンパイルする
@@ -632,6 +638,28 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
         code = vector_append(code_left, code_right);
         push(code,type_left==OBJ_VECT ? (void*)VMUL : (void*)SMUL);
         return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
+    }
+    // array 演算
+    if (type_left == OBJ_ARRAY || type_right == OBJ_ARRAY) {
+        switch(lit_type) {
+            case '*':
+                if (type_left == OBJ_ARRAY && type_right == OBJ_ARRAY) fp = aa_mul;
+                else if (type_left == OBJ_FLT) fp = sa_mul;
+                else if (type_right == OBJ_FLT) fp = as_mul;
+                else {printf("IllegalOprand!\n");Throw(3);}
+                break;
+            case '+':
+                if (type_left == OBJ_ARRAY && type_right == OBJ_ARRAY) fp = aa_add;
+                else {printf("IllegalOprand!\n");Throw(3);}
+                break;
+            default :printf("IllegalOprator!\n");Throw(3);
+        }
+        func_vect = vector_init(3);push(func_vect, (void*)FUNC_PRIM);push(func_vect,(void*)fp);
+        r_type = OBJ_ARRAY;
+        code = vector_append(code_left, code_right);
+        push(code, (void*)LDC); push(code ,(void*)func_vect); push(code, (void*)PCALL); push(code, (void*)2);
+        return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
+    
     // vector、generalへのpush
     } else if ((type_left == OBJ_VECT || type_left == OBJ_GEN ) && lit_type == '<'*256+'-' ) {
         if (type_right != OBJ_GEN) push(code_right,(void*)conv_op[type_right][OBJ_GEN]);

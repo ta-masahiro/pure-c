@@ -1,6 +1,6 @@
 #include "object.h"
 #include "hash.h"
-#include "array.h"
+//#include "array.h"
 
 void none_error() {
     printf("RuntimeError:'None'type not calculate!\n");
@@ -1703,6 +1703,8 @@ char * set_lf_format(mpfr_ptr x) {
 }
 #define NONE ""
 //#define NONE "None"
+char * array2sym(array * a, int *array_index, int size_index) ;
+
 char * objtype2str(obj_type type, void* value) {
     int new_size,buf_size=1024;
     char *str,*buf = (char*)malloc(buf_size*sizeof(char)); 
@@ -1758,6 +1760,12 @@ char * objtype2str(obj_type type, void* value) {
                             }
                         }
                         strcat(buf,"}");
+                        return buf;
+        case OBJ_ARRAY: //sprintf(buf,"<array: %lx>",(long)value);return buf;
+                        i=0;
+                        //strcpy(buf, "#[\n");
+                        strcat(buf, array2sym((array*)value, &i, 0));
+                        //strcat(buf, "]");
                         return buf;
         default:printf("RntimeError:Illegal print args!\n");Throw(3);
     }
@@ -2159,13 +2167,18 @@ void get_vector_dims(Vector * v, int *dim, int * sizes, int *total_size) {
     if ((o = (object *)vector_ref(v,0))->type == OBJ_VECT) ;
 }
 */
-void vector2array2(Vector * v, void ** a, int *ind) {
+void _vector2array2(Vector * v, array * a, int *ind) {
     object *data;
     for(int i=0;i<v->_sp;i++) {
         if ((data = (object*)vector_ref(v,i))->type == OBJ_VECT) {
-            vector2array2((Vector *)data->data.ptr, a, ind);
+            _vector2array2((Vector *)data->data.ptr, a, ind);
         }else {
-            a[(*ind)++] = data;
+            if (a->type != data->type)  {printf("ArrayTypeError!\n");Throw(3);}
+            if (a->type == OBJ_INT)
+                a->table[(*ind)++] = (void*)data->data.intg;
+            else if (a->type == OBJ_FLT)
+                a->table[(*ind)++] = (void*)*(long*)&(data->data.flt);
+            else {printf("ArrayTypeError!\n");Throw(3);}
         }
     }
 }
@@ -2182,21 +2195,41 @@ array * vector2array(Vector *v) {
     array * r = array_init(data->type, i, size);
     //
     int ind = 0;
-    vector2array2(v, r->table, &ind);
+    _vector2array2(v, r, &ind);
+    //for(int j=0;i<i;j++) r->sps[i]=size[i];
+    //r->dim = i;
+    //r->sizes = size;
+    //r->sps =size;
+    //r->type =
     return r;
 }
 
-Vector * array2vector(array *a) {
-    int ind=0;
-    
-    for(int i=0;i<a->dim;i++) {
-        Vector *v=vector_init(a->sizes[i]);
-        for(int j = 0 ;j<(a->sizes[i]);j++) {
-            push(v, a->table[ind++] );
-
-
-        }
+Vector * array2vector(array * a, int *array_index, int size_index) {
+    Vector * v = vector_init(a->sizes[size_index]);
+    object *o;
+    int i;
+    if (size_index >= a->dim - 1) {
+        for(i = 0; i < a->sizes[size_index]; i++) {o=newOBJ(a->type, a->table[(*array_index)++]);/* printf("%d %s\n",i,objtype2str(a->type,o));*/ push(v,(void *)o);}
+        return v;
     }
+    for(i =0; i < a->sizes[size_index]; i++) push(v, newOBJ(OBJ_VECT,(void*)array2vector(a, array_index,size_index + 1)));
+    return v;
+}
+
+char * array2sym(array * a, int *array_index, int size_index) {
+    char *s,* S = (char *)malloc(20*a->sizes[size_index]*sizeof(char));
+    object *o;
+    int i;
+    if (size_index >= a->dim - 1) {
+        strcpy(S,"| ");
+        for(i = 0; i < a->sizes[size_index]; i++) {s = objtype2str(a->type, a->table[(*array_index)++]); strcat(S,s);strcat(S," ");}
+        strcat(S, "|\n");
+        return S;
+    }
+    //strcpy(S,"| ");
+    for(i =0; i < a->sizes[size_index]; i++) strcat(S, array2sym(a, array_index,size_index + 1));
+    //strcat(S,"|\n");
+    return S;
 }
 
 /*

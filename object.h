@@ -1,6 +1,7 @@
 //#include "vector.h"
 //#include "symbol.h"
 #include "hash.h"
+#include "array.h"
 //#include <float.h>
 //#include <math.h>
 
@@ -163,4 +164,7 @@ object * objacosh(object *x);
 object * objatanh(object *x);
 object * objgamma(object*x);
 object * objlgamma(object*x);
+//
+Vector * array2vector(array * a, int *array_index, int size_index);
+array * vector2array(Vector *v);
 #endif

@@ -1,5 +1,9 @@
 #include "vector.h"
 #include <cblas.h>
+#include <lapacke.h>
+
+#ifndef ARRAY
+#define ARRAY
 /*
 typedef struct {
     unsigned long size; 
@@ -33,97 +37,13 @@ typedef struct {
     unsigned int * sps;
     void ** table;
 } array;
-/*
-array * array_init(unsigned long size) {
-    array * a = (array*)malloc(sizeof(array));
-    void ** table = (void**)malloc(size*sizeof(void));
-    a->size = size; a->sp = 0; a->table = table;
-    return a;
-}
 
-i8_array * i8_array_init(unsigned long size) {
-    i8_array * a = (i8_array*)malloc(sizeof(array));
-    unsigned char * table = (unsigned char *)malloc(size*sizeof(char));
-    a->size = size; a->sp = 0; a->table = table;
-    return a;
-}
-
-array_2 * array_2_init(unsigned int xsize, unsigned int ysize) {
-    array_2 * a = (array_2*)malloc(sizeof(array_2));
-    void ** table = (void **)malloc(xsize*ysize*sizeof(void*));
-    a->xsize = xsize; a->ysize = ysize;
-    a->xsp = 0; a->ysp =0;
-    a->table = table;
-    return a;
-}
-*/
-array * array_init(unsigned int type, unsigned int dim, unsigned int * sizes) {
-    unsigned int size  = 1; 
-    for(int i = 0; i < dim; i ++ ) {
-        size *= sizes[i]; 
-    }
-    void ** table = (void**)malloc(size * sizeof(void * ));
-    array * a = (array * )malloc(sizeof(array)); 
-    a -> type = type; a -> dim = dim; a -> sizes = sizes; a -> table = table;
-    return a;    
-}
-/*
-void * array_ref(array * a, unsigned long idx) {
-    return a->table[idx];
-}
-
-void * array_2_ref(array_2 *a, unsigned int xid, unsigned int yid) {
-    return a->table[xid*a->xsize + yid];
-}
-*/
-void * array_ref(array * a, int * ind) {
-    unsigned int index = ind[0]; 
-    for(int i =1 ; i < a -> dim; i ++ ) {
-        index = (index * a -> sizes[i - 1]) + ind[i]; 
-    }
-
-    return a -> table[index]; 
-}
-/*
-array * array_2_mul(array * A, array * B) {
-    if (A->ysp != B->xsp) return NULL;
-    array_2 * C = array_2_init(A->xsize, B->ysize);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        A->xsize, B->xsize, C->xsize, 1.0, (double*)(A->table), A->xsp, (double*)(B->table), B->xsp, 0.0, (double*)(C->table), C->xsp);
-    // dgemm_(order, TransA, TransB, M, N, K, alpha, A, LDA, B, LDB, beta, C, LDC)
-	// C = alpha * A * B + beta * C
-	// A=M*K, B=K*N, C=M*N
-    // order: CblasRowMajor/CblasColMajor
-	// Trans: CblasNoTrans/CblasTrans/CblasConjTrans
-	// LDA = number of row of A
-    C->xsp = A->xsp; C->ysp = B->ysp;
-    return C;
-}
-*/
-
+array * array_init(unsigned int type, unsigned int dim, unsigned int * sizes);
+void * array_ref(array * a, int * ind);
+array * array_eye(int dim) ;
+array * array_array_mul(array  * A, array * B);
 array * array_scler_mull(array *A, void * value);
 array * array_array_add(array *A, array * B);
-array * array_array_mul(array  * A, array * B) {
-    if (A->dim != 2 || B->dim != 2) return NULL;
-    if (A->sps[1] != B->sps[0]) return NULL;
-    unsigned int sizes[2]; sizes[0] = A->sizes[0]; sizes[1] =B->sizes[1];
-    array * C = array_init(A->type, A->dim, sizes);
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
-        A->sizes[0], B->sizes[0], C->sizes[0], 1.0, (double*)(A->table), A->sps[0], (double*)(B->table), B->sps[0], 0.0, (double*)(C->table), C->sps[0]);
-    // dgemm_(order, TransA, TransB, M, N, K, alpha, A, LDA, B, LDB, beta, C, LDC)
-	// C = alpha * A * B + beta * C
-	// A=M*K, B=K*N, C=M*N
-    // order: CblasRowMajor/CblasColMajor
-	// Trans: CblasNoTrans/CblasTrans/CblasConjTrans
-	// LDA = number of row of A
-    C->sps[0] = A->sps[0]; C->sps[1] = B->sps[1];
-    return C;
-}
-array * solv_liner(array * A, array * x);
-array * solv_liner_sq(array * A, array * x);
-array * inv_array(array *A);
-array * LU_decomp(array * A) ;
-Vector * QR_decomp(array *A);
-array * Hessen(array *A);
-array * eigen_vectors(array *A);
-array * diag(array *A);
+array * solv_liner(array * A, array * Y) ;
+
+#endif
