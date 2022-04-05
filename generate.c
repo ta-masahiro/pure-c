@@ -486,14 +486,42 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
 
 }
 
+void * p_array_ref(Vector * v) {
+    array * a = (array*)vector_ref(v,0);
+    int dim = v->_sp - 1;
+    int index = (int)(long)vector_ref(v, 1); 
+    if (index > a->sizes[0]) {printf("IndexError!\n");Throw(3);}
+    int j;
+    for (int i = 1; i < dim; i++) {
+        if ((j = (int)(long)vector_ref(v, i + 1)) > a->sizes[i]) {printf("IndexError!\n");Throw(3);}
+        index = (index * a -> sizes[i]) + j; 
+    }
+    return (void *)a->table[index];
+}
+
 code_ret *codegen_vref(ast *vref_ast, Vector*env, int tail) {  // AST_VREF [AST_vect, AST_expr_list[i1,i2,...]]
                 //           <0>                     <1,0>,<1,1>,
     code_ret *code_vect = codegen(((ast*)vector_ref(vref_ast->table,0)), env,FALSE);    // vector指示部をコンパイル
     Vector *code = code_vect->code; 
     code_type *ct = code_vect->ct;
     obj_type type1=ct->type;
-    //
-    if (type1 != OBJ_VECT && type1 != OBJ_SYM && type1 != OBJ_GEN && type1 != OBJ_DICT) {printf("Syntax Error:must be vector/String/Dictionary!\n");Throw(0);}
+    // arrayの処理
+    Vector * index_vect;
+    //Funcpointer fp;
+    if (type1 == OBJ_ARRAY) {
+        int array_dim = (index_vect=((ast*)vector_ref(vref_ast->table, 1))->table)->_sp;
+        for(int i = 0; i < array_dim ; i++) {
+            code_ret *code_ref = codegen((ast*)vector_ref(index_vect, i), env, FALSE);
+            code = vector_append(code, code_ref->code);
+            if (code_ref->ct->type != OBJ_INT) push(code, (void*)conv_op[code_ref->ct->type][OBJ_INT]);
+        }
+        Vector *func_vect = vector_init(3);push(func_vect, (void*)FUNC_PRIM);push(func_vect,(void*)p_array_ref);
+        push(code, (void*)LDC); push(code, (void *)func_vect); push(code, (void *)PCALL); push(code, (void *)(long)(array_dim + 1));
+        return new_code(code,new_ct(OBJ_FLT,OBJ_NONE,(void*)0,FALSE));
+    }
+
+    // array以外
+    if (type1 != OBJ_VECT && type1 != OBJ_SYM && type1 != OBJ_GEN && type1 != OBJ_DICT) {printf("Syntax Error:must be vector/String/Dictionary/Array!\n");Throw(0);}
     code_ret *code_ref = codegen((ast*)vector_ref(((ast*)vector_ref(vref_ast->table,1))->table,0), env,FALSE);
     code = vector_append(code, code_ref->code);
     if ((type1 == OBJ_DICT) && (code_ref->ct->type != OBJ_SYM)) push(code, (void*)conv_op[code_ref->ct->type][OBJ_KEY]);  
@@ -1298,6 +1326,13 @@ code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list 
         a2=new_ast(AST_FCALL,a1->o_type,v3);//ast_print(a2,0);                   // AST_FCALL [AST_LAMBDA [AST_EXP_LIST [..],AST_ML [...]],AST_EXP_LIST [...]]
         return codegen(a2,env,tail);
     }
+}
+
+code_ret * codegen_class_var(ast *class_var_ast, Vector *env, int tail) {
+    ast * left_ast  = class_var_ast->table->_table[0];
+    ast * right_ast = class_var_ast->table->_table[0];
+
+
 }
 
 code_ret * codegen_class(ast *a, Vector * env, int tail) {

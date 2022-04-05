@@ -343,6 +343,7 @@ void * p_arg(Vector * v) {double r=carg(*(complex*)vector_ref(v,0));return (void
 void *p_a2v(Vector * v) {int array_index=0;return (void *)array2vector((array*)vector_ref(v,0), &array_index, 0);}
 void *p_v2a(Vector * v) {return (void *)vector2array((Vector*)vector_ref(v,0));}
 void *p_solv_liner(Vector *v) {return (void *)solv_liner((array*)vector_ref(v,0), (array*)vector_ref(v,1));}
+void *p_make_zero(Vector *v) {int size[2];size[0]=(int)(long)vector_ref(v,0);size[1]=(int)(long)vector_ref(v,1);return (void*)array_init(4, 2, size);}
 void *p_make_eye(Vector *v) {return (void*)array_eye((int)(long)vector_ref(v,0));}
 /*
 void * p_load(Vector *v) {
@@ -373,7 +374,7 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, //p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
-                                 p_compile, p_dis_assy, p_eval, p_load, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_make_eye, NULL };
+                                 p_compile, p_dis_assy, p_eval, p_load, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_make_eye, p_make_zero, NULL };
 char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "get_time", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -386,7 +387,7 @@ char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", //"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
-                                "compile", "dis_assy", "eval", "load", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "make_eye", NULL};
+                                "compile", "dis_assy", "eval", "load", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "make_eye", "make_zero", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},                                     // exit
                                 {OBJ_SYM},                                      // forget
@@ -503,6 +504,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_VECT},                                     // v2a
                                 {OBJ_ARRAY, OBJ_ARRAY},                         // solv_liner
                                 {OBJ_INT},                                      // make_eye
+                                {OBJ_INT, OBJ_INT},                             // make_zero
                                 };
 
 int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
@@ -621,6 +623,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_ARRAY,1, FALSE},   // vtoa
                                 {OBJ_ARRAY,2, FALSE},   // solv_liner
                                 {OBJ_ARRAY,1, FALSE},   // make_eye
+                                {OBJ_ARRAY,2, FALSE},   // make_zero
                                  };
 
 void * make_primitive() {
