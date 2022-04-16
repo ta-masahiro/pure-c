@@ -511,8 +511,8 @@ int is_comm(Stream *S, tokenstate s,int comm_lvl) {
 }
 
 token * _get_token(Stream * S) {
-    // streamからtokenを取り出す
-    // tokenがなくなったらNULLを返す            
+    // streamからtokenを取り出す バッファリングはしないので必要ならget_tokenを使うこと
+    // EOFになったらTOKEN_EOFを返す            
     token * t;
     char c,*p;
     while (TRUE) {
@@ -532,17 +532,195 @@ token * _get_token(Stream * S) {
         //return NULL;
     }
 }
+/*
+token * is_INT(Stream *S, char *buff) {                           // 「整数」状態
+    token * t; char cc,ccc;
+    char c = get_char(S);
+    if (c == '.') {                 // 「.」が来たら小数に移行 
+        *(buff ++) = c; 
+        return is_FLT(S, buff);
+    } else if (c=='L' || c=='l') {
+        return new_token(TOKEN_LINT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+    //} else if (c=='F' || c=='f') {
+    //    return new_token(TOKEN_LEFLT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+    } else if (c =='/') {           // 「/」が来て数字が続けば分数に移行
+        cc = get_char(S); 
+        if (isdigit(cc)) {
+            * (buff ++) = c;
+            * (buff ++) = cc; 
+            return is_RAT(S,buff);
+        } else {
+            unget_char(S); 
+            unget_char(S); 
+            return new_token(TOKEN_INT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+        }
+    } else if ( c=='e' || c=='E' || c=='f' ||c=='F' ) {// 「e」「E」「f」「F」が来たら指数付き小数かどうか試す 
+        cc=get_char(S);
+        if (isdigit(cc)) {
+            //*(buff ++) = c; 
+            *(buff ++) = 'e'; 
+            *(buff++) = cc; 
+            return is_NUM(S, (c=='e' || c=='E') ? TOKEN_EFLT :TOKEN_LEFLT, buff);
+        } else if (cc=='+' || cc=='-') { 
+            ccc=get_char(S);
+            if (isdigit(ccc)) {
+                //*(buff++)=c;
+                *(buff++)='e';
+                *(buff++)=cc;
+                *(buff++)=ccc;
+                return is_NUM(S,(c=='e' || c=='E') ? TOKEN_EFLT : TOKEN_LEFLT,buff);
+            } else {
+                unget_char(S); 
+                unget_char(S); 
+                unget_char(S);
+                return new_token(TOKEN_INT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+            }
+        } else {
+            unget_char(S); 
+            unget_char(S); 
+            return new_token(TOKEN_INT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+        }
+    } else if (isdigit(c)) { 
+        * (buff ++) =c; 
+        return is_INT(S, buff); 
+    } else {
+        unget_char(S); 
+        return new_token(TOKEN_INT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+    }
+}
+
+token * is_EFLT(Stream *S, char * buff) {
+    token * t; char cc,ccc;
+    char c = get_char(S);
+    if (isdigit(c)) {
+        *(buff ++) = c; 
+        return is_EFLT(S,buff); 
+    } else {
+        unget_char(S); 
+        return new_token(TOKEN_EFLT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+    }
+}
+
+token * is_LEFLT(Stream *S, char * buff) {
+    token * t; char cc,ccc;
+    char c = get_char(S);
+    if (isdigit(c)) {
+        *(buff ++) = c; 
+        return is_LEFLT(S,buff); 
+    } else {
+        unget_char(S); 
+        return new_token(TOKEN_LEFLT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+    }
+}
+
+token * is_FLT(Stream *S, char * buff) {
+    token * t; char cc,ccc;
+    char c = get_char(S);
+    if ( c=='e' || c=='E' || c=='f' || c=='F') { 
+        cc=get_char(S);
+        if (isdigit(cc)) {
+            //*(buff ++) = c;  
+            *(buff ++) = 'e'; 
+            *(buff++) = cc; 
+            if (c == 'e' || c == 'E') return is_EFLT(S, buff);
+            return is_LEFLT(S, buff);
+            //return is_NUM(S, (c=='e' || c=='E') ? TOKEN_EFLT : TOKEN_LEFLT, buff);
+        } else if (cc=='+' || cc=='-') { 
+            ccc=get_char(S);
+            if (isdigit(ccc)) {
+                //*(buff++)=c;
+                *(buff++)='e';
+                *(buff++)=cc;
+                *(buff++)=ccc;
+                //return is_NUM(S,(c=='e' || c=='E') ? TOKEN_EFLT : TOKEN_LEFLT, buff);
+                if (c == 'e' || c == 'E') return is_EFLT(S, buff);
+                return is_LEFLT(S, buff);
+            } else {
+                unget_char(S); 
+                unget_char(S); 
+                unget_char(S);
+                return new_token(TOKEN_INT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+            }
+        } else {
+            unget_char(S); 
+            unget_char(S); 
+            return new_token(TOKEN_FLT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+        }
+    } else if (isdigit(c)) {
+        *(buff ++) = c; 
+        return is_FLT(S, buff);
+    } else {
+        unget_char(S);
+        return new_token(TOKEN_FLT, new_symbol(STR_BUFF, buff - STR_BUFF), (void*)0, S);
+    }
+}
+
+token * __get_token(Stream *S) {
+    token * t;
+    char c, cc, ccc,*p;
+    char *BUFF, *buff = (char *)malloc(4096*sizeof(char));
+    BUFF = buff;
+    while (TRUE) {
+        buff = BUFF;
+        while (TRUE) {
+            c=get_char(S);                     
+            if (!isblank(c) || c != '\n') break;            // 空白と改行を読み飛ばして
+        }
+        //if (c=='\0') return NULL;                           // NULL文字なら終了
+        if (c=='\0') return new_token(TOKEN_EOF,NULL,NULL,S);
+        //unget_char(S);
+
+        // .で始まるfloatをチェック
+        if (c== '.') { 
+            cc=get_char(S);
+            if (isdigit(cc)) {
+                *(buff++)=c;*(buff++)=cc;
+                //return is_NUM(S,TOKEN_FLT,buff);
+                return is_FLT(S,buff);
+            }
+            unget_char(S);  // 小数点でなく記号の.なので最後に再チェック
+        }
+        // 0で始まるhex,dec,oct,binをチェック
+        if (c == '0') {
+            cc=get_char(S);
+            if (cc=='x' || cc=='X') {   // 16進
+                return is_HEX(S,buff);                
+            } else if (cc=='o' || cc=='O') {
+                return is_OCT(S,buff);                
+            } else if (cc=='b' || cc=='B') {
+                return is_BIN(S,buff);                
+            } else {
+                unget_char(S);
+                *(buff++)=c;
+                return is_INT(S,buff);  // 「0」で始まる10進数を許容
+            }
+        // 数字で始まるdecをチェック
+        } else if (isdigit(c)) {
+            * (buff ++) =c; 
+            return is_INT(S, buff); 
+        // _か英字で始まるsymbolをチェック
+        } else if (c == '_' || isalpha(c)) {
+
+        // "で始まるstringをチェック
+        }else if (c == '"') {
+
+        }else if (c == '\'') {
+
+        }else {;}
+    }
+}
+*/
 token * get_token(TokenBuff * tokens) {
     // token bufferからtokenを取り出し返す
     // bufferが空なら_get_ktokenでBuffに読み込み、それを返す
-    // EOFの時はNULLが返る->!!bug!!の元 
+    // EOFの時はTOKEN_EOFを返し続ける
     Vector * tokenbuff =tokens->buff;
     Stream * S = tokens->S;
     token * t;
     //token_print(tokens);
     if (!is_queu_empty(tokenbuff)) return (token*)dequeue(tokenbuff);
     t=_get_token(S);//printf("%s\n",t->source->_table);
-    if (t == NULL) {printf("UnexpectedEOF!\n");Throw(0);}
+    if (t == NULL) {printf("UnexpectedEOF!\n");Throw(0);}   // tがNULLになることはない
     push(tokenbuff,(void*)t);(tokenbuff->_cp)++;
     return  t; // if EOF return NULL
 }

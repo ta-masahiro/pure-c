@@ -1720,7 +1720,8 @@ char * objtype2str(obj_type type, void* value) {
         case OBJ_LINT:  return mpz_get_str(NULL, 10, (mpz_ptr)value);
         case OBJ_RAT:   return mpq_get_str(NULL, 10, (mpq_ptr)value);
         //case OBJ_FLT:   lval=(long)value;sprintf(buf,"%20.13g",*(double*)(&lval)); return buf;
-        case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.16g",*(double*)(&lval)); return buf;
+        //case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.16g",*(double*)(&lval)); return buf;
+        case OBJ_FLT:   lval=(long)value;sprintf(buf,"%15.10g",*(double*)(&lval)); return buf;
         case OBJ_CMPLX: sprintf(buf,"%.16g%+.16gI",creal(*(complex*)value),cimag(*(complex*)value)); return buf;
         case OBJ_LFLT:  //mpfr_sprintf(buf,"%.Rg", (mpfr_ptr)value);return buf;
                         mpfr_sprintf(buf,set_lf_format((mpfr_ptr)value),(mpfr_ptr)value);return buf;
@@ -1914,8 +1915,8 @@ object * objcpy(object * s) {
 long objlen(object* o) {
     if (o==NULL) none_error();
     switch(o->type) {
-        case OBJ_VECT:return ((Vector*)o->data.ptr)->_sp;
-        case OBJ_SYM :return ((Symbol*)o->data.ptr)->_size;
+        case OBJ_VECT: return ((Vector*)o->data.ptr)->_sp;
+        case OBJ_SYM : return ((Symbol*)o->data.ptr)->_sp;
         default:printf("RntimeError:Illegal length Method!%d\n",o->type);Throw(3);
     }
     return 0;
@@ -1930,8 +1931,8 @@ object*objref(object*t,long i) {
 void objset(object*t,long i,object*v) {
     //printf("type:%d\n",t->type);
     if (t==NULL) none_error();
-    if (t->type==OBJ_VECT) {vector_set((Vector*)t->data.ptr,i,(void*)v);return;}
-    if (t->type==OBJ_SYM)  {symbol_set((Symbol*)t->data.ptr,i,(Symbol*)v->data.ptr);return;}
+    if (t->type==OBJ_VECT) {vector_set((Vector*)t->data.ptr,i>=0 ? i : ((Vector*)t->data.ptr)->_sp + i,(void*)v);return;}
+    if (t->type==OBJ_SYM)  {symbol_set((Symbol*)t->data.ptr,i>=0 ? i : ((Symbol*)t->data.ptr)->_sp + i,(Symbol*)v->data.ptr);return;}
     if (t->type==OBJ_GEN)  {printf("!!!!!!objset!!!\n");objset((object*)t->data.ptr,i,v);return;}
     printf("RntimeError:Illegal set Method!\n");Throw(3);
 }
@@ -2220,9 +2221,9 @@ char * array2sym(array * a, int *array_index, int size_index) {
     object *o;
     int i;
     if (size_index >= a->dim - 1) {
-        strcpy(S,"| ");
+        strcpy(S,"[ ");
         for(i = 0; i < a->sizes[size_index]; i++) {s = objtype2str(a->type, a->table[(*array_index)++]); strcat(S,s);strcat(S," ");}
-        strcat(S, "|\n");
+        strcat(S, "]\n");
         return S;
     }
     //strcpy(S,"| ");

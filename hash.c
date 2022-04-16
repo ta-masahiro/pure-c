@@ -1,32 +1,32 @@
 #include "hash.h"
 
-unsigned long ilog2(unsigned long x) { 
-    unsigned long c = 0, y = x - 1;
+unsigned int ilog2(unsigned int x) { 
+    unsigned int c = 0, y = x - 1;
     while ((y = y>>1)>0) c ++ ; 
     return c; 
 }
 
-Hash * Hash_init(unsigned long size) {
+Hash * Hash_init(unsigned int size) {
     Hash * h = (Hash * )malloc(sizeof(Hash));
     h ->initval = 0;
     if (size<32) h->size = 32;  
-    else h ->size = (unsigned long)2<<ilog2(size);
+    else h ->size = 2<<ilog2(size);
     h ->hashTable = (Data * )calloc(h -> size, sizeof(Data));
     h ->entries = 0;
     return h; 
 }
 
-void Hash_resize(Hash * h, unsigned long newSize) {
-    printf("Hash_resize: %ld -> %ld [%ld]\n", h ->size, newSize, h ->entries);
+void Hash_resize(Hash * h, unsigned int newSize) {
+    printf("Hash_resize: %d -> %d [%d]\n", h ->size, newSize, h ->entries);
     Data *oldTable = h ->hashTable;
-    unsigned long oldSize = h ->size;
-    unsigned long initval = h ->initval; 
+    unsigned int oldSize = h ->size;
+    unsigned int initval = h ->initval; 
     Data * newTable = (Data * )calloc(newSize, sizeof(Data));
     h ->hashTable = newTable;
     h ->size = newSize; 
     h ->initval = initval; 
   
-    long n;
+    int n;
     for (n = 0; n < oldSize; n++) {
         if (oldTable[n].key != NULL)
             Hash_put(h, oldTable[n].key, oldTable[n].val);
@@ -47,8 +47,8 @@ typedef unsigned long ub4;
   c -= a; c -= b; c ^= (b>>15); \
 }
 
-unsigned long hash( register unsigned char *k, register unsigned long length, register unsigned long initval) {
-    register unsigned long a,b,c,len;
+unsigned int hash( register unsigned char *k, register unsigned int length, register unsigned int initval) {
+    unsigned int a,b,c,len;
     len = length;
     a = b = 0x9e3779b9;  /* the golden ratio; an arbitrary value */
     c = initval;         /* the previous hash value */
@@ -76,13 +76,13 @@ unsigned long hash( register unsigned char *k, register unsigned long length, re
    mix(a,b,c); return c;
 }
 
-unsigned long Hash_put(Hash * hashT, Symbol *key, void *val) {
+unsigned int Hash_put(Hash * hashT, Symbol *key, void *val) {
     unsigned long n, h = hash(key ->_table, key ->_size, hashT ->initval) & (hashT ->size-1);
     //hashT->initval = h;
     //printf("%s %ld\n",key->_table,h);
     //printf("hash size:%ld\n",key->_size);
     for (n = 0; n < hashT ->size; n++) {
-        unsigned long ix = (h + n) & (hashT->size - 1);
+        unsigned int ix = (h + n) & (hashT->size - 1);
         if (hashT ->hashTable[ix].key == NULL) {
             hashT ->hashTable[ix].key = key;        
             hashT ->hashTable[ix].val = val;        
@@ -100,10 +100,10 @@ unsigned long Hash_put(Hash * hashT, Symbol *key, void *val) {
 }
 
 void  **Hash_get(Hash * hashT, Symbol *key) {
-    unsigned long n, h = hash(key ->_table, key ->_size, hashT ->initval) & (hashT->size -1);
+    unsigned int n, h = hash(key ->_table, key ->_size, hashT ->initval) & (hashT->size -1);
     //hashT->initval = h;
     for (n = 0; n < hashT ->size; n++) {
-        unsigned long ix = (h + n) & (hashT->size  - 1);
+        unsigned int ix = (h + n) & (hashT->size  - 1);
         if (hashT ->hashTable[ix].key == NULL) {
             //printf("ID:%ld KEY:%s is not exeist!\n",ix,key->_table);
             return NULL;                // 登録なし
@@ -117,9 +117,9 @@ void  **Hash_get(Hash * hashT, Symbol *key) {
 
 void Hash_del(Hash * hashT, Symbol *key) {
     Symbol * k;
-    unsigned long n, h = hash(key ->_table, key ->_size, hashT ->initval) & (hashT->size -1);
+    unsigned int n, h = hash(key ->_table, key ->_size, hashT ->initval) & (hashT->size -1);
     for (n = 0; n < hashT ->size; n++) {
-        unsigned long ix = (h + n) & (hashT->size  - 1);
+        unsigned int ix = (h + n) & (hashT->size  - 1);
         if ((k = hashT ->hashTable[ix].key) == NULL) {   // 登録なし
             if (hashT->hashTable[ix].val == NULL) return;
         } else if (memcmp(k->_table, key ->_table, key ->_size) == 0) {// 登録あり
@@ -132,14 +132,14 @@ void Hash_del(Hash * hashT, Symbol *key) {
 }
 
 void print_hashTable(Hash * h) {
-    unsigned long i; 
+    unsigned int i; 
     Symbol * key;
     for(i = 0;  i < (h ->size); i ++ ) {
         key=h->hashTable[i].key;
         if (key != NULL) 
-            printf("i:%ld key:%s hash:%ld, val:%ld\n",i , key ->_table, hash(key->_table,key->_size, h->initval) & (h->size -1), (long)(h ->hashTable[i].val));  
+            printf("i:%d key:%s hash:%d, val:%ld\n",i , key ->_table, hash(key->_table,key->_size, h->initval) & (h->size -1), (long)(h ->hashTable[i].val));  
     }
-    printf("hash size:%ld\n",h->entries);
+    printf("hash size:%d\n",h->entries);
 }
 /*
 Symbol * new_symbol(char * str, int size) {

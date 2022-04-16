@@ -24,7 +24,7 @@ char * code_name[] =
      "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","CADD", "CSUB", "CMUL", "CDIV", "CPOW",
      "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE", "LOOP_SET",
      "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","VSLS_","V_SLS","SSLS_","S_SLS",
-     "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD","$$$" };
+     "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD", "SPUSH","$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -46,7 +46,7 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
         1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0 };
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0 };
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -110,7 +110,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO,&&_CADD, &&_CSUB, &&_CMUL, &&_CDIV ,&&_CPOW, \
             &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE,&&_LOOP_SET,\
             &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR,&&_VSLS_,&&_V_SLS,&&_SSLS_,&&_S_SLS,\
-            &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD};
+            &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH};
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -727,8 +727,8 @@ _VREF:
     push(S, (void * )vector_ref(l,n));
     goto * dequeue(C);
 _SREF:
-    n=(long)pop(S);
-    push(S,(void*)symbol_ref((Symbol*)pop(S),n));
+    n=(long)pop(S);sym = (Symbol*)pop(S);if (n<0) n=sym->_sp+n;
+    push(S,(void*)symbol_ref(sym,n));
     goto*dequeue(C);
 _OREF:
     n=(long)pop(S);
@@ -736,13 +736,13 @@ _OREF:
     goto*dequeue(C);
 _VSET: // うまく動いていない！！
     n = (long)pop(S);
-    l = (Vector * )pop(S);
+    l = (Vector * )pop(S);if (n<0) n=l->_sp+n;
     v = (void * )pop(S);
     vector_set(l, n, v);
     push(S, v);
     goto * dequeue(C);
 _SSET:
-    n=(long)pop(S);sym=(Symbol*)pop(S);
+    n=(long)pop(S);sym=(Symbol*)pop(S);if (n<0) n=sym->_sp+n;
     push(S,(void*)symbol_set(sym,n,(Symbol*)pop(S)));
     goto*dequeue(C);
 _OSET:
@@ -772,9 +772,14 @@ _VPUSH:
     l = (Vector * )pop(S);
     //l = (Vector * )vector_ref(S,S->_sp-1);
     push(l, v);
-    push(S,(void*)l);
+    push(S,(void*)l);   
     goto * dequeue(C);
-//_SPUSH:
+_SPUSH:
+    sym = (Symbol *)pop(S);
+    sym1 = (Symbol *)pop(S);
+    symbol_push(sym1, sym);
+    push(S, (void*)sym1);
+    goto * dequeue(C);
 _OPUSH:
     //v=vector_ref(S,S->_sp-1);
     v=pop(S);
@@ -1000,7 +1005,8 @@ _VLEN:
     push(S,(void*)(long)((Vector*)pop(S))->_sp);
     goto*dequeue(C);
 _SLEN:
-    push(S,(void*)((Symbol*)pop(S))->_size);
+    //push(S,(void*)(long)((Symbol*)pop(S))->_size);
+    push(S,(void*)(long)((Symbol*)pop(S))->_sp);
     goto*dequeue(C);
 _DLEN:
     push(S,(void*)(long)((Hash*)pop(S))->entries);

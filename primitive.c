@@ -301,7 +301,7 @@ void * p_hex_str(Vector *v) {unsigned long d,rem,val=(long)vector_ref(v,0);char*
 void * p_as_float(Vector *v) {return vector_ref(v,0);}
 void * p_as_int(Vector *v) {return vector_ref(v,0);}
 void * p_type(Vector *v) {return (void*)(long)((object *)vector_ref(v,0))->type;}
-void * p_str_search(Vector *v) {return (void*)symbol_search((Symbol*)vector_ref(v,0), (Symbol*)vector_ref(v,1));}
+void * p_str_search(Vector *v) {return (void*)(long)symbol_search((Symbol*)vector_ref(v,0), (Symbol*)vector_ref(v,1));}
 void * p_copy(Vector *v) {return (void*)objcpy((object*)vector_ref(v,0));}
 void * p_system(Vector *v) { if (system(((Symbol*)vector_ref(v,0))->_table) == 0 ) perror("canot exec command"); return NULL;}
 void * p_popen(Vector *v) {

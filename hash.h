@@ -15,14 +15,14 @@ typedef struct Data {
 
 typedef struct Hash {
     Data *hashTable;
-    unsigned long initval, size, entries;        // 初期値、サイズ、登録数
+    unsigned int initval, size, entries;        // 初期値、サイズ、登録数
 } Hash;
 
-Hash * Hash_init(unsigned long size);
-void Hash_resize(Hash * h, unsigned long newSize);     // 内部関数
+Hash * Hash_init(unsigned int size);
+void Hash_resize(Hash * h, unsigned int newSize);     // 内部関数
 void Hash_free(Hash *pHash);
-unsigned long hash(unsigned char *key, unsigned long keysize, unsigned long initval);                 // 内部関数SH
-unsigned long Hash_put(Hash * h, Symbol *key, void *val);
+unsigned int hash(unsigned char *key, unsigned int keysize, unsigned int initval);                 // 内部関数SH
+unsigned int Hash_put(Hash * h, Symbol *key, void *val);
 void  ** Hash_get(Hash * h, Symbol *key);
 void  * eval(Vector * S, Vector * E, Vector * C, Vector * R, Vector * EE, Hash * G); 
 void print_hashTable(Hash* h); 

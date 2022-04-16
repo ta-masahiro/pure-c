@@ -27,7 +27,7 @@ enum CODE op2_2[18][19] = {
                 {VAPP, 0,    VMUL, 0,    0,    0,    VPUSH,0,    0,    0,    0,   0,   0,   0,   VEQ, 0,    0,    0,    0},   // OBJ_VECT
                 {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_DICT
                 {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_PAIR
-                {SAPP, 0,    SMUL, 0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   SEQ, 0,    0,    0,    0},   // OBJ_SYM
+                {SAPP, 0,    SMUL, 0,    0,    0,    SPUSH,0,    0,    0,    0,   0,   0,   0,   SEQ, 0,    0,    0,    0},   // OBJ_SYM
                 {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_ARRAY
                 {0,    0,    0,    0,    0,    0,    0,    0,    0,    0,    0,   0,   0,   0,   0,   0,    0,    0,    0},   // OBJ_IO
                 };
@@ -105,9 +105,11 @@ enum CODE get_convert_op(obj_type from, obj_type to) {
     return conv_op[from][to];
 }
 
-Hash* G;
-Hash* GLOBAL_VAR;
-Hash* PRIMITIVE_FUNC;
+Hash* G;                // global 環境
+Hash* GLOBAL_VAR;       // global nameの型を保持
+Hash* PRIMITIVE_FUNC;   // primitive関数を保持
+Hash* CLASS_NAME;       // class名を保持
+Hash * IMPORT_NAME;
 /*
 typedef struct {
     obj_type type;
@@ -739,11 +741,11 @@ code_ret *codegen_1op(ast *_1op_ast, Vector * env, int tail) { // AST_1OP [op_ty
     for(i=0;i<6;i++) {
         if (op1_1[i]==(int)(long)vector_ref(_1op_ast->table,0)) break;
     }
-    if (i>=6){printf("illegal 2oprand\n");return NULL;}
+    if (i>=6){printf("illegal 1oprand\n");return NULL;}
     if ((opcode=op1_2[r_type][i])==0) {printf("syntax Error:operator is not supported\n");Throw(0);}
     push(code,(void*)(long)opcode);
-    if (op1_3[i] != 0) r_type=op1_3[i];
-    if (op1_1[i]=='-'*256+'>' && r_type==OBJ_SYM) r_type=OBJ_SYM;
+    if ((op1_1[i]=='-'*256+'>') && (r_type==OBJ_SYM)) r_type=OBJ_SYM;
+    else if (op1_3[i] != 0) r_type=op1_3[i];
     return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
 }
 
@@ -901,7 +903,7 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
         if (ast_j->type==AST_VAR) {                                                 // int I,J,K;等初期代入がない場合
             if (get_gv(s=(Symbol*)vector_ref(ast_j->table,0))!=NULL) {printf("Warning!:DupricateDifinition!\n");}  //警告を出して続行
             // printf("!!!!\n");
-            ct=new_ct(dcl_ast->o_type,OBJ_NONE,(void*)0,FALSE);                     // 宣言された型でctを作り
+            ct=new_ct(dcl_ast->o_type,OBJ_NONE,(void*)0, dcl_ast->o_type == OBJ_UFUNC ? TRUE : FALSE);                     // 宣言された型でctを作り
             put_gv(s,ct);                                                           // 型をgvに登録する
             push(code,(void*)LDC);push(code,create_zero(dcl_ast->o_type));          // 「0」で初期化しておく
             push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
@@ -1331,6 +1333,12 @@ code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list 
 code_ret * codegen_class_var(ast *class_var_ast, Vector *env, int tail) {
     ast * left_ast  = class_var_ast->table->_table[0];
     ast * right_ast = class_var_ast->table->_table[0];
+    void * d;
+    if (left_ast->type == AST_VAR) {
+        if ((d=*Hash_get(CLASS_NAME,(Symbol*)left_ast->table->_table[0])) != NULL) {        // class変数
+
+        }else if ((d=*Hash_get(IMPORT_NAME,(Symbol*)left_ast->table->_table[0])) != NULL) {}
+    } 
 
 
 }
