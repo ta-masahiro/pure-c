@@ -12,7 +12,7 @@ typedef struct {
     int     _line;
     int     _pos;
     int     _max; 
-    FILE *  _fp; 
+    int     _fileid; 
     char *  _buff;
 } Stream;
 

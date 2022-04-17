@@ -1,4 +1,50 @@
 #include "lexparse2.h"
+#define MAXBUFF 4096
+#include <fcntl.h>
+/*
+Stream  * new_stream(FILE * f) {
+    Stream * S = (Stream * )malloc(sizeof(Stream) );
+    S ->_pos = 0;
+    S ->_line = 0;
+    S ->_buff = (char * )malloc(MAXBUFF * sizeof(char));  
+    char * p = fgets(S ->_buff, MAXBUFF, f); 
+    S -> _fp = f;
+    if (p == NULL) return NULL;  
+    S->_max=strlen(p);
+    return S; 
+}
+*/
+Stream  * new_stream(Symbol *s) {
+    int file_id ;
+    size_t n;
+
+    if ((file_id = open(s->_table, O_RDONLY)) == -1) {printf("FileI/O Error!\n");Throw(3);}   
+
+    Stream * S = (Stream * )malloc(sizeof(Stream) );
+    S ->_pos = 0;
+    S ->_line = 0;
+    S ->_buff = (char * )malloc(MAXBUFF * sizeof(char));  
+    S -> _fileid = file_id;
+
+    if ((n = read(file_id, S ->_buff, MAXBUFF)) == 0) return NULL;; 
+    if (n <= 0) {printf("FileI/O Error!\n");return NULL;}  
+    S->_max = n;
+    return S; 
+}
+Stream  * new_str_stream(Symbol * str) {
+    Stream * S = (Stream * )malloc(sizeof(Stream) );
+    S ->_pos = 0;
+    S ->_line = 0;
+    S ->_buff = str->_table;  
+    S -> _fileid = NULL;
+    S->_max = str->_size;
+    return S; 
+}
+
+Symbol * get_line(Stream *S) {
+    // stramのbufferから改行記号まで取り出してsymbolに変換する
+    return new_symbol(S->_buff, S->_max);
+}
 
 Token * new_token(int type, Symbol * s) {
     Token * t = (Token*)malloc(sizeof(Token));
@@ -110,9 +156,8 @@ Symbol * _get_float(char **S) {
                 return sym;                             // 整数部+'.'+整数部
             }
             return sym;                                 // 整数部+'.'
-        }else if ((c == '/')) {
-
         }
+        // 整数なのだが…
     }else if ((c = *s++) == '.') {
 
     }    
