@@ -26,9 +26,9 @@ Stream  * new_stream(Symbol *s) {
     S ->_buff = (char * )malloc(MAXBUFF * sizeof(char));  
     S -> _fileid = file_id;
 
-    if ((n = read(file_id, S ->_buff, MAXBUFF)) == 0) return NULL;; 
-    if (n <= 0) {printf("FileI/O Error!\n");return NULL;}  
-    S->_max = n;
+    if ((n = read(file_id, S ->_buff, MAXBUFF-1)) == 0) return NULL;; 
+    if (n <= 0) {printf("FileI/O Error!\n"); Throw(3);}  
+    S->_max = n; S->_buff[S->_max] = '\0';
     return S; 
 }
 Stream  * new_str_stream(Symbol * str) {
@@ -39,116 +39,140 @@ Stream  * new_str_stream(Symbol * str) {
     S -> _fileid = NULL;
     S->_max = str->_size;
     return S; 
+};
+
+char * _reload(Stream *S) {
+    size_t n;
+    if (S->_fileid == -1) return NULL;
+    S->_pos = 0;
+    (S ->_line) ++;
+    if ((n = read(S->_fileid, S->_buff, MAXBUFF-1)) == 0) return NULL;
+    if (n < 0) {printf("FileI/O Error!\n");Throw(3);}
+    S->_max = n; S->_buff[S->_max] = '\0';
+    return S;
+}
+
+unsigned char _get_char(Stream *S) {
+    char *p;
+    char c = S->_buff[(S->_pos) ++];
+    if (c == '\0') {
+        if ((p = _reload(S)) == NULL) return '\0';
+        c = S->_buff[(S->_pos) ++];
+    }
+    return c;
+}
+
+void _unget_char(Stream *S) {
+    (S->_pos) --;
 }
 
 Symbol * get_line(Stream *S) {
     // stramのbufferから改行記号まで取り出してsymbolに変換する
-    return new_symbol(S->_buff, S->_max);
+    if (S->_pos >=S->_max -1) reload(S);
+    char * p = strchar(S->_buff + S->_pos, '\n');
+    if (p == NULL) {
+        S->_pos = S->_max;
+        return new_symbol(S->_buff + S->_pos, S->_max);
+    }
+    S->_pos = p - S->_buff;
+    return new_symbol(S->_buff + S->_pos, p - S->_pos +1);
 }
 
-Token * new_token(int type, Symbol * s) {
+Token * new_token(int type, Symbol * s, int line, int pos) {
     Token * t = (Token*)malloc(sizeof(Token));
     t->type=type;
     t->source=s; 
     //t->value.ptr=val; 
-    //t->line = line;
-    //t->pos = pos;
+    t->line = line;
+    t->pos = pos;
     return t;
 }
 
-Symbol * _get_dec(char ** S) {
-    unsigned char * s = * S;
+Token * _get_dec(Stream *S) {
     unsigned char c;
-    while ((c = *s++) != '\0' && isblank(c)) ;
-    if (c == '\0' || c == '0') { s--; return NULL;}
+    while ((c = _get_char(S)) != '\0' && isblank(c)) ;
+    if (c == '\0' || c != '0') { _unget_char(S); return NULL;}
     Symbol * buff = new_symbol("",0);
-
-    while isdigit(c = *s++) {
+    while (isdigit(c = _get_char(S))) {
         symbol_push_c(buff, c);
     }
-    return buff;
+    _unget_char(S);
+    return new_token(TOKEN_INT, buff, S->_line, S->_pos - buff->_size);
 }
 
-Symbol * _get_hex_part(char **S) {
-    unsigned char * s = * S;
+Symbol * _get_hex_part(Stream *S) {
     unsigned char c;
     
-    if ((c = *s) == '\0') return NULL;
+    if ((c = _get_char(S)) == '\0') return NULL;
     Symbol * buff = new_symbol("",0);
-    while (((c = *s++) >='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F')) symbol_push_c(buff, c);
-    //s--;
+    while (((c = _get_char(S)) >='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F')) symbol_push_c(buff, c);
+    _unget_char(S);
     return buff;
 }
-Symbol * _get_hex(char **S) {
-    unsigned char * s = * S;
+Token * _get_hex(Stream *S) {
     unsigned char c;
-    while ((c = *s++) != '\0' && isblank(c)) ;
-    if (c == '\0' || c != '0') { s--; return NULL;}
-    if ((c = *s++) != 'x' && c != 'X') { s--; return NULL;}
+    while ((c = _get_char(S)) != '\0' && isblank(c)) ;
+    if (c == '\0' || c != '0') { _unget_char(S); return NULL;}
+    if ((c = _get_char(S)) != 'x' && c != 'X') { _unget_char(S); return NULL;}
     Symbol * buff = new_symbol("0X",2);
 
-    while (((c = *s++) >='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F')) symbol_push_c(buff, c);
-    //s--;
-    return buff;
+    while (((c = _get_char(S)) >='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F')) symbol_push_c(buff, c);
+    _unget_char(S);
+    return new_token(TOKEN_HEX, buff, S->_line, S->_pos - buff->_size);
 }
 
-Symbol * _get_oct(char **S) {
-    unsigned char * s = * S;
+Token * _get_oct(Stream *S) {
     unsigned char c;
-    while ((c = *s++) != '\0' && isblank(c)) ;
-    if (c == '\0' || c != '0') { s--; return NULL;}
-    if ((c = *s++) != 'o' && c != 'O') { s--; return NULL;}
+    while ((c = _get_char(S)) != '\0' && isblank(c)) ;
+    if (c == '\0' || c != '0') { _unget_char(S); return NULL;}
+    if ((c = _get_char(S)) != 'o' && c != 'O') { _unget_char(S); return NULL;}
     Symbol * buff = new_symbol("0O",2);
 
-    while ((c = *s++) >='0' && c<='8') symbol_push_c(buff, c);
-    //s--;
-    return buff;
-
+    while ((c = _get_char(S)) >='0' && c<='8') symbol_push_c(buff, c);
+    _unget_char(S);
+    return new_token(TOKEN_OCT, buff, S->_line, S->_pos);
 }
 
-Symbol * _get_bin(char **S) {
-    unsigned char * s = * S;
+Token * _get_bin(Stream *S) {
     unsigned char c;
-    while ((c = *s++) != '\0' && isblank(c)) ;
-    if (c == '\0' || c != '0') { s--; return NULL;}
-    if ((c = *s++) != 'b' && c != 'B') { s--; return NULL;}
+    while ((c = _get_char(S)) != '\0' && isblank(c)) ;
+    if (c == '\0' || c != '0') { _unget_char(S); return NULL;}
+    if ((c = _get_char(S)) != 'b' && c != 'B') { _unget_char(S); return NULL;}
     Symbol * buff = new_symbol("0B",2);
 
-    while ((c = *s++) =='0' || c =='1') symbol_push_c(buff, c);
-    //s--;
-    return buff;
-
+    while ((c = _get_char(S)) =='0' || c =='1') symbol_push_c(buff, c);
+    unget_token(S);
+    return new_token(TOKEN_BIN, buff, S->_line, S->_pos);
 }
 
-Symbol *_get_int(char **S) {
-    unsigned char * s = * S;
+Token *_get_int(Stream *S) {
     unsigned char c;
-    Symbol * sym;
-    while ((c = *s++) != '\0' && isblank(c)) ;
-    if (c == '\0' ) { s--; return NULL;}
-    if ((sym =_get_dec(&s)) || (sym =_get_hex(&s))||(sym =_get_oct(&s))||(sym =_get_bin(&s))) return sym;
+    Token *t;
+    while ((c = _get_char(S)) != '\0' && isblank(c)) ;
+    if (c == '\0' ) { _unget_char(S); return NULL;}
+    if ((t =_get_dec(S)) || (t =_get_hex(S))||(t =_get_oct(S))||(t =_get_bin(S))) return t;
 }
 // 指数部を求める [e|E][+|-]?[0-9]+
-Symbol * _get_exp_part(char **S) {
+Symbol * _get_exp_part(Stream *S) {
 
 }
 // 小数を求める
 // 小数: 整数部+指数部 | 整数部+'.'+指数部 | 整数部+'.'+整数部 | 整数部+'.'+整数部+指数部
-Symbol * _get_float(char **S) {
-    unsigned char * s = * S;
+Token * _get_float(Stream *S) {
     unsigned char c;
-    Symbol * sym, *sym2, *sym3;
-    while ((c = *s++) != '\0' && isblank(c)) ;
-    if (c == '\0' ) { s--; return NULL;}
+    Symbol * sym, *sym1;
+    Token * t, *t1;
+    while ((c = _get_char(S)) != '\0' && isblank(c)) ;
+    if (c == '\0' ) { _unget_char(S); return NULL;}
 
-    if ((sym = _get_dec(&s))) {
-        if ((sym2 == _get_exp_part(&s))) { 
-            return symbol_append(sym, sym2);        // 整数部+指数部
-        }else if ((c = *s++) == '.') {
-            symbol_push_c(sym, c);         
-            if (sym2 =  _get_exp_part(&s)) {
-                return symbol_append(sym, sym2);        // 整数部+'.'+指数部
-            } else if (sym2 = _get_dec(&s)) {
+    if ((t = _get_dec(S))) {
+        if ((sym == _get_exp_part(S))) { 
+            return new_token(TOKEN_FLT, symbol_append(t->source, sym), t->line, t->pos);        // 整数部+指数部
+        }else if ((c = _get_char(S)) == '.') {
+            symbol_push_c(t->source, c);         
+            if (sym =  _get_exp_part(S)) {
+                return new_token(TOKEN_EFLT, symbol_append(t->source, sym), t->line, S->_pos - t->pos);        // 整数部+'.'+指数部
+            } else if (t1 = _get_dec(&s)) {
                 sym = symbol_append(sym, sym2);
                 if (sym2 =_get_exp_part) {
                     return symbol_append(sym, sym2);    // 整数部+'.'+整数部+指数部

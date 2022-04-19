@@ -17,9 +17,12 @@ typedef struct {
 } Stream;
 
 typedef enum {
-    TOKEN_NONE, TOKEN_INT, TOKEN_LINT, TOKEN_RAT, TOKEN_FLT, TOKEN_EFLT, TOKEN_LEFLT, TOKEN_SYM, TOKEN_STR, TOKEN_CHR,TOKEN_HEX,TOKEN_OCT,TOKEN_BIN,TOKEN_COMM,TOKEN_LCOMM,TOKEN_RAW_STR, TOKEN_EOF
-    
-//  初期状態、整数、分数、小数、指数付き少数、シンボル、文字列、RAW文字列、文字、コメント、1行コメント、RAW文字列、EOF
+    TOKEN_NONE, TOKEN_INT, TOKEN_LINT, TOKEN_RAT, TOKEN_FLT, TOKEN_EFLT, TOKEN_LEFLT,  TOKEN_SYM, TOKEN_STR, 
+//  初期状態、  整数、     LONG整数、  分数、    小数、      指数付少数、指数付長小数、シンボル、 文字列、
+    TOKEN_CHR,TOKEN_HEX,TOKEN_OCT,TOKEN_BIN,TOKEN_COMM,TOKEN_LCOMM, TOKEN_RAW_STR, TOKEN_EOF,  
+//  文字、    16進数、　10進数、  2進数、   コメント、 1行コメント、RAW文字列、    EOF
+    TOKENP_HEX, TOKENP_OCT, TOKENP_BIN, TOKENP_EXP
+//  16進部分    8進数部分   2進数部分   指数表示部分
 } tokenstate; 
 
 typedef tokenstate tokentype; 
@@ -28,11 +31,11 @@ typedef struct {
     int         type; 
     Symbol *    source;
     int         line, pos;
-    union {
-        long    intg; 
-        double  flt; 
-        void *  ptr; 
-    } value; 
+    //union {
+    //    long    intg; 
+    //    double  flt; 
+    //    void *  ptr; 
+    //} value; 
 } Token;
 
 //token type definition 
@@ -51,7 +54,7 @@ typedef struct {
 #define t_DSLA      '/'*256+'/'
 #define t_DPAR      '%'*256+'%'
 #define t_LAND      '&'*256+'&'
-#define t_LOR       '|'*256+'|'
+#define t_LOR       ''*256+'|'
 #define t_LXOR      '^'*256+'^'
 #define t_DRAR      '>'*256+'>'
 #define t_DLAR      '<'*256+'<'
@@ -119,12 +122,12 @@ ast * new_ast(ast_type type, Vector * table) {
 */
 extern char * dcl_string[];
 //char get_char(Stream*S);
-Stream *new_stream(FILE * f);  
+Stream *new_stream(Symbol *s);  
 Stream *new_str_stream(Symbol * str);  
 //void unget_char(Stream *S);
 //Symbol * new_symbol(unsigned char * str, unsigned long size);  
 //Token * new_token(int type, Symbol * s, void * val, Stream * S); 
-Token * new_token(int type, Symbol * s); 
+Token * new_token(int type, Symbol * s, int line, int pos); 
 TokenBuff * new_tokenbuff(FILE *f);
 TokenBuff * new_str_tokenbuff(Symbol *f);
 Token * _get_token(Stream *S); 
