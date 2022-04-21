@@ -436,6 +436,8 @@ code_ret *codegen_lit(ast*lit_ast,Vector*env,int tail) {
                 push(code,(void*)mpz_get_ui(z));
                 return new_code(code,new_ct(OBJ_INT,OBJ_NONE,(void*)0,FALSE));
             }
+        case TOKEN_CHR:
+        default: printf("Unknown Token!\n");Throw(2);
     }
 
 }
@@ -738,6 +740,7 @@ code_ret *codegen_1op(ast *_1op_ast, Vector * env, int tail) { // AST_1OP [op_ty
     int i;
     code_ret *code_s = codegen((ast*)vector_ref(_1op_ast->table,1),env,FALSE);
     Vector *code = code_s->code; obj_type r_type=code_s->ct->type;
+    tokentype litpyte = (int)(long)vector_ref(_1op_ast->table,0);
     for(i=0;i<6;i++) {
         if (op1_1[i]==(int)(long)vector_ref(_1op_ast->table,0)) break;
     }
@@ -904,11 +907,11 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
             if (get_gv(s=(Symbol*)vector_ref(ast_j->table,0))!=NULL) {printf("Warning!:DupricateDifinition!\n");}  //警告を出して続行
             // printf("!!!!\n");
             ct=new_ct(dcl_ast->o_type,OBJ_NONE,(void*)0, dcl_ast->o_type == OBJ_UFUNC ? TRUE : FALSE);                     // 宣言された型でctを作り
-            put_gv(s,ct);                                                           // 型をgvに登録する
-            push(code,(void*)LDC);push(code,create_zero(dcl_ast->o_type));          // 「0」で初期化しておく
-            push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
-        } else if (ast_j->type==AST_SET) {                                          // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
-            if (((ast*)vector_ref(ast_j->table,1))->type==AST_VAR) {                //                        <1>                 <2>
+            put_gv(s,ct);                                                               // 型をgvに登録する
+            push(code,(void*)LDC);push(code,create_zero(dcl_ast->o_type));              // 「0」で初期化しておく
+            push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);          // declear式は値を返さない;
+        } else if (ast_j->type==AST_SET) {                                              // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
+            if (((ast*)vector_ref(ast_j->table,1))->type==AST_VAR) {                    //                        <1>                 <2>
                 //変数名を取り出してSymbol*sに取っておき、定義済(GVにある)なら警告
                 s = (Symbol*)vector_ref(((ast*)vector_ref(ast_j->table,1))->table,0);
                 if (get_gv(s) !=0) printf("Warning!:DupricateDifinition!\n");           //警告を出して続行

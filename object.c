@@ -881,7 +881,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_FLT:   return objFADD(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  //return objLFADD(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
                                 return objLFADD_i((mpfr_ptr)y->data.ptr,x->data.intg);
-                case OBJ_CMPLX: return objCADD(itoc(x->data.intg), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCADD(itoc(x->data.intg), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_LINT:
@@ -892,7 +892,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_FLT:   return objFADD(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  //return objLFADD(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
                                 return objLFADD_L((mpfr_ptr)y->data.ptr, (mpz_ptr)x->data.ptr);
-                case OBJ_CMPLX: return objCADD(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCADD(litoc((mpz_ptr)x->data.ptr), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_RAT:
@@ -903,7 +903,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_FLT:   return objFADD(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  //return objLFADD(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
                                 return objLFADD_R((mpfr_ptr)y->data.ptr, (mpq_ptr)x->data.ptr);
-                case OBJ_CMPLX: return objCADD(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCADD(rtoc((mpq_ptr)x->data.ptr), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_FLT:
@@ -914,7 +914,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_FLT:   return objFADD(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  //return objLFADD(ftolf(x -> data.flt), (mpfr_ptr)y -> data.ptr);
                                 return objLFADD_f((mpfr_ptr)y->data.ptr, x->data.flt);
-                case OBJ_CMPLX: return objCADD(ftoc(x->data.flt), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCADD(ftoc(x->data.flt), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_LFLT:
@@ -924,7 +924,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objLFADD_R((mpfr_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objLFADD_f((mpfr_ptr)x -> data.ptr, y -> data.flt);
                 case OBJ_LFLT:  return objLFADD((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCADD(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCADD(lftoc((mpfr_ptr)x->data.ptr), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_CMPLX:
@@ -934,7 +934,7 @@ object * objadd(object * x, object * y) {
                 case OBJ_RAT:   return objCADD((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objCADD((complex*)x -> data.ptr, ftoc(y -> data.flt));
                 case OBJ_LFLT:  return objCADD((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
-                case OBJ_CMPLX: return objCADD((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCADD((complex*)x -> data.ptr, (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_VECT:
@@ -962,7 +962,7 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objRSUB(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFSUB(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCSUB(itoc(x->data.intg), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCSUB(itoc(x->data.intg), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_LINT:
@@ -972,7 +972,7 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objRSUB(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFSUB(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCSUB(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCSUB(litoc((mpz_ptr)x->data.ptr), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_RAT:
@@ -982,7 +982,7 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objRSUB((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFSUB(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCSUB(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCSUB(rtoc((mpq_ptr)x->data.ptr), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_FLT:
@@ -992,7 +992,7 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objFSUB(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFSUB(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFSUB(ftolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCSUB(ftoc(x->data.flt), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCSUB(ftoc(x->data.flt), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_LFLT:
@@ -1002,7 +1002,7 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objLFSUB((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFSUB((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFSUB((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCSUB(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCSUB(lftoc((mpfr_ptr)x->data.ptr), (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_CMPLX:
@@ -1012,7 +1012,7 @@ object * objsub(object * x, object * y) {
                 case OBJ_RAT:   return objCSUB((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objCSUB((complex*)x -> data.ptr, ftoc(y -> data.flt));
                 case OBJ_LFLT:  return objCSUB((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
-                case OBJ_CMPLX: return objCSUB((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCSUB((complex*)x -> data.ptr, (complex*)y->data.ptr);
                 default:break;
             }
         default:printf("runtime error illegal add op\n");Throw(3);
@@ -1033,7 +1033,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objRMUL(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMUL(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFMUL(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCMUL(itoc(x->data.intg), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCMUL(itoc(x->data.intg), (complex*)y->data.ptr);
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -1042,7 +1042,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objRMUL(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMUL(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFMUL(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCMUL(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCMUL(litoc((mpz_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -1051,7 +1051,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objRMUL((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFMUL(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFMUL(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCMUL(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCMUL(rtoc((mpq_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -1060,7 +1060,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objFMUL(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFMUL(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFMUL(ftolf(x -> data.flt), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCMUL(ftoc(x->data.flt), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCMUL(ftoc(x->data.flt), (complex*)y->data.ptr);
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -1069,7 +1069,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objLFMUL((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFMUL((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFMUL((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCMUL(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCMUL(lftoc((mpfr_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_CMPLX:
             switch(type_y) {
@@ -1078,7 +1078,7 @@ object * objmul(object * x, object * y) {
                 case OBJ_RAT:   return objCMUL((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objCMUL((complex*)x -> data.ptr, ftoc(y -> data.flt));
                 case OBJ_LFLT:  return objCMUL((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
-                case OBJ_CMPLX: return objCMUL((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCMUL((complex*)x -> data.ptr, (complex*)y->data.ptr);
                 default:break;
             }
         case OBJ_VECT:
@@ -1123,7 +1123,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objRDIV(itor(x -> data.intg), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFDIV(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFDIV(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCDIV(itoc(x->data.intg), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCDIV(itoc(x->data.intg), (complex*)y->data.ptr);
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -1132,7 +1132,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objRDIV(litor((mpz_ptr)x -> data.ptr), (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFDIV(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFDIV(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCDIV(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCDIV(litoc((mpz_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -1141,7 +1141,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objRDIV((mpq_ptr)x -> data.ptr, (mpq_ptr)y -> data.ptr);
                 case OBJ_FLT:   return objFDIV(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFDIV(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCDIV(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCDIV(rtoc((mpq_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -1150,7 +1150,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objFDIV(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFDIV(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFDIV(ftolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCDIV(ftoc(x->data.flt), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCDIV(ftoc(x->data.flt), (complex*)y->data.ptr);
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -1159,7 +1159,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objLFDIV((mpfr_ptr)x -> data.ptr, rtolf((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFDIV((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFDIV((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCDIV(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCDIV(lftoc((mpfr_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_CMPLX:
             switch(type_y) {
@@ -1168,7 +1168,7 @@ object * objdiv(object * x, object * y) {
                 case OBJ_RAT:   return objCDIV((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objCDIV((complex*)x -> data.ptr, ftoc(y -> data.flt));
                 case OBJ_LFLT:  return objCDIV((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
-                case OBJ_CMPLX: return objCDIV((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCDIV((complex*)x -> data.ptr, (complex*)y->data.ptr);
                 default:break;
             }
         default:printf("runtime error illegal add op\n");Throw(3);
@@ -1236,7 +1236,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objLPOW(itol(x -> data.intg), rtoi((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFPOW(itof(x -> data.intg), y -> data.flt);
                 case OBJ_LFLT:  return objLFPOW(itolf(x -> data.intg), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCPOW(itoc(x->data.intg), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCPOW(itoc(x->data.intg), (complex*)y->data.ptr);
             }
         case OBJ_LINT:
             switch(type_y) {
@@ -1245,7 +1245,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objLPOW((mpz_ptr)x -> data.ptr, rtoi((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFPOW(litof((mpz_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFPOW(litolf((mpz_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCPOW(litoc((mpz_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCPOW(litoc((mpz_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_RAT:
             switch(type_y) {
@@ -1254,7 +1254,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objRPOW((mpq_ptr)x -> data.ptr, rtoi((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFPOW(rtof((mpq_ptr)x -> data.ptr), y -> data.flt);
                 case OBJ_LFLT:  return objLFPOW(rtolf((mpq_ptr)x -> data.ptr), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCPOW(rtoc((mpq_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCPOW(rtoc((mpq_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_FLT:
             switch(type_y) {
@@ -1263,7 +1263,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objFPOW(x -> data.flt, rtof((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objFPOW(x -> data.flt, y -> data.flt);
                 case OBJ_LFLT:  return objLFPOW(ftolf(x -> data.flt), (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCPOW(ftoc(x->data.flt), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCPOW(ftoc(x->data.flt), (complex*)y->data.ptr);
             }
         case OBJ_LFLT:
             switch(type_y) {
@@ -1272,7 +1272,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objLFPOW_i((mpfr_ptr)x -> data.ptr, rtoi((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objLFPOW((mpfr_ptr)x -> data.ptr, ftolf(y -> data.flt));
                 case OBJ_LFLT:  return objLFPOW((mpfr_ptr)x -> data.ptr, (mpfr_ptr)y -> data.ptr);
-                case OBJ_CMPLX: return objCPOW(lftoc((mpfr_ptr)x->data.ptr), (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCPOW(lftoc((mpfr_ptr)x->data.ptr), (complex*)y->data.ptr);
             }
         case OBJ_CMPLX:
             switch(type_y) {
@@ -1281,7 +1281,7 @@ object * objpow(object * x, object * y) {
                 case OBJ_RAT:   return objCPOW((complex*)x -> data.ptr, rtoc((mpq_ptr)y -> data.ptr));
                 case OBJ_FLT:   return objCPOW((complex*)x -> data.ptr, ftoc(y -> data.flt));
                 case OBJ_LFLT:  return objCPOW((complex*)x -> data.ptr, lftoc((mpfr_ptr)y -> data.ptr));
-                case OBJ_CMPLX: return objCPOW((complex*)x -> data.ptr, (complex*)x->data.ptr);
+                case OBJ_CMPLX: return objCPOW((complex*)x -> data.ptr, (complex*)y->data.ptr);
                 default:break;
             }
         default:printf("runtime error illegal POW op\n");Throw(3);
