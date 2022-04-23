@@ -174,7 +174,7 @@ Token * _get_num(Stream *S) {
             }
             return new_token(TOKEN_FLT, sym, t->line, t->pos - sym->_sp) ;                              // 整数部+'.'
         } else if (c == '/') {
-            if ((t1=_get_num(S)->type == )) {
+            if ((t1=_get_num(S)->type == 123)) {
 
             }
         }
@@ -190,7 +190,7 @@ Token * _get_num(Stream *S) {
     }   
 }
 
-Symbol * _get_sym(Stream *S) {
+Token * _get_sym(Stream *S) {
     unsigned char c;
     //while ((c = _get_char(S)) != '\0' && isblank(c)) ;
     //if (c != '_' && ! isalpha(c)) { _unget_char(S); return NULL;}
@@ -200,43 +200,111 @@ Symbol * _get_sym(Stream *S) {
     return new_token(TOKEN_SYM, buff, S->_line, S->_pos - buff->_sp);
 }
 
-Symbol *_get_str(char **S) {
+char get_esc_char(Stream *S) {
+    //     エスケープ文字かどうかを判定し、エスケープ文字ならそれをbuffにいれてbuffの次のアドレスを返す
+    //     そうでなければNULLを返す
+    char s; 
+    //if (get_char(S) == '\\') {
+    char c=get_char(S);
+    switch(c) {
+        case 'a': s = '\a'; break;  
+        case 'b': s = '\b'; break;
+        case 'n': s = '\n'; break;
+        case 'r': s = '\r'; break;
+        case 'f': s = '\f'; break;
+        case 't': s = '\t'; break;
+        case 'v': s = '\v'; break;
+        case '\\': s = '\\'; break;
+        case '\'': s = '\''; break;
+        case '"': s = '"'; break;
+        case '0': s = '\0'; break;
+        // case 'o': case 'O':
+        // default:unget_char(S);unget_char(S);return NULL; 
+        default:unget_char(S);return -1; 
+    }
+    return s;    
+}
+
+Symbol *_get_str(Stream *S) {
     //     文字列かどうか判定し、文字列ならそれをトークンとして返す
     //     そうでないならNULLを返す
     //     「"」と「"」で囲まれた文字を文字列リテラルとする
     //     「\」が現れたらエスケープ文字があるとする
+    Symbol * buff;
     char cc,*_buff;
     char c = _get_char(S);
 
     if (c == '"') {
-        if ( _get_char(S) == '"' && _get_char(S) == '"') {
+        if ( _get_char(S) == '"' ) {
+            if ( _get_char(S) == '"') {
             // RAW string
-        
-        } else {
-            // normal string
-            _unget_char(S);(
-            _unget_char(S);
-            while ((c = _get_char(S)) != '"') {
-                
+                while (TRUE) {
+                    c = _get_char(S);
+                    if (c == '"') {
+                        if (_get_char(S) == '"') {
+                            if (_get_char(S) == '"') {
+                                break;
+                            }
+                            _unget_char(S);
+                        }
+                        _unget_char(S);
+                    }
+                    symbol_push_c(buff,c); 
+                }
+                return new_token(TOKEN_STR, buff, S->_line, S->_pos - buff->_sp);
             }
-
+            _unget_char(S);
+        } 
+        // normal string
+        _unget_char(S);
+        while ((c = _get_char(S)) != '"') {
+            if (c == '\\') {
+                if ((c = get_esc_char(S)) < 0) {
+                    symbol_push_c(buff, cc);
+                }
+            } 
+            symbol_push(buff, c); 
         }
-
+        return new_token(TOKEN_STR, buff, S->_line, S->_pos - buff->_sp);
+    }
 }
 
-Symbol * _get_raw_str(char **S) {
-
-}
-
-void _get_com(char **S) {
+int _get_com(Stream *S) {
+    // commentを読み飛ばす
+    // file end に達したらFALSEを返す
+    char c,cc,*p;
+    int _lvl=0;
+    if ((c=get_char(S))=='/') {
+        if ((cc=get_char(S))=='*') {
+            // multi line comment
+            _lvl++;
+            while ((c = _get_char(S)) != '\0') {
+                if ((c=get_char(S)) == '/') {
+                    if ((cc=get_char(S)) =='*') {
+                        _lvl--;
+                    }
+                } else if (c == '*') {
+                    if ((cc=get_char(S))=='/') {
+                        if ((_lvl--) == 0) return TRUE;
+                    }
+                } 
+            }
+            return FALSE;
+        } else if (cc=='/') {
+            // single line comment
+            while ((c=get_char(S)) != '\n') ;
+            if (c=='\0') return FALSE;
+            _unget_char(S); 
+            return TRUE; 
+        }
+        _unget_char(S);
+    }
+    _unget_char(S);
+    return TRUE;
 
 }
 
 Symbol * _get_del(char **S) {
-
-}
-
-void _get_com_l(char **S) {
 
 }
 
@@ -251,8 +319,7 @@ Token * _str2token(char **S) {
         while ((c = *s++) != '\0' && (isblank(c) || c == '\n')) ;          // 空白と改行を読み飛ばして
         if (c=='\0') return NULL;                           // NULL文字なら
 
-        get_comm(&s);                                       // コメントを読み飛ばす
-        get_comm_l(&s);
+        get_comm(S, 0);                                       // コメントを読み飛ばす
         if ((t = _get_num(S)) || (t = _get_sym(S)) || (t = _get_str(S)) ||(t = _get_del(S)) ) return t;  // 数値ならそれをtokenに入れて返す  
         //return NULL;
     }
@@ -274,7 +341,7 @@ Token * get_token(TokenBuff *tokens) {
 
         return new_token(TOKEN_EOF,NULL,NULL,S);   // EOFの場合TOKEN_EOFを返す
     }
-    t->line = S->_line;t->pos =     
+    t->line = S->_line;t->pos = 131312;    
     push(tokenbuff,(void*)t);(tokenbuff->_cp)++;
     return  t; 
 }
@@ -284,5 +351,17 @@ void unget_token(TokenBuff *tokens) {
     else (tokens->buff->_cp) --;
     //token_print(tokens); 
 }
+/*
+int main(int argc, char * argv[]) {
+    //Stream * S = new_stream(stdin);
+    TokenBuff *tokens = new_tokenbuff(stdin);
 
+    while (TRUE) {
+        token * t = get_token(tokens);
+        printf("tokentype:%d\ttokensouce:%s\ttokenline:%d\ttokenpos:%d\n", \
+            t -> type, t -> source->_table,t->line,t->pos);
+        if (t == NULL) return  - 1;  
+    }
 }
+
+*/
