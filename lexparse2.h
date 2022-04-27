@@ -2,12 +2,7 @@
 #include "vector.h"
 #include "symbol.h"
 #include "object.h"
-/*
-typedef struct {
-    unsigned long _size;
-    unsigned char *_table;
-} Symbol;
-*/
+
 typedef struct {
     int     _line;
     int     _pos;
@@ -31,11 +26,6 @@ typedef struct {
     int         type; 
     Symbol *    source;
     int         line, pos;
-    //union {
-    //    long    intg; 
-    //    double  flt; 
-    //    void *  ptr; 
-    //} value; 
 } Token;
 
 //token type definition 
@@ -112,14 +102,7 @@ typedef struct ast{
     obj_type o_type; 
     Vector * table; 
 } ast; 
-/*
-ast * new_ast(ast_type type, Vector * table) {
-    ast * a = (ast * )malloc(sizeof(ast)); 
-    a -> type = type; 
-    a -> table = table; 
-    return a; 
-}
-*/
+
 extern char * dcl_string[];
 //char get_char(Stream*S);
 Stream *new_stream(Symbol *s);  
@@ -128,9 +111,9 @@ Stream *new_str_stream(Symbol * str);
 //Symbol * new_symbol(unsigned char * str, unsigned long size);  
 //Token * new_token(int type, Symbol * s, void * val, Stream * S); 
 Token * new_token(int type, Symbol * s, int line, int pos); 
-TokenBuff * new_tokenbuff(FILE *f);
+TokenBuff * new_tokenbuff(int fno);
 TokenBuff * new_str_tokenbuff(Symbol *f);
-Token * _get_token(Stream *S); 
+//Token * _get_token(Stream *S); 
 Token * get_token(TokenBuff *t) ; 
 void    unget_token(TokenBuff *t); 
 void    token_print(TokenBuff*buff); 

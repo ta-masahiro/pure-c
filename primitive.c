@@ -667,5 +667,9 @@ void * make_primitive() {
         Hash_put(G,new_symbol(s,n),(void*)vv);
         i++;
     }
+    Hash_put(GLOBAL_VAR,new_symbol("__PRIMITIVE__",13),new_ct(OBJ_DICT,OBJ_NONE,(void*)0,FALSE));
+    Hash_put(G,new_symbol("__PRIMITIVE__", 13),(void*)PRIMITIVE_FUNC);
+    Hash_put(GLOBAL_VAR,new_symbol("__GLOBAL__",10),new_ct(OBJ_DICT,OBJ_NONE,(void*)0,FALSE));
+    Hash_put(G,new_symbol("__GLOBAL__", 10),(void*)G);
     //print_hashTable(PRIMITIVE_FUNC);print_hashTable(G);
 }

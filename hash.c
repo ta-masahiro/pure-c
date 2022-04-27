@@ -131,6 +131,16 @@ void Hash_del(Hash * hashT, Symbol *key) {
     }
 }
 
+Vector * get_Hash_keys(Hash *h) {
+    Vector *r = vector_init(10);
+    Symbol *key;
+    for(int i=0; i < (h->size); i++) {
+        key = h->hashTable[i].key;
+        if (key != NULL) push(r,h->hashTable[i].val);
+    }
+    return r;
+}
+
 void print_hashTable(Hash * h) {
     unsigned int i; 
     Symbol * key;
