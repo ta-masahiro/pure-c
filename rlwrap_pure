@@ -103,6 +103,7 @@ irand
 lrand
 pollart_rho
 pollard_pm1
+fermat
 hexstr
 asfloat
 asint
@@ -127,6 +128,8 @@ v2a
 solv_liner
 make_eye
 make_zero
+__PRIMITIVE__
+__GLOBAL__
 list
 vlist
 split

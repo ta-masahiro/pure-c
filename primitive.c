@@ -258,6 +258,13 @@ void * p_pollard_pm1(Vector *v) {
     mpz_init_set_ui(iz,0);
     return (void*)iz;
 }
+void * p_fermat(Vector *v) {
+    mpz_ptr r= (mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_init(r); mpz_ptr n;
+    if (mpz_probab_prime_p(n=(mpz_ptr)vector_ref(v,0),20)) return (void*)n;
+    fermat(n,r);
+    return (void*)r;
+}
 /*
 #include "ecm.h"
 void * p_factor(Vector *v) {
@@ -333,6 +340,16 @@ void * p_compile(Vector * v) {void * vv = str_compile((Symbol*)vector_ref(v,0));
 void * p_dis_assy(Vector *v) {disassy(((code_ret *)vector_ref(v,0))->code, 0, stdout);return NULL;}
 void * p_eval(Vector *v) {return (void*)code_eval((code_ret *)vector_ref(v,0));}
 void * p_load(Vector * v) {FILE * f = fopen(((Symbol*)vector_ref(v,0))->_table,"r");code_load(f);fclose(f);return NULL;}
+void * p_keys(Vector *v) {
+    Hash *h = (Hash*)vector_ref(v,0);
+    Vector *r = vector_init(10);
+    Symbol *key;
+    for(int i=0; i < (h->size); i++) {
+        key = h->hashTable[i].key;
+        if (key != NULL) push(r, newOBJ(OBJ_SYM, (void*) key));
+    }
+    return (void*)r;
+}
 
 void * p_num(Vector *v) {mpz_ptr l=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(l);mpq_get_num(l,(mpq_ptr)vector_ref(v,0));return (void*)l;}
 void * p_den(Vector *v) {mpz_ptr l=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(l);mpq_get_den(l,(mpq_ptr)vector_ref(v,0));return (void*)l;}
@@ -372,9 +389,9 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
-                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, //p_factor, 
+                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
-                                 p_compile, p_dis_assy, p_eval, p_load, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_make_eye, p_make_zero, NULL };
+                                 p_compile, p_dis_assy, p_eval, p_load, p_keys, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_make_eye, p_make_zero, NULL };
 char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "get_time", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -385,9 +402,9 @@ char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
-                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", //"factor", 
+                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
-                                "compile", "dis_assy", "eval", "load", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "make_eye", "make_zero", NULL};
+                                "compile", "dis_assy", "eval", "load", "keys", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "make_eye", "make_zero", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},                                     // exit
                                 {OBJ_SYM},                                      // forget
@@ -484,6 +501,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_LINT},                                     // lrand
                                 {OBJ_LINT,OBJ_LINT,OBJ_LINT,OBJ_INT,OBJ_INT},   // pollard_rho
                                 {OBJ_LINT,OBJ_INT,OBJ_INT},                     // pollard_pm1
+                                {OBJ_LINT},                                     // fermat
                                 //{OBJ_LINT,OBJ_FLT},                             // factor
                                 {OBJ_INT},                                      // hexstr
                                 {OBJ_INT},                                      // asfloat
@@ -499,6 +517,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_CNT},                                      // dis_assy
                                 {OBJ_CNT},                                      // eval
                                 {OBJ_SYM},                                      // load
+                                {OBJ_DICT},                                     // keys
                                 {OBJ_RAT},{OBJ_RAT},{OBJ_CMPLX},{OBJ_CMPLX},{OBJ_CMPLX},    // num,den,real,imag,arg
                                 {OBJ_ARRAY},                                    // a2v
                                 {OBJ_VECT},                                     // v2a
@@ -603,6 +622,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_LINT, 1, FALSE},   // lrand
                                 {OBJ_LINT, 5, FALSE},   // pollard_rho
                                 {OBJ_LINT, 3, FALSE},   // pollard_pm1
+                                {OBJ_LINT, 1, FALSE},   // fermat
                                 //{OBJ_LINT, 2, FALSE},   // factor
                                 {OBJ_SYM,  1, FALSE},   // hex_str
                                 {OBJ_FLT,  1, FALSE},   // asfloat
@@ -618,6 +638,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_NONE, 1, FALSE},   // dis_assy
                                 {OBJ_GEN,  1, FALSE},   // eval
                                 {OBJ_NONE, 1, FALSE},   // load
+                                {OBJ_VECT, 1, FALSE},   // keys
                                 {OBJ_LINT,1,FALSE},{OBJ_LINT,1,FALSE},{OBJ_FLT,1,FALSE},{OBJ_FLT,1,FALSE},{OBJ_FLT,1,FALSE},    // num,den,real,imag,arg
                                 {OBJ_VECT, 1, FALSE},   // atov
                                 {OBJ_ARRAY,1, FALSE},   // vtoa
@@ -641,12 +662,16 @@ void * make_primitive() {
     PRIMITIVE_FUNC = Hash_init(256);
     Symbol *char_I=new_symbol("I",1);
     Symbol *char_NONE = new_symbol("None",4);
+    Symbol *char_stdin = new_symbol("stdin",5);
+    Symbol *char_stdout = new_symbol("stdout",6);
     //Symbol *char_PAI = new_symbol("PAI",3);
     //Symbol *char_LOG2 = new_symbol("LOG2",4);
     Hash_put(G,char_I,(void*)c);
     //Hash_put(G,char_PAI,(void*)mp_pai);
     //Hash_put(G,char_LOG2,(void*)mp_log2);
     Hash_put(G,char_NONE,(void*)0);
+    Hash_put(G,char_stdin,(void*)stdin);
+    Hash_put(G,char_stdout,(void*)stdout);
     Hash_put(GLOBAL_VAR,char_I,new_ct(OBJ_CMPLX,OBJ_NONE,(void*)0,FALSE));
     //Hash_put(GLOBAL_VAR,char_PAI,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));
     //Hash_put(GLOBAL_VAR,char_LOG2,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));
