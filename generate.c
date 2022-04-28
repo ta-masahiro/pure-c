@@ -1340,7 +1340,9 @@ code_ret * codegen_class_var(ast *class_var_ast, Vector *env, int tail) {
     if (left_ast->type == AST_VAR) {
         if ((d=*Hash_get(CLASS_NAME,(Symbol*)left_ast->table->_table[0])) != NULL) {        // class変数
 
-        }else if ((d=*Hash_get(IMPORT_NAME,(Symbol*)left_ast->table->_table[0])) != NULL) {}
+        }else if ((d=*Hash_get(IMPORT_NAME,(Symbol*)left_ast->table->_table[0])) != NULL) {// import変数
+
+        }
     } 
 
 
@@ -1506,8 +1508,11 @@ int main(int argc, char*argv[]) {
         //    }
         //}
     }
-    if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");fflush(stdout);
+    if (fp==stdin) printf("PURE REPL Version 0.3.1 Copyright 2022.04.29 M.Taniguro\n");fflush(stdout);
     //DEBUG=TRUE;
+    //
+    code_load(fopen("lib.pur","r"));
+    //
     S = new_tokenbuff(fp);
     //tokenbuff=vector_init(100);
     signal(SIGINT,ctrc_handler);
