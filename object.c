@@ -1981,6 +1981,17 @@ object * objslice(object* o,long start,long end) {
         Throw(3);
     }
 }
+object *objlog10(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(log10(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_log10(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_log10(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(log10(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_log10(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=clog(*(complex*)x->data.ptr)/log(10.0);return newCMPLX(c);
+    }
+}
 object *objlogE(object *x) {
     mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
     switch(x->type) {
@@ -1990,6 +2001,28 @@ object *objlogE(object *x) {
         case OBJ_FLT:  return newFLT(log(x->data.flt));
         case OBJ_LFLT: mpfr_init(F);mpfr_log(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
         case OBJ_CMPLX:*c=clog(*(complex*)x->data.ptr);return newCMPLX(c);
+    }
+}
+object *objlog1p(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(log1p(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_log1p(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_log1p(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(log1p(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_log1p(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=clog(*(complex*)x->data.ptr + 1.0);return newCMPLX(c);
+    }
+}
+object *objexp(object *x) {
+    mpfr_ptr F=(mpfr_ptr)malloc(sizeof(__mpfr_struct));complex *c=(complex*)malloc(sizeof(complex));
+    switch(x->type) {
+        case OBJ_INT:  return newFLT(exp(itof(x->data.intg)));
+        case OBJ_LINT: mpfr_init(F);mpfr_exp(F,litolf((mpz_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_RAT:  mpfr_init(F);mpfr_exp(F,rtolf((mpq_ptr)x->data.ptr),MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_FLT:  return newFLT(exp(x->data.flt));
+        case OBJ_LFLT: mpfr_init(F);mpfr_exp(F,(mpfr_ptr)x->data.ptr,MPFR_RNDN);return newLFLT(F) ;
+        case OBJ_CMPLX:*c=cexp(*(complex*)x->data.ptr);return newCMPLX(c);
     }
 }
 object *objsin(object *x) {

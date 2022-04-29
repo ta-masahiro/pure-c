@@ -162,6 +162,10 @@ object * objtanh(object *x);
 object * objasinh(object *x);
 object * objacosh(object *x);
 object * objatanh(object *x);
+object * objlog10(object *x);
+object * objlogE(object *x);
+object * objlog1p(object *x);
+object * objexp(object *x);
 object * objgamma(object*x);
 object * objlgamma(object*x);
 //

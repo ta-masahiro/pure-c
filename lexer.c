@@ -297,9 +297,9 @@ token * is_SYM(Stream*S,tokenstate s, char* buff) {
 char * get_esc_char(Stream *S, char * buff) {
     //     エスケープ文字かどうかを判定し、エスケープ文字ならそれをbuffにいれてbuffの次のアドレスを返す
     //     そうでなければNULLを返す
-    char s; 
+    char s, c, cc, ccc; 
     //if (get_char(S) == '\\') {
-        char c=get_char(S);
+        c=get_char(S);
         switch(c) {
             case 'a': s = '\a'; break;  
             case 'b': s = '\b'; break;
@@ -308,6 +308,10 @@ char * get_esc_char(Stream *S, char * buff) {
             case 'f': s = '\f'; break;
             case 't': s = '\t'; break;
             case 'v': s = '\v'; break;
+            //case 'x':
+            //    if (((cc = get_char(S))>='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F')) {
+            //        if (((ccc = get_char(S))>='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F')) {
+            //                s = 
             case '\\': s = '\\'; break;
             case '\'': s = '\''; break;
             case '"': s = '"'; break;

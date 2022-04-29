@@ -178,6 +178,11 @@ void *p_otanh(Vector *v) {return (void*)objtanh((object*)vector_ref(v,0));}
 void *p_oasinh(Vector *v) {return (void*)objasinh((object*)vector_ref(v,0));}
 void *p_oacosh(Vector *v) {return (void*)objacosh((object*)vector_ref(v,0));}
 void *p_oatanh(Vector *v) {return (void*)objatanh((object*)vector_ref(v,0));}
+void *p_olog10(Vector *v)   {return (void*)objlog10((object*)vector_ref(v,0));}
+void *p_ologE (Vector *v)   {return (void*)objlogE((object*)vector_ref(v,0));}
+void *p_olog1p(Vector *v)   {return (void*)objlog10((object*)vector_ref(v,0));}
+void *p_oexp  (Vector *v)   {return (void*)objexp((object*)vector_ref(v,0));}
+void *p_olog(Vector *v)     {return (void*)objdiv(objlogE((object*)vector_ref(v,1)), objlogE((object*)vector_ref(v,0)));}
 //void *p_osqrt(Vector *v) {return (void*)objsqrt((object *)vector_ref(v,0));}
 void *p_ofloor(Vector * v) {return (void *)objfloor((object*)vector_ref(v,0));}
 // constnt
@@ -362,23 +367,6 @@ void *p_v2a(Vector * v) {return (void *)vector2array((Vector*)vector_ref(v,0));}
 void *p_solv_liner(Vector *v) {return (void *)solv_liner((array*)vector_ref(v,0), (array*)vector_ref(v,1));}
 void *p_make_zero(Vector *v) {int size[2];size[0]=(int)(long)vector_ref(v,0);size[1]=(int)(long)vector_ref(v,1);return (void*)array_init(4, 2, size);}
 void *p_make_eye(Vector *v) {return (void*)array_eye((int)(long)vector_ref(v,0));}
-/*
-void * p_load(Vector *v) {
-    FILE * fp;
-    Stream * s;
-    if (v->_sp>0 || (fp=fopen((char*)vector_ref(v,0), "r")) != NULL ) {
-        s=new_stream(fp);
-    }
-
-}
-
-code_ret * compile_str(Symbol * s) {
-}
-
-void * eval_str(Symbol * s) {
-
-}
-*/
 Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_puts,p_getc, p_get_time, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,
@@ -387,7 +375,8 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_lfsin, p_lfcos, p_lftan,p_lfasin, p_lfacos, p_lfatan,
                                  p_lfsinh, p_lfcosh, p_lftanh,p_lfasinh, p_lfacosh, p_lfatanh,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
-                                 p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, p_ofloor,
+                                 p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, 
+                                 p_olog10, p_ologE, p_olog1p, p_olog, p_oexp, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
@@ -395,12 +384,13 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
 char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "get_time", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
-                                "log10", "logE", "log", "exp", "iabs", "fabs", "isqrt", "fsqrt",
+                                "flog10", "flogE", "flog", "fexp", "iabs", "fabs", "isqrt", "fsqrt",
                                 "labs", "rabs", "flabs", "cabs", "lsqrt", "lfsqrt","csqrt",
                                 "lfsin","lfcos", "lftan","lfasin","lfacos","lfatan",
                                 "lfsinh","lfcosh", "lftanh","lfasinh","lfacosh","lfatanh",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
-                                "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", "floor",
+                                "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", 
+                                "log10", "logE", "log1p", "log", "exp", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
@@ -476,6 +466,12 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},                                      // asinh
                                 {OBJ_GEN},                                      // acosh
                                 {OBJ_GEN},                                      // atanh
+                                {OBJ_GEN},                                      // log10
+                                {OBJ_GEN},                                      // logE
+                                {OBJ_GEN},                                      // log1p
+                                {OBJ_GEN, OBJ_GEN},                             // log
+                                {OBJ_GEN},                                      // exp 
+
                                 {OBJ_GEN},                                      // floor
                                 //{OBJ_GEN}                                     // sqrt
                                 {OBJ_INT},                                      // pi
@@ -562,7 +558,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_LINT,1, FALSE},    // labs
                                 {OBJ_RAT, 1, FALSE},    // rabs
                                 {OBJ_LFLT,1, FALSE},    // lfabs
-                                {OBJ_FLT,1, FALSE},   // cabs
+                                {OBJ_FLT,1, FALSE},     // cabs
                                 {OBJ_LINT, 1, FALSE},   // lsqrt
                                 {OBJ_LFLT, 1, FALSE},   // lfsqrt
                                 {OBJ_CMPLX,1, FALSE},   // caqrt
@@ -597,6 +593,12 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE},   // asinh
                                 {OBJ_GEN,  1, FALSE},   // acosh
                                 {OBJ_GEN,  1, FALSE},   // atanh
+                                {OBJ_GEN,  1, FALSE},   // log10 
+                                {OBJ_GEN,  1, FALSE},   // logE
+                                {OBJ_GEN,  1, FALSE},   // log1p
+                                {OBJ_GEN,  2, FALSE},   // 1og
+                                {OBJ_GEN,  1, FALSE},   // exp
+
                                 {OBJ_GEN,  1, FALSE},   // floor
                                 //{OBJ_GEN,  1, FALSE}  // sqrt
                                 {OBJ_LFLT, 1, FALSE},   // pi
