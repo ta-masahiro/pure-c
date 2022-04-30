@@ -227,6 +227,8 @@ void * p_vdel(Vector * v) {long index=(long)vector_ref(v,1);Vector*vv=(Vector*)v
 void * p_vins(Vector * v) {vector_insert(vector_ref(v,0), (long)vector_ref(v,1), vector_ref(v,2)); return NULL;}
 
 void * p_cmp(Vector * v) {return (void*)(long)objcmp((object*)vector_ref(v,0), (object*)vector_ref(v,1));}
+void * p_fact(Vector * v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(r); mpz_fac_ui(r, (long)vector_ref(v,0)); return (void*)r;}
+void * p_fib(Vector * v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(r); mpz_fib_ui(r, (long)vector_ref(v,0)); return (void*)r;}
 // 数論関数
 void * p_lis_prime(Vector *v) {int reps=(v->_sp<=1)?20:(int)(long)vector_ref(v,1);return  (void*)(long)mpz_probab_prime_p(vector_ref(v,0),reps);}
 void * p_lnext_prime(Vector *v) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)vector_ref(v,0));return (void*)r;}
@@ -377,7 +379,7 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, 
                                  p_olog10, p_ologE, p_olog1p, p_olog, p_oexp, p_ofloor,
-                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_lis_prime, p_lnext_prime,
+                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_fact, p_fib, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
                                  p_compile, p_dis_assy, p_eval, p_load, p_keys, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_make_eye, p_make_zero, NULL };
@@ -391,7 +393,7 @@ char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", 
                                 "log10", "logE", "log1p", "log", "exp", "floor",
-                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins",  "lis_prime", "lnext_prime", 
+                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins", "fact", "fib", "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
                                 "compile", "dis_assy", "eval", "load", "keys", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "make_eye", "make_zero", NULL};
@@ -489,6 +491,8 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_DICT,OBJ_KEY},                             // ddel
                                 {OBJ_VECT,OBJ_INT},                             // vdel
                                 {OBJ_VECT,OBJ_INT,OBJ_GEN},                     // vins
+                                {OBJ_INT},                                      // fact
+                                {OBJ_INT},                                      // fib
                                 {OBJ_LINT, OBJ_INT},                            // is_prime
                                 {OBJ_LINT},                                     // next_prime
                                 {OBJ_INT},                                      // init_irand
@@ -616,6 +620,8 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_NONE, 2, FALSE},   // ddel
                                 {OBJ_NONE, 2, FALSE},   // vdel
                                 {OBJ_NONE, 3, FALSE},   // vins
+                                {OBJ_LINT, 1, FALSE},   // fact
+                                {OBJ_LINT, 1, FALSE},   // fib 
                                 {OBJ_INT,  2, TRUE},    // is_prime
                                 {OBJ_LINT, 1, FALSE} ,  // next_prime
                                 {OBJ_NONE, 1, FALSE},   // init_irand
