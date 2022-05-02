@@ -218,13 +218,14 @@ string r2decstr(rational r,int size)={
 	};
 	s
 };
-//vector factorint(long n)={vector v=[];int max;long q;if n<=2L**64:max=100000:max=1000000;while n>1L:{q=pollard_rho(n,2L,1L,max,10);if q !=0:{v<-q;n/=q}:n=1};v};
-vector PRIME_LIST_20=filter(lambda(x) lis_prime(tolong(x))!=0,range(1,2**20));
-vector trial_div(long n)={long p=n;vector V=[],v=[];while @(v=filter(lambda(x) p%tolong(x)==0,PRIME_LIST_20))!=0:{V=V+v;p/=tolong(fold1(lambda(x,y) x*y,1,v))};[V,p]};
+//vector PRIME_LIST_20=filter(lambda(x) lis_prime(tolong(x))!=0,range(1,2**20));
+//vector trial_div(long n)={long p=n;vector V=[],v=[];while @(v=filter(lambda(x) p%tolong(x)==0,PRIME_LIST_20))!=0:{V=V+v;p/=tolong(fold1(lambda(x,y) x*y,1,v))};[V,p]};
 string _msieve(long n) = popen("msieve -q "+str(n));
 string _msieve_e(long n) = popen("msieve -q -e "+str(n));
 vector msieve(long n)={string s;int p,q=0;vector v=[];s=_msieve(n);p=str_search(s,": ");if p<0:{v<-n;v}:{while p>=0:{s=s[p+2:];q=str_search(s,"\n");v<-tolong(s[:q]);p=str_search(s,": ")};v}};
 vector msieve_e(long n)={string s;int p,q=0;vector v=[];s=_msieve(n);p=str_search(s,": ");if p<0:{v<-n;v}:{while p>=0:{s=s[p+2:];q=str_search(s,"\n");v<-tolong(s[:q]);p=str_search(s,": ")};v}};
 var factorint(long n)={vector v=trial_div(n);if v[1] == 1:v[0]:v[0]+msieve_e(v[1])};
-
-print("Library ver 0.01 loded.");
+vector ppm1(long n)={vector r=[];long p,old_n=-1;while ((p=pollard_pm1(n,197,30000)) !=0) && (old_n != n):{old_n=n;n/=p;r<-p};[r,n]};		// pollard_pm1
+vector prh(long n)={vector r=[];long p,old_n=-1;while ((p=pollard_rho(n,213L,1L,2000,600)) !=0) && (old_n != n):{old_n=n;n/=p;r<-p};[r,n]};	// pollard_rho
+vector frm(long n)={vector r=[];long p,old_n=-1;while ((p=fermat(n)) !=0) && (old_n != n):{old_n=n;n/=p;r<-p};[r,n]};						// fermat
+print("Library ver 0.02 loded.");

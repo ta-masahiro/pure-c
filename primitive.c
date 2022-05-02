@@ -242,6 +242,7 @@ void * p_init_lrand(Vector * v) { gmp_randseed(RAND_STATE, (mpz_ptr)vector_ref(v
 void * p_irand(Vector * v) {unsigned long t=(_X ^ (_X << 11));_X=_Y;_Y=_Z;_Z=_W;return (void*) (_W = (_W ^ (_W >>19)) ^ (t ^ (t >>8)));}
 void * p_lrand(Vector *v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(r); mpz_urandomm(r, RAND_STATE, (mpz_ptr)vector_ref(v, 0));return (void *)r;}
 #include "ntheory.c"
+void * p_trial_div(Vector *v) {return (void*)trial_div((mpz_ptr)vector_ref(v,0));}
 void * p_pollard_rho(Vector *v) {
     mpz_ptr r= (mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(r);
@@ -380,7 +381,7 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, 
                                  p_olog10, p_ologE, p_olog1p, p_olog, p_oexp, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_fact, p_fib, p_lis_prime, p_lnext_prime,
-                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
+                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_trial_div, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
                                  p_compile, p_dis_assy, p_eval, p_load, p_keys, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_make_eye, p_make_zero, NULL };
 char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
@@ -394,7 +395,7 @@ char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", 
                                 "log10", "logE", "log1p", "log", "exp", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins", "fact", "fib", "lis_prime", "lnext_prime", 
-                                "init_irand", "init_lrand", "irand", "lrand", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
+                                "init_irand", "init_lrand", "irand", "lrand", "trial_div", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
                                 "compile", "dis_assy", "eval", "load", "keys", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "make_eye", "make_zero", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
@@ -499,6 +500,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_LINT},                                     // init_lint
                                 {OBJ_NONE} ,                                    // irand
                                 {OBJ_LINT},                                     // lrand
+                                {OBJ_LINT},                                     // trial_div
                                 {OBJ_LINT,OBJ_LINT,OBJ_LINT,OBJ_INT,OBJ_INT},   // pollard_rho
                                 {OBJ_LINT,OBJ_INT,OBJ_INT},                     // pollard_pm1
                                 {OBJ_LINT},                                     // fermat
@@ -628,6 +630,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_NONE, 1, FALSE},   // init_lrand
                                 {OBJ_INT,  0, FALSE},   // irand
                                 {OBJ_LINT, 1, FALSE},   // lrand
+                                {OBJ_VECT, 1, FALSE},   // trial_div
                                 {OBJ_LINT, 5, FALSE},   // pollard_rho
                                 {OBJ_LINT, 3, FALSE},   // pollard_pm1
                                 {OBJ_LINT, 1, FALSE},   // fermat
