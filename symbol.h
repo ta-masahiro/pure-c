@@ -9,6 +9,7 @@ typedef struct {
 Symbol * new_symbol(unsigned char * str, unsigned int size) ;
 int symbol_eq(Symbol*s1,Symbol*s2) ;            // if s1 == s2 then TRUE else FALSE 
 Symbol * symbol_cat(Symbol *s1, Symbol *s2);    // s1 = s1 + s2
+Symbol * symbol_cat_s(Symbol *, char *);        
 Symbol * symbol_append(Symbol*s1,Symbol*s2) ;   // new symbol = s1 + s2
 Symbol * symbol_ref(Symbol*s,unsigned int pos); // sのpos番目の1文字
 Symbol * symbol_cpy(Symbol*s) ;

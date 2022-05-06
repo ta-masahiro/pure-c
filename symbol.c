@@ -31,6 +31,19 @@ Symbol * symbol_cat(Symbol *s1,Symbol *s2) {
     return s1;
 }
 
+Symbol * symbol_cat_s(Symbol *s1, char * s2) {
+    int s2_size = strlen(s2);
+    if (s1->_size - s1->_sp >= s2_size) {
+        memcpy(s1->_table + s1->_sp, s2, s2_size*sizeof(char));
+        s1->_sp += s2_size;
+        return s1;
+    }
+    unsigned char * sd=(char*)malloc((s1->_size + s2_size)*sizeof(char));
+    memcpy(sd, s1->_table, (s1->_sp)*sizeof(char)); memcpy(sd + (s1->_sp), s2, s2_size*sizeof(char));
+    s1->_size += s2_size;s1->_sp += s2_size; s1->_table = sd;
+    return s1;
+}
+
 Symbol * symbol_append(Symbol *s1,Symbol *s2) {
     /*
     if (s1->_size - s1->_sp >= s2 ->_sp) {

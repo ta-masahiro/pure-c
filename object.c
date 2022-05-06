@@ -1673,7 +1673,7 @@ int objneq(object*x,object*y){
 }
 
 char*objtostr(object* o) {
-    if (o==NULL) return "None";
+    if (o==NULL) return " ";
     switch(o->type) {
         case OBJ_INT:return objtype2str(OBJ_INT,(void*)(o->data.intg));
         case OBJ_FLT:return objtype2str(OBJ_FLT,(void*)*(long*)(&(o->data.flt)));
@@ -1701,10 +1701,10 @@ char * set_lf_format(mpfr_ptr x) {
     sprintf(form,"%s%d%s","%.",i,"Rg");
     return form;
 }
-#define NONE ""
+//#define NONE "" 
 //#define NONE "None"
 char * array2sym(array * a, int *array_index, int size_index) ;
-
+/*
 char * objtype2str(obj_type type, void* value) {
     int new_size,buf_size=1024;
     char *str,*buf = (char*)malloc(buf_size*sizeof(char)); 
@@ -1770,10 +1770,91 @@ char * objtype2str(obj_type type, void* value) {
         default:printf("RntimeError:Illegal print args!\n");Throw(3);
     }
 }
+*/
 
-Symbol*objtype2symbol(obj_type t,void*value) {
-    char*c=objtype2str(t,value);
-    return new_symbol(c,strlen(c));  
+Symbol NONE = {2, 2, "  "};
+Symbol * objtype2symbol(obj_type type, void* value) {
+    int new_size,buf_size=1024;
+    char *str, buf[1024];
+    mp_exp_t e;
+    int i,n;
+    long lval;
+    unsigned long li;
+    Symbol * key, * sym;
+    if ((type != OBJ_INT && type != OBJ_FLT) && value == NULL) return &NONE;
+    switch(type){
+        case OBJ_NONE:  return &NONE;
+        case OBJ_INT:   sprintf(buf, "%ld", (long)value); return new_symbol(buf, strlen(buf));
+        case OBJ_LINT:  str = mpz_get_str(NULL, 10, (mpz_ptr)value); return new_symbol(str, strlen(str));
+        case OBJ_RAT:   str = mpq_get_str(NULL, 10, (mpq_ptr)value); return new_symbol(str, strlen(str));
+        //case OBJ_FLT:   lval=(long)value;sprintf(buf,"%20.13g",*(double*)(&lval)); return buf;
+        case OBJ_FLT:   lval=(long)value;sprintf(buf,"%.16g",*(double*)(&lval)); return new_symbol(buf, strlen(buf));
+        //case OBJ_FLT:   lval=(long)value;sprintf(buf,"%15.10g",*(double*)(&lval)); return buf;
+        case OBJ_CMPLX: sprintf(buf,"%.16g%+.16gI",creal(*(complex*)value),cimag(*(complex*)value)); return new_symbol(buf, strlen(buf));
+        case OBJ_LFLT:  //mpfr_sprintf(buf,"%.Rg", (mpfr_ptr)value);return buf;
+                        mpfr_sprintf(buf,set_lf_format((mpfr_ptr)value),(mpfr_ptr)value);return new_symbol(buf, strlen(buf));
+        case OBJ_GEN:   return obj2symbol((object*)value);
+                        //return objtype2str(((object*)value)->type,((object*)value)->data.ptr);
+        case OBJ_SYM:   return (Symbol*)value;                //
+        case OBJ_VECT://printf("vectorsize:%d",((Vector*)value)->_sp);
+                        n=((Vector*)value)->_sp;
+                        //strcpy(buf,"[");
+                        sym = new_symbol("[", 1);
+                        if (n > 0) {
+                            //結構無駄なことをしている気がする
+                            for(i=0;i<n-1;i++) {//printf("##%s\n",objtostr((object*)vector_ref(((Vector*)value),i)));
+                                //str=objtostr((object*)vector_ref(((Vector*)value),i));
+                                //if ((new_size=strlen(buf)+strlen(str)+1)>=buf_size) {buf=(char*)realloc(buf,new_size*2);buf_size=new_size*2;}
+                                //strcat(buf,str);
+                                //strcat(buf,", ");
+                                symbol_cat(sym, obj2symbol((object*)vector_ref(((Vector *)value), i)));
+                                symbol_cat_s(sym, ", ");
+                            }
+                            //str=objtostr((object*)vector_ref(((Vector*)value),n-1));
+                            //if ((new_size=strlen(buf)+strlen(str)+1)>=buf_size) {buf=(char*)realloc(buf,new_size*2);buf_size=new_size*2;}
+                            //strcat(buf,str);
+                            symbol_cat(sym, obj2symbol((object*)vector_ref(((Vector*)value),n-1)));
+                        }
+                        //strcat(buf,"]");
+                        //return buf;
+                        symbol_push_c(sym, ']');
+                        return sym;
+        case OBJ_UFUNC: sprintf(buf,"<UserFunction: %lx>",(long)value);return new_symbol(buf, strlen(buf));
+        case OBJ_PFUNC: sprintf(buf,"<PrimitiveFunction: %lx>",(long)value);return new_symbol(buf, strlen(buf));
+        case OBJ_CNT:   sprintf(buf,"<UserCode: %lx>",(long)value);return new_symbol(buf, strlen(buf));
+        case OBJ_IO   : sprintf(buf,"<I/O_file: %lx>",(long)value);return new_symbol(buf, strlen(buf));
+        case OBJ_DICT : //sprintf(buf,"<Dictionary: %lx>",(long)value);return buf;
+                        //strcpy(buf, "{ ");
+                        sym = new_symbol("{", 1);
+                        for(li = 0;  li < (((Hash*)value)->size); li ++ ) {
+                            key = ((Hash*)value)->hashTable[li].key;
+                            if (key != NULL) { 
+                                //printf("i:%ld key:%s hash:%ld, val:%ld\n",i , key ->_table, hash(key->_table,key->_size, h->initval) & (h->size -1), (long)(h ->hashTable[i].val));  
+                                //strcat(buf,key->_table);strcat(buf," :");strcat(buf,objtostr((object*)(((Hash*)value) ->hashTable[li].val)));
+                                //strcat(buf,", ");
+                                symbol_cat(sym, key);symbol_cat_s(sym, " :");symbol_cat(sym, obj2symbol((object*)(((Hash*)value) ->hashTable[li].val)));symbol_cat_s(sym, ", ");
+                            }
+                        }
+                        //strcat(buf,"}");
+                        //return buf;
+                        symbol_push_c(sym, '}');
+                        return sym;
+        case OBJ_ARRAY: //sprintf(buf,"<array: %lx>",(long)value);return buf;
+                        i=0;
+                        //strcat(buf, array2sym((array*)value, &i, 0));
+                        //return buf;
+                        str = array2sym((array*)value, &i, 0); return new_symbol(str, strlen(str));
+        default:printf("RntimeError:Illegal print args!\n");Throw(3);
+    }
+}
+
+//Symbol*objtype2symbol(obj_type t,void*value) {
+//    char*c=objtype2str(t,value);
+//    return new_symbol(c,strlen(c));  
+//}
+
+char * objtype2str(obj_type t, void * value) {
+    return objtype2symbol(t, value)->_table;
 }
 
 object*symbol2obj(Symbol*s,obj_type t) {
