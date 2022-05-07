@@ -785,7 +785,7 @@ object * objLFDIV(mpfr_ptr x, mpfr_ptr y) {
     object * o = (object*)malloc(sizeof(object));
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    if (mpfr_sgn(y)) zero_division_error();
+    if (mpfr_sgn(y)==0) zero_division_error();
     mpfr_div(F, x, y, MPFR_RNDN);
     o -> data.ptr = (void * )F;
     o -> type = OBJ_LFLT;
@@ -796,7 +796,7 @@ object*objLFMOD(mpfr_ptr x, mpfr_ptr y) {
     object * o = (object*)malloc(sizeof(object) );
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(F);
-    if (mpfr_sgn(y)) zero_division_error();
+    if (mpfr_sgn(y)==0) zero_division_error();
     //mpfr_div(F, x, y);
     //mpfr_trunc(F,F);
     //mpfr_mul(F,F,y);
