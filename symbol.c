@@ -114,7 +114,7 @@ int symbol_search(Symbol * s, Symbol * c) {
 void symbol_resize(Symbol * s) {
     int oldN = s ->_size; 
     int maxN = 3 * oldN / 2 + 1;     /* 1.5倍に拡大  */   
-    char * table =(char* )realloc(s ->_table, maxN * sizeof(char)) ;
+    char * table =(char* )realloc(s ->_table, (maxN+1) * sizeof(char)) ;
     if (table == NULL)  {
         printf("reallock failed!\n"); 
         free(s -> _table); exit(0); }
@@ -126,15 +126,18 @@ void symbol_resize(Symbol * s) {
 void symbol_push(Symbol * s, Symbol * t) {
     if (s ->_sp >= s ->_size ) 
         symbol_resize(s);  
-    s ->_table[(s ->_sp) ++ ] = t->_table[0];
-    s ->_table[(s ->_sp) ++ ] = t->_table[1];
+    s ->_table[(s ->_sp)++ ] = t->_table[0];
+    //s ->_table[s ->_sp ] = t->_table[1];
+    s ->_table[s ->_sp ] = '\0';
+
     //return s;
 }
 
 void symbol_push_c(Symbol * s, unsigned char t) {
-    if (s ->_sp >= s ->_size ) 
+    if (s ->_sp >= s ->_size  ) 
         symbol_resize(s);  
-    s ->_table[(s ->_sp) ++ ] = t;
-    s ->_table[(s ->_sp) ++ ] = '\0';
+    s ->_table[(s ->_sp)++ ] = t;
+    s ->_table[s ->_sp ] = '\0';
+
     //return s;
 }

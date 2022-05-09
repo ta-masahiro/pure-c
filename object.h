@@ -7,16 +7,17 @@
 
 #ifndef OBJECT
 #define OBJECT
-typedef enum { OBJ_NONE=0,
+
+//typedef enum { OBJ_NONE=0,
     // 1     2          3       4        5         6          7
-    OBJ_INT, OBJ_LINT, OBJ_RAT, OBJ_FLT, OBJ_LFLT, OBJ_CMPLX, OBJ_GEN,
+//    OBJ_INT, OBJ_LINT, OBJ_RAT, OBJ_FLT, OBJ_LFLT, OBJ_CMPLX, OBJ_GEN,
     //      8          9      10        11
-    OBJ_SYSFUNC, OBJ_PFUNC, OBJ_UFUNC, OBJ_CNT,
+//    OBJ_SYSFUNC, OBJ_PFUNC, OBJ_UFUNC, OBJ_CNT,
     //    12        13        14      15    16
-    OBJ_VECT, OBJ_DICT, OBJ_PAIR,OBJ_SYM, OBJ_ARRAY,
+//    OBJ_VECT, OBJ_DICT, OBJ_PAIR,OBJ_SYM, OBJ_ARRAY,
     // 17   18       19
-    OBJ_IO, OBJ_KEY, OBJ_CLS_DEF
-} obj_type;
+//    OBJ_IO, OBJ_KEY, OBJ_CLS_DEF
+//} obj_type;
 
 typedef struct object {
     obj_type type;
@@ -171,4 +172,5 @@ object * objlgamma(object*x);
 //
 Vector * array2vector(array * a, int *array_index, int size_index);
 array * vector2array(Vector *v);
+Symbol * array2sym(array * a, int *array_index, int size_index) ;
 #endif

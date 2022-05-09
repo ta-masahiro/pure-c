@@ -22,9 +22,10 @@ char * code_name[] =
      "LD02",  "LD03", "LD10", "LD11", "LD12", "LD13", "SET00","SET01","SET02","SET03","SET10","SET11","SET12","SET13",
      "LFADD", "LFSUB","LFMUL","LFDIV","LFMOD","LFPOW","LFGT", "LFLT", "LFEQ", "LFNEQ","LFGEQ","LFLEQ","LFNEG","ITOLF",
      "LTOLF", "RTOLF","FTOLF","OTOLF","LFTOI","LFTOL","LFTOR","LFTOF","LFTOO","CADD", "CSUB", "CMUL", "CDIV", "CPOW",
-     "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE", "LOOP_SET",
+     "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE","LOOP_SET",
      "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","VSLS_","V_SLS","SSLS_","S_SLS",
-     "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD", "SPUSH","$$$" };
+     "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD", "SPUSH","OTOA", "ATOO",
+     "ATOS",  "ALEN", "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -46,7 +47,8 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
         1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0 };
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
+        0,    0,     0 };
 
 Vector *tosqs(Vector*code, const void** table) {
     enum CODE op;
@@ -87,7 +89,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
     Vector *C = vector_copy0(Code),*ssp=vector_init(200);
     double* fx,*fy,*fz;
     double xx,yy,zz;
-    object*o;
+    object*o;array *ary;
     char*ch;
     long LOOP_COUNTER = 0;
     static const void * table[] = {
@@ -110,7 +112,8 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LTOLF, &&_RTOLF,&&_FTOLF,&&_OTOLF,&&_LFTOI,&&_LFTOL,&&_LFTOR,&&_LFTOF,&&_LFTOO,&&_CADD, &&_CSUB, &&_CMUL, &&_CDIV ,&&_CPOW, \
             &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE,&&_LOOP_SET,\
             &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR,&&_VSLS_,&&_V_SLS,&&_SSLS_,&&_S_SLS,\
-            &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH};
+            &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH,&&_OTOA, &&_ATOO, \
+            &&_ATOS,  &&_ALEN};
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -1007,6 +1010,7 @@ _VLEN:
 _SLEN:
     //push(S,(void*)(long)((Symbol*)pop(S))->_size);
     push(S,(void*)(long)((Symbol*)pop(S))->_sp);
+    //push(S,(void*)(long)_mbstrlen(((Symbol *)pop(S))->_table));
     goto*dequeue(C);
 _DLEN:
     push(S,(void*)(long)((Hash*)pop(S))->entries);
@@ -1435,6 +1439,22 @@ _FTOK:
     *ip=(long)pop(S);
     push(S,new_symbol((char*)ip, sizeof(double)));
     goto *dequeue(C);
+_ALEN:
+    l=vector_init(10);
+    ary=(array*)pop(S);
+    for(i=0;i<ary->dim;i++) push(l,(void*)newINT((long)ary->sps[i]));
+    push(S, (void*)l);
+    goto *dequeue(C);
+_ATOO:
+    push(S, (void*)newOBJ(OBJ_ARRAY, (array*)pop(S)));
+    goto *dequeue(C);
+_ATOS:
+    int si=0;
+    push(S, (void*)array2sym((array*)pop(S),&si,0));
+    goto *dequeue(C);
+_OTOA:
+    push(S, (void*)((object*)pop(S))->data.ptr);
+    goto *dequeue(C); 
 _LOOP_SET:
     LOOP_COUNTER = (long)dequeue(S);
     goto *dequeue(C);

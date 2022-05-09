@@ -52,7 +52,7 @@ enum CODE op1_2[18][6] =
                 {0,    0,    DLEN, 0,    0   , 0   },     // DICT
                 {0,    0,    0,    0,    0   , 0   },     // PAIR
                 {0,    0,    SLEN, 0,    0   , SPOP},     // SYM
-                {0,    0,    0,    0,    0   , 0   },     // ARRAY
+                {0,    0,    ALEN,  0,    0   , 0   },     // ARRAY
                 {0,    0,    0,    0,    0   , 0   },     // IO
                };
 obj_type op1_3[]={0,0,OBJ_INT,0,0,OBJ_GEN};
@@ -65,7 +65,7 @@ enum CODE conv_op[18][19] =
                         {0,   FTOI, FTOL, FTOR, 0   , FTOLF, FTOC,  FTOO,  0,      0,    0,    0,    0,   0,   0,   FTOS, 0,    0,  FTOK  },
                         {0,   LFTOI,LFTOL,LFTOR,LFTOF,0,     LFTOC, LFTOO, 0,      0,    0,    0,    0,   0,   0,   LFTOS,0,    0,  0  },
                         {0,   0,    0,    0,    0,    0,     0,     CTOO,  0,      0,    0,    0,    0,   0,   0,   CTOS, 0,    0,  0  },
-                        {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, OTOC,  0,     0,      0,    0,    0,    OTOV,OTOD,0,   OTOS, 0,    0,  0  },
+                        {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, OTOC,  0,     0,      0,    0,    0,    OTOV,OTOD,0,   OTOS, OTOA, 0,  0  },
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//SYSFUNC
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,   -1,    0,    0,   0,   0,   0,    0,    0,  0  },//PFUNC
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,     -1,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//UFUNC
@@ -74,7 +74,7 @@ enum CODE conv_op[18][19] =
                         {0,   0,    0,    0,    0,    0,     0,     DTOO,  0,      0,    0,    0,    0,   0,   0,   DTOS, 0,    0,  0  },//DICT
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//PAIR
                         {0,   STOI, STOL, STOR, STOF, 0,     0,     STOO,  0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//SYM
-                        {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//ARRAY
+                        {0,   0,    0,    0,    0,    0,     0,     ATOO,  0,      0,    0,    0,    0,   0,   0,   ATOS, 0,    0,  0  },//ARRAY
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  } //IO 
                         };
 /* 後で完成させること
@@ -495,12 +495,13 @@ void * p_array_ref(Vector * v) {
     int dim = v->_sp - 1;
     int index = (int)(long)vector_ref(v, 1); 
     if (index > a->sizes[0]) {printf("IndexError!\n");Throw(3);}
-    int j;
+    int j;complex *c;
     for (int i = 1; i < dim; i++) {
         if ((j = (int)(long)vector_ref(v, i + 1)) > a->sizes[i]) {printf("IndexError!\n");Throw(3);}
         index = (index * a -> sizes[i]) + j; 
     }
-    return (void *)a->table[index];
+    if (a->type == OBJ_CMPLX) return  &a->table._cmplx;
+    return (void *)a->table._ptr[index];
 }
 
 code_ret *codegen_vref(ast *vref_ast, Vector*env, int tail) {  // AST_VREF [AST_vect, AST_expr_list[i1,i2,...]]
@@ -512,7 +513,7 @@ code_ret *codegen_vref(ast *vref_ast, Vector*env, int tail) {  // AST_VREF [AST_
     // arrayの処理
     Vector * index_vect;
     //Funcpointer fp;
-    if (type1 == OBJ_ARRAY) {
+    if (type1 == OBJ_ARRAY) {                                                               // arrayのrefはgeneraruにしてから返すように変更すべし(現状float決め打ちなので)
         int array_dim = (index_vect=((ast*)vector_ref(vref_ast->table, 1))->table)->_sp;
         for(int i = 0; i < array_dim ; i++) {
             code_ret *code_ref = codegen((ast*)vector_ref(index_vect, i), env, FALSE);
@@ -521,7 +522,7 @@ code_ret *codegen_vref(ast *vref_ast, Vector*env, int tail) {  // AST_VREF [AST_
         }
         Vector *func_vect = vector_init(3);push(func_vect, (void*)FUNC_PRIM);push(func_vect,(void*)p_array_ref);
         push(code, (void*)LDC); push(code, (void *)func_vect); push(code, (void *)PCALL); push(code, (void *)(long)(array_dim + 1));
-        return new_code(code,new_ct(OBJ_FLT,OBJ_NONE,(void*)0,FALSE));
+        return new_code(code,new_ct(OBJ_FLT,OBJ_NONE,(void*)0,FALSE));  // !!!!!!!arrayの要素はfloatと決めつけているが…
     }
 
     // array以外
@@ -622,6 +623,7 @@ code_ret*codegen_sls(ast*sls_ast, Vector*env, int tail) {   // AST_SLS [AST_vect
 
 void * aa_mul(Vector * v) {return (void*)array_array_mul((array*)vector_ref(v,0), (array*)vector_ref(v,1));}
 void * as_mul(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,0), vector_ref(v,1));}
+//void * as_div(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,0), vector_ref(v,1));}
 void * sa_mul(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,1), vector_ref(v,0));}
 void * aa_add(Vector * v) {return (void*)array_array_add((array*)vector_ref(v, 0), (array*)vector_ref(v, 1));}
 
@@ -685,6 +687,7 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
                 else {printf("IllegalOprand!\n");Throw(3);}
                 break;
             default :printf("IllegalOprator!\n");Throw(3);
+            //case '/'
         }
         func_vect = vector_init(3);push(func_vect, (void*)FUNC_PRIM);push(func_vect,(void*)fp);
         r_type = OBJ_ARRAY;
@@ -748,6 +751,7 @@ code_ret *codegen_1op(ast *_1op_ast, Vector * env, int tail) { // AST_1OP [op_ty
     if ((opcode=op1_2[r_type][i])==0) {printf("syntax Error:operator is not supported\n");Throw(0);}
     push(code,(void*)(long)opcode);
     if ((op1_1[i]=='-'*256+'>') && (r_type==OBJ_SYM)) r_type=OBJ_SYM;
+    else if ((op1_1[i] == '@') && (r_type == OBJ_ARRAY)) r_type = OBJ_VECT;
     else if (op1_3[i] != 0) r_type=op1_3[i];
     return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
 }

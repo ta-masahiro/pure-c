@@ -152,6 +152,80 @@ complex *lftoc(mpfr_ptr F) {
     complex *c = (complex*)malloc(sizeof(complex));
     *c=mpfr_get_d(F,MPFR_RNDN)+0.0*I;
 }
+
+void * change_objtype(void * value, obj_type s, obj_type d) {
+    double d_value;long i_value;
+    switch(s) {
+        case OBJ_INT:
+            switch(d) {
+                case OBJ_INT:  return value;
+                case OBJ_FLT:  d_value=itof((long)value);return (void*)*(long*)&d_value ;
+                case OBJ_LINT: return (void*)itol((long)value);
+                case OBJ_RAT:  return (void*)itor((long)value);
+                case OBJ_LFLT: return (void*)itolf((long)value);
+                case OBJ_CMPLX:return (void*)itoc((long)value);
+                case OBJ_GEN:  return (void*)newINT((long)value);
+            }
+        case OBJ_FLT:
+            i_value = (long)value;
+            switch(d) {
+                case OBJ_INT:  return (void*)ftoi(*(double*)&i_value);
+                case OBJ_FLT:  return value ;
+                case OBJ_LINT: return (void*)ftoli(*(double*)&i_value);
+                case OBJ_RAT:  return (void*)ftor(*(double*)&i_value);
+                case OBJ_LFLT: return (void*)ftolf(*(double*)&i_value);
+                case OBJ_CMPLX:return (void*)ftoc(*(double*)&i_value);
+                case OBJ_GEN:  return (void*)newFLT(*(double*)&i_value);
+            }
+        case OBJ_LINT:
+            switch(d) {
+                case OBJ_INT:  return (void*)litoi((mpz_ptr)value);
+                case OBJ_FLT:  d_value=litof((mpz_ptr)value);return (void*)*(long*)&d_value ;
+                case OBJ_LINT: return value;
+                case OBJ_RAT:  return (void*)litor((mpz_ptr)value);
+                case OBJ_LFLT: return (void*)litolf((mpz_ptr)value);
+                case OBJ_CMPLX:return (void*)litoc((mpz_ptr)value);
+                case OBJ_GEN:  return (void*)newLINT((mpz_ptr)value);
+            }
+        case OBJ_RAT:
+            switch(d) {
+                case OBJ_INT:  return (void*)rtoi((void*)value);
+                case OBJ_FLT:  d_value=rtof((mpq_ptr)value);return (void*)*(long*)&d_value ;
+                case OBJ_LINT: return (void*)rtoli((mpq_ptr)value);
+                case OBJ_RAT:  return (void*)value;
+                case OBJ_LFLT: return (void*)rtolf((mpq_ptr)value);
+                case OBJ_CMPLX:return (void*)rtoc((mpq_ptr)value);
+                case OBJ_GEN:  return (void*)newRAT((mpq_ptr)value);
+            }
+        case OBJ_LFLT:
+            switch(d) {
+                case OBJ_INT:  return (void*)lftoi((__mpfr_struct *)value);
+                case OBJ_FLT:  d_value = lftof((__mpfr_struct*)value);return (void*)*(long*)&d_value ;
+                case OBJ_LINT: return (void*)lftol((__mpfr_struct*)value);
+                case OBJ_RAT:  return (void*)lftor((__mpfr_struct*)value);
+                case OBJ_LFLT: return value;
+                case OBJ_CMPLX:return (void*)lftoc((__mpfr_struct*)value);
+                case OBJ_GEN:  return (void*)newLFLT((__mpfr_struct*)value);
+            }
+        
+        case OBJ_CMPLX:
+            switch(d) {
+                //case OBJ_INT:  return (void*)ctoi((complex *)value);
+                //case OBJ_FLT:  d_value = ctof((complex*)value);return (void*)(long*)&d_value ;
+                //case OBJ_LINT: return (void*)ctol((complex*)value);
+                //case OBJ_RAT:  return (void*)ctor((complex*)value);
+                //case OBJ_LFLT: return (void*)ctolf((complex*)value);
+                case OBJ_CMPLX:return value;
+                case OBJ_GEN:  return (void*)newCMPLX((complex*)value);
+            }
+        case OBJ_GEN:
+            switch(d) {
+                case OBJ_GEN: return (void*)value;
+                default:return (void*)change_objtype(((object*)value)->data.ptr, ((object*)value)->type, d);
+            }
+        default: printf("RuntimeErroe:CanotConverToInteger!\n");Throw(3);
+    }
+}
 //#define newINT(n)   newOBJ(OBJ_INT,  n)
 #define newLINT(n)  newOBJ(OBJ_LINT, (void*)n)
 #define newRAT(n)   newOBJ(OBJ_RAT,  (void*)n)
@@ -1703,7 +1777,7 @@ char * set_lf_format(mpfr_ptr x) {
 }
 //#define NONE "" 
 //#define NONE "None"
-char * array2sym(array * a, int *array_index, int size_index) ;
+//char * array2sym(array * a, int *array_index, int size_index) ;
 /*
 char * objtype2str(obj_type type, void* value) {
     int new_size,buf_size=1024;
@@ -1772,7 +1846,7 @@ char * objtype2str(obj_type type, void* value) {
 }
 */
 
-Symbol NONE = {2, 2, "  "};
+Symbol NONE = {0, 0, ""};
 Symbol * objtype2symbol(obj_type type, void* value) {
     int new_size,buf_size=1024;
     char *str, buf[1024];
@@ -1843,7 +1917,8 @@ Symbol * objtype2symbol(obj_type type, void* value) {
                         i=0;
                         //strcat(buf, array2sym((array*)value, &i, 0));
                         //return buf;
-                        str = array2sym((array*)value, &i, 0); return new_symbol(str, strlen(str));
+                        //str = array2sym((array*)value, &i, 0); return new_symbol(str, strlen(str));
+                        return array2sym((array*)value, &i, 0);
         default:printf("RntimeError:Illegal print args!\n");Throw(3);
     }
 }
@@ -1987,7 +2062,8 @@ object * objcpy(object * s) {
                        mpfr_init_set(F, (mpfr_ptr)s ->data.ptr,MPFR_RNDN); t -> data.ptr = (void * )F; return t;
         case OBJ_CMPLX: c=(complex *)malloc(sizeof(complex));*c=*(complex *)s->data.ptr;t->data.ptr=c;t->type=OBJ_CMPLX;return t;
         case OBJ_VECT:t->data.ptr=(void*)vector_copy0((Vector*)s->data.ptr);t->type=OBJ_VECT;return t;
-        case OBJ_SYM: t->data.ptr=(void*)symbol_cpy((Symbol*)t->data.ptr);t->type=OBJ_SYM;return t;
+        case OBJ_SYM: t->data.ptr=(void*)symbol_cpy((Symbol*)s->data.ptr);t->type=OBJ_SYM;return t;
+        case OBJ_ARRAY:t->data.ptr=(void*)array_copy((array*)s->data.ptr);t->type=OBJ_ARRAY;return t;
         default:printf("RntimeError:Illegal copy Method!\n");Throw(3);
     }
     return NULL;
@@ -1998,6 +2074,7 @@ long objlen(object* o) {
     switch(o->type) {
         case OBJ_VECT: return ((Vector*)o->data.ptr)->_sp;
         case OBJ_SYM : return ((Symbol*)o->data.ptr)->_sp;
+        case OBJ_DICT: return ((Hash*)o->data.ptr)->entries;
         default:printf("RntimeError:Illegal length Method!%d\n",o->type);Throw(3);
     }
     return 0;
@@ -2282,21 +2359,23 @@ void get_vector_dims(Vector * v, int *dim, int * sizes, int *total_size) {
 }
 */
 void _vector2array2(Vector * v, array * a, int *ind) {
-    object *data;
+    object *data;complex *c;
     for(int i=0;i<v->_sp;i++) {
         if ((data = (object*)vector_ref(v,i))->type == OBJ_VECT) {
             _vector2array2((Vector *)data->data.ptr, a, ind);
+        } else if (a->type == OBJ_CMPLX) {
+            c=change_objtype(data->data.ptr, data->type, a->type);
+            a->table._cmplx[(*ind)++] = *c;
         }else {
-            if (a->type != data->type)  {printf("ArrayTypeError!\n");Throw(3);}
-            if (a->type == OBJ_INT)
-                a->table[(*ind)++] = (void*)data->data.intg;
-            else if (a->type == OBJ_FLT)
-                a->table[(*ind)++] = (void*)*(long*)&(data->data.flt);
-            else {printf("ArrayTypeError!\n");Throw(3);}
+            if (a->type != data->type)  {//printf("ArrayTypeError!\n");Throw(3);
+                data->data.ptr= change_objtype(data->data.ptr, data->type, a->type);
+            }
+            a->table._ptr[(*ind)++] = data->data.ptr;
         }
     }
 }
-
+// vectorをarrayに変換する
+// arrayのtypeはvectorの最初の要素とし、vectorの各要素はそのtypeに型変換される
 array * vector2array(Vector *v) {
     object * data = (object*)vector_ref(v,0);
     Vector * vv;
@@ -2323,13 +2402,17 @@ Vector * array2vector(array * a, int *array_index, int size_index) {
     object *o;
     int i;
     if (size_index >= a->dim - 1) {
-        for(i = 0; i < a->sizes[size_index]; i++) {o=newOBJ(a->type, a->table[(*array_index)++]);/* printf("%d %s\n",i,objtype2str(a->type,o));*/ push(v,(void *)o);}
+        for(i = 0; i < a->sizes[size_index]; i++) {
+            if (a->type == OBJ_CMPLX) o=newOBJ(a->type, & a->table._cmplx[(*array_index)++]);
+            else o=newOBJ(a->type, a->table._ptr[(*array_index)++]);/* printf("%d %s\n",i,objtype2str(a->type,o));*/ 
+            push(v,(void *)o);
+        }
         return v;
     }
     for(i =0; i < a->sizes[size_index]; i++) push(v, newOBJ(OBJ_VECT,(void*)array2vector(a, array_index,size_index + 1)));
     return v;
 }
-
+/*
 char * array2sym(array * a, int *array_index, int size_index) {
     char *s,* S = (char *)malloc(20*a->sizes[size_index]*sizeof(char));
     object *o;
@@ -2345,7 +2428,34 @@ char * array2sym(array * a, int *array_index, int size_index) {
     //strcat(S,"|\n");
     return S;
 }
-
+*/
+Symbol * array2sym(array * a, int *array_index, int size_index) {
+    //char *s,* S = (char *)malloc(20*a->sizes[size_index]*sizeof(char));
+    Symbol * sym;
+    object *o;
+    int i;
+    if (size_index >= a->dim - 1) {
+        //strcpy(S,"[ ");
+        sym = new_symbol("[", 1);
+        for(i = 0; i < a->sizes[size_index]; i++) {
+            //s = objtype2str(a->type, a->table[(*array_index)++]); 
+            //strcat(S,s);strcat(S," ");
+            if (a->type == OBJ_CMPLX)  symbol_cat(sym, objtype2symbol(a->type, & a->table._cmplx[(*array_index)++]));
+            else symbol_cat(sym, objtype2symbol(a->type, a->table._ptr[(*array_index)++]));
+            symbol_push_c(sym, ' ');
+        }
+        //strcat(S, "]\n");
+        //return S;
+        symbol_cat(sym, new_symbol("]\n", 2));
+        return sym;
+    }
+    //strcpy(S,"| ");
+    sym = new_symbol("",0);
+    //for(i =0; i < a->sizes[size_index]; i++) strcat(S, array2sym(a, array_index,size_index + 1));
+    for(i =0; i < a->sizes[size_index]; i++) symbol_cat(sym, array2sym(a, array_index,size_index + 1));
+    //strcat(S,"|\n");
+    return sym;
+}
 /*
    void * _realloc(void * ptr, size_t old_size, size_t new_size) {
    return GC_realloc(ptr, new_size);

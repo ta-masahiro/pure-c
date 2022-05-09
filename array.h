@@ -30,20 +30,46 @@ typedef struct {
     void ** table;
 } array_n;
 */
+typedef enum { OBJ_NONE=0,
+    // 1     2          3       4        5         6          7
+    OBJ_INT, OBJ_LINT, OBJ_RAT, OBJ_FLT, OBJ_LFLT, OBJ_CMPLX, OBJ_GEN,
+    //      8          9      10        11
+    OBJ_SYSFUNC, OBJ_PFUNC, OBJ_UFUNC, OBJ_CNT,
+    //    12        13        14      15    16
+    OBJ_VECT, OBJ_DICT, OBJ_PAIR,OBJ_SYM, OBJ_ARRAY,
+    // 17   18       19
+    OBJ_IO, OBJ_KEY, OBJ_CLS_DEF
+} obj_type;
+/*
 typedef struct {
-    unsigned int type;
+    obj_type type;
     unsigned int dim;
     unsigned int * sizes;
     unsigned int * sps;
     void ** table;
 } array;
-
-array * array_init(unsigned int type, unsigned int dim, unsigned int * sizes);
+*/
+typedef struct {
+    obj_type type;
+    unsigned int dim;
+    unsigned int * sizes;
+    unsigned int * sps;
+    union {
+        long    * _int;
+        double  * _flt;
+        complex * _cmplx;
+        void   ** _ptr;
+    } table;
+} array;
+array * array_init(obj_type type, unsigned int dim, unsigned int * sizes);
 void * array_ref(array * a, int * ind);
+void change_array_type(array *, obj_type);
 array * array_eye(int dim) ;
 array * array_array_mul(array  * A, array * B);
 array * array_scler_mull(array *A, void * value);
 array * array_array_add(array *A, array * B);
 array * solv_liner(array * A, array * Y) ;
-
+array * array_inv(array *);
+array * array_copy(array *);
+Vector * eigen(array*);
 #endif

@@ -224,8 +224,18 @@ string _msieve(long n) = popen("msieve -q "+str(n));
 string _msieve_e(long n) = popen("msieve -q -e "+str(n));
 vector msieve(long n)={string s;int p,q=0;vector v=[];s=_msieve(n);p=str_search(s,": ");if p<0:{v<-n;v}:{while p>=0:{s=s[p+2:];q=str_search(s,"\n");v<-tolong(s[:q]);p=str_search(s,": ")};v}};
 vector msieve_e(long n)={string s;int p,q=0;vector v=[];s=_msieve(n);p=str_search(s,": ");if p<0:{v<-n;v}:{while p>=0:{s=s[p+2:];q=str_search(s,"\n");v<-tolong(s[:q]);p=str_search(s,": ")};v}};
-var factorint(long n)={vector v=trial_div(n);if v[1] == 1:v[0]:v[0]+msieve_e(v[1])};
+//var factorint(long n)={vector v=trial_div(n);if v[1] == 1:v[0]:v[0]+msieve_e(v[1])};
+vector factorint(long n)={long l;vector v=trial_div(n);l=v->;v+msieve(l)};
 vector ppm1(long n)={vector r=[];long p,old_n=-1;while ((p=pollard_pm1(n,197,30000)) !=0) && (old_n != n):{old_n=n;n/=p;r<-p};[r,n]};		// pollard_pm1
 vector prh(long n)={vector r=[];long p,old_n=-1;while ((p=pollard_rho(n,213L,1L,2000,600)) !=0) && (old_n != n):{old_n=n;n/=p;r<-p};[r,n]};	// pollard_rho
 vector frm(long n)={vector r=[];long p,old_n=-1;while ((p=fermat(n)) !=0) && (old_n != n):{old_n=n;n/=p;r<-p};[r,n]};						// fermat
+
+array make_array(vector v,int m,int n)={int i,j,k=-1;vector vv=[],vvv=[];for i=-1:(i+=1)<n:{vvv=[];for j=-1:(j+=1)<m:vvv<-v[k+=1];vv<-vvv};v2a(vv)};
+array arraytype2int(array a)=array_type_change(a,1);
+array arraytype2lint(array a)=array_type_change(a,2);
+array arraytype2rat(array a)=array_type_change(a,3);
+array arraytype2flt(array a)=array_type_change(a,4);
+array arraytype2lflt(array a)=array_type_change(a,5);
+array arraytype2cmplx(array a)=array_type_change(a,6);
+
 print("Library ver 0.02 loded.");
