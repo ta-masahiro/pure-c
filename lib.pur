@@ -237,5 +237,6 @@ array arraytype2rat(array a)=array_type_change(a,3);
 array arraytype2flt(array a)=array_type_change(a,4);
 array arraytype2lflt(array a)=array_type_change(a,5);
 array arraytype2cmplx(array a)=array_type_change(a,6);
-
+none cprint(var x, string ccc)={color_map ={"black":"\x1b[30m","red":"\x1b[31m","green":"\x1b[32m"};lambda(x,c) print(color_map[ccc]+str(x)+"\x1b[39m")}(x,ccc);// cをcccにすると動かない
 print("Library ver 0.02 loded.");
+
