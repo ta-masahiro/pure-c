@@ -1567,12 +1567,14 @@ int main(int argc, char*argv[]) {
                 }
             } 
         } Catch(e) {
+            printf("\x1b[41m");
             switch(e) {
-                case 0: printf("Error in generator\n");break;
-                case 1: printf("Error in parser\n");break;
-                case 3: printf("Error in VM\n");break;
-                case 4: printf("Ctr-C pressed!\n");break;
+                case 0: printf("Error in generator");break;
+                case 1: printf("Error in parser");break;
+                case 3: printf("Error in VM");break;
+                case 4: printf("Ctr-C pressed!");break;
             }
+            printf("\x1b[49m\n");
             //fclose(fp);
             S=new_tokenbuff(stdin);
             //S->buff=vector_init(100);

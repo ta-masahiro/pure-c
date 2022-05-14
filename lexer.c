@@ -297,12 +297,14 @@ token * is_SYM(Stream*S,tokenstate s, char* buff) {
 char * get_esc_char(Stream *S, char * buff) {
     //     エスケープ文字かどうかを判定し、エスケープ文字ならそれをbuffにいれてbuffの次のアドレスを返す
     //     そうでなければNULLを返す
-    char s, c, cc, ccc; 
+    char s, c, cc=0, ccc, cccc;
+    long int_num; 
+    token *t;
     //if (get_char(S) == '\\') {
         c=get_char(S);
         switch(c) {
             case 'a': s = '\a'; break;  
-            case 'b': s = '\b'; break;
+            case 'b': s = '\b'; break;  
             case 'n': s = '\n'; break;
             case 'r': s = '\r'; break;
             case 'f': s = '\f'; break;
@@ -315,10 +317,57 @@ char * get_esc_char(Stream *S, char * buff) {
             case '\\': s = '\\'; break;
             case '\'': s = '\''; break;
             case '"': s = '"'; break;
-            case '0': s = '\0'; break;
+            //case '0': s = '\0'; break;
             // case 'o': case 'O':
-           // default:unget_char(S);unget_char(S);return NULL; 
-            default:unget_char(S);return NULL; 
+            case 'X': case 'x':
+                //if ((c=get_char(S)) == 'x' || c == 'X') { 
+                    cc = get_char(S);
+                    if (cc >= '0' && cc <= '9') s = cc - '0';
+                    else if (cc >= 'a' && cc <= 'f') s = cc - 'a' + 10;
+                    else if (cc >= 'A' && cc <= 'F') s = cc = 'A' + 10;
+                    else { unget_char(S); unget_char(S);return NULL;}
+                    ccc = get_char(S);
+                    if (ccc >= '0' && ccc <= '9') s = s *16 + ccc - '0';
+                    else if (ccc >= 'a' && ccc <= 'f') s = s * 16 + ccc - 'a' + 10;
+                    else if (ccc >= 'A' && ccc <= 'F') s = s * 16 + ccc - 'A' + 10;
+                    else unget_char(S);
+                    //printf("%d\n",s);
+                    * (buff ++) = s;
+                    return buff ;
+            case 'o': case 'O':          
+                //} else if (c == 'o' || c == 'O') { 
+                    cc = get_char(S);
+                    if (cc >= '0' && cc <= '8') {
+                        s = cc - '0';
+                        ccc = get_char(S);
+                        if (ccc >= '0' && ccc <= '8') {
+                            s = s * 8 + ccc - '0';
+                            cccc = get_char(S);
+                            if (cccc >= '0' && cccc <= '8') {
+                                s = s * 16 + cccc - '0';
+                            }
+                            else unget_char(S);
+                        } else unget_char(S);
+                        * (buff ++) = s;
+                        return buff ;          
+                    }
+                    unget_char(S);
+                    return NULL ;          
+                //} else {
+                //    unget_char(S);unget_char(S); return NULL;
+                //}
+            default: 
+            if (c >= '1' && c <= '9') {
+                s = c -'0';
+                if ((cc=get_char(S)) >= '0' && cc <= '9') {
+                    s = 10 * s + cc - '0';
+                    if ((ccc=get_char(S)) >= '1' && ccc <= '9') {
+                        s = 10 * s + ccc - '0';
+                    }else unget_char(S);
+                }else unget_char(S);
+                * (buff ++) = s;
+                return buff;
+            } else unget_char(S);return NULL; 
         }    
         * (buff ++ ) = s;
         //printf("%d\n",(int)s);
