@@ -90,7 +90,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
     double* fx,*fy,*fz;
     double xx,yy,zz;
     object*o;array *ary;
-    char*ch;
+    char*ch;int si;
     long LOOP_COUNTER = 0;
     static const void * table[] = {
             &&_STOP,  &&_LDC,  &&_LD,   &&_ADD,  &&_CALL, &&_RTN,  &&_SEL,  &&_JOIN, &&_LDF,  &&_SET,  &&_LEQ,  &&_LDG,  &&_GSET, &&_SUB,  \
@@ -1449,7 +1449,7 @@ _ATOO:
     push(S, (void*)newOBJ(OBJ_ARRAY, (array*)pop(S)));
     goto *dequeue(C);
 _ATOS:
-    int si=0;
+    si=0;
     push(S, (void*)array2sym((array*)pop(S),&si,0));
     goto *dequeue(C);
 _OTOA:
