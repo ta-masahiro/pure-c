@@ -22,7 +22,7 @@ ast * new_ast(ast_type type, obj_type o_type,Vector * table) {
 char* ast_type_str[] = {"None","MultiFunction","If","Set","Lambda","While","Class","Operator2",
                         "Opraor1","VectorRef","VectorSlice","Literal","Variable","Vector",
                         "Dictionary","ApplyFunction","FunctionCall","Exprlist","CallC/C","Propaeity",
-                        "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","\0"};
+                        "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","for","FunctionDeclear","\0"};
 
 void ast_print(ast*a, int tablevel) {
     int i;
@@ -44,7 +44,7 @@ void ast_print(ast*a, int tablevel) {
         // ast list type
         case AST_WHILE: case AST_IF: case AST_CLASS: case AST_VREF: case AST_SLS: case AST_VECT: case AST_DICT:
         case AST_DCL:case AST_APPLY: case AST_LAMBDA:case AST_EXP_LIST: case AST_EXP_LIST_DOTS: case AST_ARG_LIST: 
-        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR:
+        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR: case AST_DCL_F:
             printf("type:%s\t", ast_type_str[t]);
             printf("objecttype: %d\n",a->o_type);
             if (a->table==NULL) break;
@@ -249,8 +249,8 @@ ast * is_pair(TokenBuff * S) {
 }
 
 ast * is_pair_list(TokenBuff * S) {
-    // pair_list    : pair ',' pair_list
-    //              | pair
+    // pair_list    : pair
+    //              | pair ',' ... pair
     ast * a1, * a2;
     token * t1, * t2;
     Vector * v;
@@ -610,7 +610,7 @@ ast * is_lambda_expr(TokenBuff *S) {
                         v=vector_init(2);
                         push(v,(void*)a1);push(v,(void*)a2);
                         return new_ast(AST_LAMBDA,a2->o_type,v);
-                    }
+                    }//「関数本体がない」というerrorにすること
                 } else if (t1->type=='.'*256+'.' && get_token(S)->type==')') {
                     //a1->type=AST_EXP_LIST_DOTS;
                     a1->type=AST_ARG_LIST_DOTS;
@@ -618,17 +618,17 @@ ast * is_lambda_expr(TokenBuff *S) {
                         v=vector_init(2);
                         push(v,(void*)a1);push(v,(void*)a2);
                         return new_ast(AST_LAMBDA,a2->o_type,v);
-                    }
-                }
+                    }//「関数本体がない」というerrorにすること
+                }// 「')'または'...)'で終わっていない」というerrorにすること
             } else if (get_token(S)->type==')') {                               //引数がない場合
                 if (a2=is_expr(S)) {
                     v=vector_init(2);
                     a1=new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1));           //空のarg_listを作る
                     push(v,(void*)a1);push(v,(void*)a2);
                     return new_ast(AST_LAMBDA,OBJ_UFUNC,v);
-                }
-            }
-        }
+                }//「関数本体がない」というerrorにすること
+            }//「引数リストが)で終わっていない」というエラー
+        }//「'('で始まらない」というエラー
         printf("Syntax error in lambda\n");
         Throw(1);
     }
@@ -828,6 +828,27 @@ ast * is_dcl_expr(TokenBuff*S) {
     t=get_token(S);
     //if (t->type==TOKEN_SYM && strcmp("var",t->source->_table)==0) {
     if (t->type==TOKEN_SYM && (i=string_isin(t->source->_table,dcl_string))!=-1) {
+        if ((t=get_token(S))->type == '(') {
+            v = vector_init(3);
+            if (a=is_arg_list(S)) {
+                if ((t=get_token(S))->type == ')') {
+                    push(v,(void*)a);
+                    if (a = is_expr_list(S)) {
+                        push(v,(void*)a);
+                        return new_ast(AST_DCL_F,i,v);
+                    }
+                    printf("expr_listがありません\n");
+                    Throw(1);
+                }
+                printf("')'が必要\n");Throw(1);
+            } else if ((t=get_token(S))->type == ')') {
+                push(v, new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
+                return new_ast(AST_DCL_F,i,v);
+            } else {
+                printf("')'かarglistが必要\n");Throw(1);
+            }
+        } 
+        unget_token(S); 
         if (a=is_expr_list(S)) {
             v=vector_init(1);
             push(v,(void*)a);

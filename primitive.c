@@ -7,6 +7,8 @@ unsigned long mulmod(unsigned long a,unsigned long b,unsigned long c);
 void * p_exit() {exit(0);}
 void * p_forget(Vector *v) {
     Hash_del(G, (Symbol*)vector_ref(v,0));
+    Hash_del(GLOBAL_VAR, (Symbol*)vector_ref(v,0));
+    Hash_del(PRIMITIVE_FUNC, (Symbol*)vector_ref(v,0));
     return NULL;
 }
 void * p_set_prec(Vector *v) {

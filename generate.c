@@ -1239,7 +1239,7 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
             //    code_s->function_r_type=r_type;code_s->arg_type=v;code_s->dotted=dot;
             //}
             //return code_s;
-        default:printf("jhdjadjaw4yy87wfhwj\n");
+        default:printf("Unknown 'set expr!\n");
     }
 }
 
@@ -1529,12 +1529,12 @@ int main(int argc, char*argv[]) {
         Try {
             if (fp==stdin) putchar('>');fflush(stdout);
             //if (fp==stdin) write(1,PROMPT,1);
-            if ((a=is_expr(S)) && (tk=get_token(S))->type==';') {
+            if ((a=is_expr(S)) && (tk=get_token(S))->type==';') {//printf("parse ok...\n");
                 if (DEBUG) ast_print(a,0);
                 s1_time = clock();clock_gettime(CLOCK_REALTIME,&S1_T);
                 code_s = codegen(a,env,FALSE);//PR(121);
                 code=code_s->code;push(code,(void*)STOP);//PR(122);
-                ct=code_s->ct;type=ct->type;
+                ct=code_s->ct;type=ct->type;//printf("codegen ok...\n");
                 if (DEBUG) {
                     printf("expr type:%d\n",type);
                     if (type==OBJ_UFUNC || type==OBJ_PFUNC ) {
@@ -1543,7 +1543,7 @@ int main(int argc, char*argv[]) {
                     }
                     disassy(code,0,stdout);
                 }
-                s2_time = clock();clock_gettime(CLOCK_REALTIME,&S2_T);
+                s2_time = clock();clock_gettime(CLOCK_REALTIME,&S2_T);//printf("befor eval ok...\n");
                 value = eval(Stack,Env,code,Ret,EEnv,G);
                 e_time = clock();clock_gettime(CLOCK_REALTIME,&E_T);
                 if (fp==stdin) {

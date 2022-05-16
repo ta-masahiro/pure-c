@@ -117,11 +117,11 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
  
     C = tosqs(Code,table);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
-_STARt:
+_STARt://printf("vm strat...\n");
     C->_cp = 0;
     goto * dequeue(C);
     //goto * table[(int)dequeue(C)];
-_STOP:
+_STOP://printf("vm end...\n");
     return pop(S);
 _LDC:
     push(S, dequeue(C));
@@ -712,7 +712,7 @@ _LDF:
     code = (Vector * )dequeue(C);
     cl = vector_init(4);
     push(cl, (void * )FUNC_USER); push(cl, (void * )code); push(cl, (void * )E);
-    push(S, (void * )cl);
+    push(S, (void * )cl);//printf("ldf ok...");
     goto * dequeue(C);
 _VEC:
     n = (long)dequeue(C);
