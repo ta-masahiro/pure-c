@@ -22,7 +22,7 @@ ast * new_ast(ast_type type, obj_type o_type,Vector * table) {
 char* ast_type_str[] = {"None","MultiFunction","If","Set","Lambda","While","Class","Operator2",
                         "Opraor1","VectorRef","VectorSlice","Literal","Variable","Vector",
                         "Dictionary","ApplyFunction","FunctionCall","Exprlist","CallC/C","Propaeity",
-                        "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","for","FunctionDeclear","\0"};
+                        "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","for","FunctionDeclear","FunctionType","\0"};
 
 void ast_print(ast*a, int tablevel) {
     int i;
@@ -44,7 +44,7 @@ void ast_print(ast*a, int tablevel) {
         // ast list type
         case AST_WHILE: case AST_IF: case AST_CLASS: case AST_VREF: case AST_SLS: case AST_VECT: case AST_DICT:
         case AST_DCL:case AST_APPLY: case AST_LAMBDA:case AST_EXP_LIST: case AST_EXP_LIST_DOTS: case AST_ARG_LIST: 
-        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR: case AST_DCL_F:
+        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR: case AST_DCL_F: case AST_FTYPE:
             printf("type:%s\t", ast_type_str[t]);
             printf("objecttype: %d\n",a->o_type);
             if (a->table==NULL) break;
@@ -76,6 +76,7 @@ void ast_print(ast*a, int tablevel) {
         default:printf("Unknown AST\n");Throw(1);
     }
 }
+
 ast *  is_lit(TokenBuff*S) {
     Vector * v;
     ast *a;
@@ -200,17 +201,14 @@ ast * is_factor(TokenBuff *S) {
 }
 
 ast * is_pair(TokenBuff * S) {
-    // pair     : expr ':' expr
+    // pair     = expr ':' expr
+    //          =>
+    // AST_PAIR, none, [left_expr_ast, right_expr_AST]
     ast *a1,*a2;
     token *t;
     Vector * v;
     int token_p = S->buff ->_cp;
 
-    //if ((a1=is_expr(S)) && (t=get_token(S))->type == ':'  && (a2=is_expr(S))) {
-    //    v = vector_init(2);
-    //    push(v,a1);push(v,a2);
-    //    return new_ast(AST_PAIR,OBJ_NONE,v); 
-    // }
     if ((t=get_token(S))->type == ':' && (a1=is_expr(S))) {
         v=vector_init(2);
         push(v,(void*)0);push(v,a1);        
@@ -234,8 +232,9 @@ ast * is_pair(TokenBuff * S) {
 }
 
 ast * is_pair_list(TokenBuff * S) {
-    // pair_list    : pair
-    //              | pair ',' ... pair
+    // pair_list    = pair {',' pair}
+    //              =>
+    // AST_PAIR_LIST, none, [pair, ..., pair]
     ast * a1, * a2;
     token * t1, * t2;
     Vector * v;
@@ -253,7 +252,7 @@ ast * is_pair_list(TokenBuff * S) {
             if (a1 = is_pair(S)) {
                 ;
             } else {
-                printf("Syntax error in pair_list\n");
+                printf("SyntaxError: pair_list中にあるべきpairが見つかりません\n");
                 Throw(1);
             }
         }
@@ -268,7 +267,7 @@ ast * is_expr_list(TokenBuff * S) {
     token * t1, * t2;
     Vector * v;
     int token_p = S->buff ->_cp;
-
+    //printf("in...is_expr_list\n");
     if (a1 = is_expr(S)) {
         v=vector_init(3);
         while (TRUE) {
@@ -290,27 +289,44 @@ ast * is_expr_list(TokenBuff * S) {
     return NULL;
 }
 
-ast * is_expr_list_br(TokenBuff * S) {
-    // exp_list_br  : '(' ')'
-    //                  | '(' exp_list  ')'
-    //                  | '(' exp_list '..' ')'
+ast * is_list_br(TokenBuff * S, char bl, int pair_flg) {
+    // blが'('か'['か、およびpair_flgがTRUEかFALSEかで以下を判定しastを作る
+    //
+    // expr_list_br  = '(' [expr_list] {',' expr_list} ')' 
+    // expr_list_bk  = '[' [expr_list] {',' expr_list} ']' 
+    // pair_list_bk  = '[' [pair_list] {',' pair_list} ']'
+    //
     ast * a1, * a2;
     token * t1;
     Vector * v;
-    if ((get_token(S)->type)=='(') {
-        if (a1 = is_expr_list(S)) {                                                                 // check arg_list
-            if ((t1=get_token(S))->type==')'){                                              //  '(' exp_list ')' ならばそのままAST_ARG_LISTを返す
+    char br;
+    ast * (* is_list)(TokenBuff * S);
+    ast_type terget_ast_type;
+
+    if (bl == '(') br = ')';
+    else if (bl == '[') br = ']';
+    else if (bl == '{') br = '}';
+
+    is_list = (pair_flg) ? is_pair_list : is_expr_list;  
+    terget_ast_type  = (pair_flg) ? AST_PAIR_LIST :AST_EXP_LIST;
+    
+    if ((get_token(S)->type)== bl) {
+        //printf("!!!!!!!!!!!!!!!!!!%c %d\n",br,pair_flg );
+        if (a1 = is_list(S)) {                                                                 // check arg_list
+            if ((t1=get_token(S))->type== br){                                              //  '(' exp_list ')' ならばそのままAST_ARG_LISTを返す
                     return a1;                                                                          //
-            } else if (t1->type=='.'*256+'.' && get_token(S)->type==')') {     //  '(' exp_list '..' ')'ならば 
+            } else if (t1->type=='.'*256+'.' && get_token(S)->type == br) {     //  '(' exp_list '..' ')'ならば 
+                if (pair_flg) {printf("SyntaxError:'%c'が必要です\n", br); Throw(1);}
                 a1->type=AST_EXP_LIST_DOTS;                                            // type をAST_EXP_LIST_DOTSにして返す
                 return a1;
             }
-            printf("SyntaxError:')'または'..'が必要です\n"); Throw(1);
-        } else if (get_token(S)->type==')') {                                               //引数がない場合
-            a1=new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1));                //空のexp_listを作り
+            printf("SyntaxError:'%c'または'..'が必要です\n", br); Throw(1);
+        } else if (get_token(S)->type==br) {                                               //引数がない場合
+            a1=new_ast(terget_ast_type, OBJ_NONE, vector_init(1));                //空のexp_listを作り
             return a1;                                                                                  // それを返す
         }//「引数リストが)で終わっていない」というエラー
-        printf("SyntaxError:')'が必要です\n"); Throw(1);
+        unget_token(S);
+        //printf("SyntaxError:式リストまたは'%c'が必要です\n", br); Throw(1);
     }//「'('で始まらない」というエラー
     //printf("SyntaxError:'('が必要です\n"); Throw(1);
     unget_token(S);
@@ -318,21 +334,18 @@ ast * is_expr_list_br(TokenBuff * S) {
 }
 
 ast * is_arg_list(TokenBuff * S);
-/*
+ast * is_arg_list_br(TokenBuff * S);
+
 ast * is_expr_0(TokenBuff *S) {
     //
     // ※expr_0以下が形式上左辺式に使える
     //
-    // exp_0        : APPLY '(' expr_list ')'
-    //              | factor
-    //              | exp_0 '(' arg_list '..' ')'
-    //              | exp_0 '(' arg_list ')'
-    //              | exp_0 '(' expr_list '..' ')'
-    //              | exp_0 '(' expr_list ')'
-    //              | exp_0 '(' ')'
-    //              | exp_0 '[' expr_list ']'
-    //              | exp_0 '[' pair_list ']'
-    //              | exp_0 '.' exp_0                   // class 
+    // exp_0            = APPLY exp_list_br
+    //                  | factor '.' factor                   // class =>1階層上に移すべし! 
+    //                  | factor {pair_list_bk}
+    //                  | factor {arg_list_br}
+    //                  | factor {expr_list_br}
+    //                  | factor {expr_list_bk}
     ast * a1, * a2;
     token*t;
     tokentype t1,t2;
@@ -348,166 +361,30 @@ ast * is_expr_0(TokenBuff *S) {
         Throw(1);
     }
     unget_token(S);
-    // 
-    if (a1 = is_factor(S)) {
-        //t1 = get_token(S)->type;
-        while (TRUE) {
-            //token_print(S);
-            t1 = get_token(S)->type;
-            if (t1 !='(' && t1 != '[' && t1 != '.') {
-                unget_token(S);
-                return a1;
-            } // factorの後に'.'、'('または'['が続く場合
-            if (t1 == '.') { // class
-                if (a2 = is_expr_0(S)) {
-                    v = vector_init(2);
-                    push(v, (void*)a1); push(v, (void*)a2);
-                    a1 =  new_ast(AST_CLASS_VAR, OBJ_NONE, v);                 // クラス変数
-                    continue;        
-                }
-            }
-            t2 = get_token(S) -> type;
-            if (t1=='(' && t2 == ')'){
-                v = vector_init(2);
-                //push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のexplistを作る
-                push(v, (void * )a1); push(v, new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
-                a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
-                continue;
-            }
-            unget_token(S);
-            if ((a2 = is_pair_list(S)) || (a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
-            //if ((a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
-                t2 = get_token(S) ->type;
-                if ((t1=='(' && t2 == ')') || (t1 == '[' && t2==']')) {
-                    v = vector_init(2);
-                    push(v, (void * )a1); push(v, (void * )a2);
-                    if (t1=='(') {
-                        a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
-                        continue;
-                    } else if (a2->type==AST_PAIR_LIST) {a1= new_ast(AST_SLS,OBJ_NONE,v);continue;}
-                    a1= new_ast(AST_VREF,OBJ_UFUNC, v);continue;
-                } else if (t1=='(' && t2=='.'*256+'.' && get_token(S)->type==')') {
-                    v = vector_init(2);
-                    //push(v, (void * )a1);//expr_list a2の先頭にa1を入れたものをvとすること！！
-                    //for(i=0;i<a2->table->_sp;i++) {
-                    //    push(v, (void*)vector_ref(a2->table,i));
-                    //}
-                    //v1=vector_init(1);push(v1,new_ast(AST_EXP_LIST,v));
-                    //return new_ast(AST_APPLY, v1);
-                    if (a2->type == AST_EXP_LIST) a2->type=AST_EXP_LIST_DOTS;
-                    else if (a2->type == AST_ARG_LIST) a2->type=AST_ARG_LIST_DOTS;
-                    else break;
-                    //a2->type=AST_EXP_LIST_DOTS;
-                    push(v, (void * )a1); push(v, (void * )a2);
-                    a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
-                    continue;
-                }
-            //} else { //空引数のfunction call 
-            //    t2 = get_token(S) -> type;
-            //    if (t1=='(' && t2 == ')'){
-            //        v = vector_init(2);
-            //        push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
-            //        return new_ast(AST_FCALL,OBJ_UFUNC, v);
-            //    }
-            }
-            printf("syntax error in function call/vector\n");
-            Throw(1);
-        }
-    }
-    S->buff -> _cp = token_p;
-    return NULL;
-}
-*/
-ast * is_expr_0(TokenBuff *S) {
     //
-    // ※expr_0以下が形式上左辺式に使える
-    //
-    // exp_0        : APPLY exp_list_br
-    //                  | factor
-    //                  | factor arg_list_br ... arg_list_br
-    //                  | factor exp_list_br ... exp_list_br
-    //                  | factor '[' expr_list ']'
-    //                  | factor '[' pair_list ']'
-    //                  | factor '.' factor                   // class 
-    ast * a1, * a2;
-    token*t;
-    tokentype t1,t2;
-    int token_p = S->buff -> _cp,i;
-    Vector*v,*v1;
-    // applyの処理
-    if ((t=get_token(S))->type==TOKEN_SYM && strcmp(t->source->_table,"apply")==0) {
-        if ((get_token(S)->type =='(') && (a1=is_expr_list(S)) && get_token(S)->type==')') {
-            v=vector_init(1);push(v,(void*)a1);
-            return new_ast(AST_APPLY,OBJ_UFUNC,v);
-        }
-        printf("Syntax error in apply\n");
-        Throw(1);
-    }
-    unget_token(S);
-    // 
     if (a1 = is_factor(S)) {
-        //t1 = get_token(S)->type;
         while (TRUE) {
-            //token_print(S);
-            t1 = get_token(S)->type;
-            if (t1 !='(' && t1 != '[' && t1 != '.') {
-                unget_token(S);
-                return a1;
-            } // factorの後に'.'、'('または'['が続く場合
-            if (t1 == '.') { // class
-                if (a2 = is_expr_0(S)) {
-                    v = vector_init(2);
-                    push(v, (void*)a1); push(v, (void*)a2);
-                    a1 =  new_ast(AST_CLASS_VAR, OBJ_NONE, v);                 // クラス変数
-                    continue;        
-                }
-            }
-            t2 = get_token(S) -> type;
-            if (t1=='(' && t2 == ')'){
+            if (a2 = is_list_br(S,'[',TRUE)) {              // pair_list_bk?...スライス
                 v = vector_init(2);
-                //push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のexplistを作る
-                push(v, (void * )a1); push(v, new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
-                a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
+                push(v, (void*)a1);push(v, (void*)a2);
+                a1 = new_ast(AST_SLS, OBJ_NONE, v);
                 continue;
-            }
-            unget_token(S);
-            if ((a2 = is_pair_list(S)) || (a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
-            //if ((a2 = is_arg_list(S)) || (a2 = is_expr_list(S)) ) {//この順番で調べること！
-                t2 = get_token(S) ->type;
-                if ((t1=='(' && t2 == ')') || (t1 == '[' && t2==']')) {
-                    v = vector_init(2);
-                    push(v, (void * )a1); push(v, (void * )a2);
-                    if (t1=='(') {
-                        a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
-                        continue;
-                    } else if (a2->type==AST_PAIR_LIST) {a1= new_ast(AST_SLS,OBJ_NONE,v);continue;}
-                    a1= new_ast(AST_VREF,OBJ_UFUNC, v);continue;
-                } else if (t1=='(' && t2=='.'*256+'.' && get_token(S)->type==')') {
-                    v = vector_init(2);
-                    //push(v, (void * )a1);//expr_list a2の先頭にa1を入れたものをvとすること！！
-                    //for(i=0;i<a2->table->_sp;i++) {
-                    //    push(v, (void*)vector_ref(a2->table,i));
-                    //}
-                    //v1=vector_init(1);push(v1,new_ast(AST_EXP_LIST,v));
-                    //return new_ast(AST_APPLY, v1);
-                    if (a2->type == AST_EXP_LIST) a2->type=AST_EXP_LIST_DOTS;
-                    else if (a2->type == AST_ARG_LIST) a2->type=AST_ARG_LIST_DOTS;
-                    else break;
-                    //a2->type=AST_EXP_LIST_DOTS;
-                    push(v, (void * )a1); push(v, (void * )a2);
-                    a1= new_ast(AST_FCALL,OBJ_UFUNC, v);
-                    continue;
-                }
-            //} else { //空引数のfunction call 
-            //    t2 = get_token(S) -> type;
-            //    if (t1=='(' && t2 == ')'){
-            //        v = vector_init(2);
-            //        push(v, (void * )a1); push(v, new_ast(AST_EXP_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
-            //        return new_ast(AST_FCALL,OBJ_UFUNC, v);
-            //    }
-            }
-            printf("syntax error in function call/vector\n");
-            Throw(1);
+            } else if (a2 = is_arg_list_br(S)) {            // arg_list_br?...関数定義
+                v = vector_init(2);
+                push(v, (void*)a1);push(v, (void*)a2);
+                a1 = new_ast(AST_FCALL, OBJ_NONE, v);
+                continue;
+            } else if (a2 = is_list_br(S, '(', FALSE)) {    // expr_list_br?...関数呼び出し
+                v = vector_init(2);
+                push(v, (void*)a1);push(v, (void*)a2);
+                a1 = new_ast(AST_FCALL, OBJ_NONE, v);
+                continue;
+            } else if (a2 = is_list_br(S, '[', FALSE)) {    // expr_list_bk?...添字参照
+                v = vector_init(2);
+                push(v, (void*)a1);push(v, (void*)a2);
+                a1 = new_ast(AST_VREF, OBJ_NONE, v);
+                continue;
+            } else return a1;
         }
     }
     S->buff -> _cp = token_p;
@@ -517,8 +394,10 @@ ast * is_expr_0(TokenBuff *S) {
 #define max(a,b) (a ? a >= b: b)
 
 ast * is_expr_1(TokenBuff *S) {
-    // expr_1       : expr_0
-    //              : expr_0 '**' expr_1
+    // expr_1       = expr_0
+    //              | expr_0 '**' expr_1
+    //              =>
+    // AST_2OP, op_type, [left_expr_ast, right_expr_ast]
     ast*a1,*a2;
     tokentype t;
     int token_p = S->buff->_cp;
@@ -540,8 +419,10 @@ ast * is_expr_1(TokenBuff *S) {
 }
 
 ast * is_expr_2(TokenBuff * S) {
-    // expr_2       : expr_1
-    //              | [-|~|@] expr_2
+    // expr_2       = expr_1
+    //              | (-|~|@) expr_2
+    //              =>
+    // AST_1OP, op_type, [expr_ast]
     ast * a;
     tokentype t;
     int token_p = S->buff ->_cp;
@@ -565,8 +446,9 @@ ast * is_expr_2(TokenBuff * S) {
 }
 
 ast * is_expr_3(TokenBuff * S) {
-    // expr_incdec  : expr_2  [--|++|->]
-    //              | expr_2 
+    // expr_3       = expr_2 {(--|++|->)}
+    //              =>
+    // AST_1OP, op_type, [expr_AST]
     ast * a;
     tokentype t;
     int token_p = S->buff ->_cp;
@@ -586,13 +468,7 @@ ast * is_expr_3(TokenBuff * S) {
     S->buff->_cp=token_p;
     return NULL;
 }
-/*
-ast * is_expr_4(Stream * S) {
-    // expr_pow : expr_incdec '**' expr_pow
-    //          | expr_incdec
-    return is_expr_3(S);
-}
-*/
+
 int* is_in(int*s,void* v) {
     int i=0;//printf("value:%ld\n",(long)v);
     while (TRUE) { //printf("check:%d\n",s[i]);
@@ -601,6 +477,7 @@ int* is_in(int*s,void* v) {
         i++;
     }
 }
+
 int op_type[][7]={  {0}, {0}, {0}, {0}, {'<'*256+'-',0},
     {'*','/','/'*256+'/','%',0},      {'+','-',0}, {'<'*256+'<','>'*256+'>',0},
     {'&',0}, {'^',0}, {'|',0},        {'<','<'*256+'=','>','>'*256+'=','!'*256+'=','='*256+'=',0},
@@ -608,9 +485,9 @@ int op_type[][7]={  {0}, {0}, {0}, {0}, {'<'*256+'-',0},
 };
 
 ast * is_expr_2n(TokenBuff * S,int n) {
-    // expr_n       : expr_n-1
-    //              | expr_n-1 op_type expr_n-1 op_type ...
-    //
+    // expr_n       = expr_n-1 {2op expr_n-1}
+    //      =>
+    // AST_2OP, type, [left_expr_ast, right_expr_ast]
     ast * a1, * a2;
     tokentype t;
     int *tp;
@@ -663,57 +540,69 @@ int string_isin(char* s,char* table[]) {
 
 ast * is_arg_list_br(TokenBuff *);
 
-ast * is_type(TokenBuff * S) {
-    // 「型」指定構文かどうかを判定する　※arg_list内でしか呼ばれない
-    // type  : dcl_string ? arg_list_br * expr　
+ast * is_arg(TokenBuff * S, int dcl_flg) {
+    // 「型」指定構文かどうかを判定する　※arg_listおよびdeclearで呼ばる
+    // arg          = [dcl_string] arg_list_br {arg_list_br}  expr　
     // 
-    ast * a;
+    ast * a, * a1, * type_ast = NULL;
     token * t;
+    Vector * v;
     int i;
     obj_type o_type;
     ast_type a_type;
+    int token_p = S->buff -> _cp;
     if ((t =get_token(S))->type == TOKEN_SYM) {
-        if ((i = string_isin(t->source->_table, dcl_string)) != -1) o_type = i; else {unget_token(S); o_type = OBJ_GEN;}
+        if ((i = string_isin(t->source->_table, dcl_string)) != -1) o_type = i; 
+        else if (dcl_flg) {S->buff->_cp = token_p;return NULL;}                 // declearから呼ばれたときは型指定文字が必要
+        else {unget_token(S); o_type = OBJ_GEN;}                                // それ以外(arg_list)から呼ばれたときは型指定文字を省略可
+
         if (a = is_arg_list_br(S)) {
-        
-        
-        
+            while (TRUE) {
+                v = vector_init(1);
+                push(v, (void*)a);
+                if ((a1 = is_arg_list_br(S)) == 0) {
+                    type_ast = new_ast(AST_FTYPE, o_type, v);
+                    break; 
+                }
+                push(v, (void * )a1 );
+                a = new_ast(AST_FTYPE, OBJ_NONE, v) ;
+            }
         }
-    }    
+        if (a1 = is_expr(S)) {
+            if (type_ast == NULL) {a1->o_type = o_type; return a1;}
+            push(type_ast->table, a1);
+            return type_ast;
+        }
+        //printf("SyntaxError式が必要です\n"); Throw(1);
+    }
+    S->buff -> _cp = token_p;
+    return NULL;    
 }
 
 ast * is_arg_list(TokenBuff * S) {
-    // arg_list     : dcl_expr ',' arg_list
-    //              | dcl_expr
-    ast * a1, * a2;
+    // arg_list           = arg {',' arg}
+    // 
+    ast * a, * a1;
     token *t,* t1, * t2;
     Vector * v;
     int i,token_p = S->buff->_cp;
     obj_type o_type;
-    //if (a1 = is_dcl_expr(S)) {
-    if ((t=get_token(S))->type == TOKEN_SYM) {
-        if ((i=string_isin(t->source->_table,dcl_string))!=-1) o_type=i; else {unget_token(S);o_type=OBJ_GEN;} 
-        if (a1=is_expr(S)) {
-            a1->o_type=o_type;
-            v=vector_init(3);
-            while (TRUE) {
-                if ((t1 = get_token(S)) ->type != ',') {
-                    unget_token(S);
-                    push(v,(void*)a1);
-                    return new_ast(AST_ARG_LIST,OBJ_NONE,v);
-                }
-                push(v,(void*)a1);
-                //if (a1 = is_dcl_expr(S)) {
-                if ((t=get_token(S))->type==TOKEN_SYM) { 
-                    if ((i=string_isin(t->source->_table,dcl_string))!=-1) o_type=i; else {unget_token(S);o_type=OBJ_GEN;} 
-                    if (a1=is_expr(S)) {
-                        a1->o_type=o_type;
-                        continue;
-                    }
-                } 
-                S->buff -> _cp = token_p;
-                return NULL;
+    if (a = is_arg(S, FALSE)) {
+        v = vector_init(1);
+        while (TRUE) {
+            if (get_token(S)->type != ',') {
+                unget_token(S);
+                push(v,  (void*)a);
+                return new_ast(AST_ARG_LIST, OBJ_NONE, v);
             }
+            push(v, (void*)a);
+            if (a = is_arg(S, FALSE)) {
+                continue;
+            }
+            //printf("SyntaxError:型指定式が必要です\n"); Throw(1);
+            //S->buff -> _cp = token_p;
+            //return NULL;
+            break;
         }
     }
     S->buff -> _cp = token_p;
@@ -721,77 +610,33 @@ ast * is_arg_list(TokenBuff * S) {
 }
 
 ast * is_arg_list_br(TokenBuff *S) {
-    // arg_list_br  : '(' ')'
+    // arg_list_br      = '(' ')'
     //                  | '(' arg_list  ')'
     //                  | '(' arg_list '..' ')'
     ast * a1, * a2;
     token * t1;
     Vector * v;
     if ((get_token(S)->type)=='(') {
-        if (a1 = is_arg_list(S)) {                                                                  // check arg_list
-            if ((t1=get_token(S))->type==')'){                                              //  '(' arg_list ')' ならばそのままAST_ARG_LISTを返す
-                    return a1;                                                                          //
-            } else if (t1->type=='.'*256+'.' && get_token(S)->type==')') {     //  '(' arg_list '..' ')'ならば 
-                a1->type=AST_ARG_LIST_DOTS;                                            // type をAST_ARG_LIST_DOTSにして返す
+        if (a1 = is_arg_list(S)) {                                          // check arg_list
+            if ((t1=get_token(S))->type==')'){                              //  '(' arg_list ')' ならばそのままAST_ARG_LISTを返す
+                    return a1;                                              //
+            } else if (t1->type=='.'*256+'.' && get_token(S)->type==')') {  //  '(' arg_list '..' ')'ならば 
+                a1->type=AST_ARG_LIST_DOTS;                                 // type をAST_ARG_LIST_DOTSにして返す
                 return a1;
             }
             printf("SyntaxError:')'または'..'が必要です\n"); Throw(1);
-        } else if (get_token(S)->type==')') {                                               //引数がない場合
-            a1=new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1));                //空のarg_listを作り
-            return a1;                                                                                  // それを返す
+        } else if (get_token(S)->type==')') {                               //引数がない場合
+            a1=new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1));               //空のarg_listを作り
+            return a1;                                                      // それを返す
         }//「引数リストが)で終わっていない」というエラー
-        printf("SyntaxError:')'が必要です\n"); Throw(1);
+        //printf("SyntaxError:arg listが必要です\n"); Throw(1);
+        unget_token(S);
     }//「'('で始まらない」というエラー
     //printf("SyntaxError:'('が必要です\n"); Throw(1);
     unget_token(S);
     return NULL;
 }
-/*
-ast * is_lambda_expr(TokenBuff *S) {
-    // lambda_expr  : lambda ( expr_list ..) expr
-    //              | lambda ( expr_list ) expr
-    //              | lambda ( ) expr
-    ast * a1, * a2;
-    token*t,*t1 ;
-    Vector * v;
-    int token_p = S->buff->_cp;
 
-    t=get_token(S);
-    if ((t->type)==TOKEN_SYM && strcmp("lambda",t->source->_table)==0) {
-        if ((get_token(S)->type)=='(') {
-            //if (a1=is_expr_list(S)) {
-            if (a1=is_arg_list(S)) {                    // check arg_list
-                if ((t1=get_token(S))->type==')'){
-                    if (a2=is_expr(S)) {
-                        v=vector_init(2);
-                        push(v,(void*)a1);push(v,(void*)a2);
-                        return new_ast(AST_LAMBDA,a2->o_type,v);
-                    }//「関数本体がない」というerrorにすること
-                } else if (t1->type=='.'*256+'.' && get_token(S)->type==')') {
-                    //a1->type=AST_EXP_LIST_DOTS;
-                    a1->type=AST_ARG_LIST_DOTS;
-                    if (a2=is_expr(S)) {
-                        v=vector_init(2);
-                        push(v,(void*)a1);push(v,(void*)a2);
-                        return new_ast(AST_LAMBDA,a2->o_type,v);
-                    }//「関数本体がない」というerrorにすること
-                }// 「')'または'...)'で終わっていない」というerrorにすること
-            } else if (get_token(S)->type==')') {                               //引数がない場合
-                if (a2=is_expr(S)) {
-                    v=vector_init(2);
-                    a1=new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1));           //空のarg_listを作る
-                    push(v,(void*)a1);push(v,(void*)a2);
-                    return new_ast(AST_LAMBDA,OBJ_UFUNC,v);
-                }//「関数本体がない」というerrorにすること
-            }//「引数リストが)で終わっていない」というエラー
-        }//「'('で始まらない」というエラー
-        printf("Syntax error in lambda\n");
-        Throw(1);
-    }
-    S->buff->_cp=token_p;
-    return NULL;
-}
-*/
 ast * is_lambda_expr(TokenBuff *S) {
     // lambda_expr  : lambda ( expr_list ..) expr
     //                      | lambda ( expr_list ) expr
@@ -817,6 +662,43 @@ ast * is_lambda_expr(TokenBuff *S) {
     return NULL;
 }
 
+char      *sp_exp_string[]  = {"if",  "while",   "for",   "loop",   NULL};
+ast_type sp_exp_ast_type[]  = {AST_IF, AST_WHILE, AST_FOR, AST_LOOP     };
+
+ast * is_special_expr(TokenBuff *S, char delm) {
+    // sp_exp   = <key_word> expr {':' expr}
+    //          =>
+    // AST_<key_word>, none, [expr_ast, ..., expr_ast]
+    token * t;
+    int i;
+    ast * a, * a1;
+    ast_type a_type;
+    Vector * v = vector_init(1);
+    int token_p = S->buff -> _cp;
+
+    if ((t =get_token(S))->type == TOKEN_SYM) {
+        if ((i = string_isin(t->source->_table, sp_exp_string)) != -1) {
+            a_type = sp_exp_ast_type[i];
+            if (a = is_expr(S)) {
+                push(v, (void*)a);
+                while (TRUE) {
+                    if (get_token(S)->type != delm) {
+                        unget_token(S);
+                        //push(v, (void *)a);
+                        return new_ast(a_type, OBJ_NONE, v);
+                    }
+                    if (a = is_expr(S)) {
+                        push(v, (void*)a);
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+    S->buff->_cp=token_p;
+    return NULL;
+}
+/*
 ast*is_if_expr(TokenBuff *S) {
     // if_expr  : if expr : expr : expr
     ast*a1,*a2,*a3;
@@ -974,23 +856,21 @@ ast*is_loop_expr(TokenBuff *S) {
     S->buff->_cp=token_p;
     return NULL;
 }
-
-//int set_op[]={'=','*'*256+'=','/'*256+'=','%'*256+'=','+'*256+'=','-'*256+'=', '|'*256+'=',0};
+*/
 
 ast * is_set_expr(TokenBuff * S) {
-    // set_expr : expr_0 [=|+=|-=|*=|/=] expr
+    // set_expr = expr_0 ('='|'+='|'-='|'*='|'/='|'%='|'|='|'&='|'^='|'>>='|'<<=') expr
+    //      =>
+    // AST_SET,[type of set, ast of left_expr, ast of right_expr]
     ast* a1,*a2;
     tokentype  t;
     Vector*v;
     int token_p = S->buff->_cp;
-    //if ((a1 = is_expr_0(S)) && (t=*is_in(set_op, (void*)get_token(S)->type)) && (a2 = is_expr(S))) {
-    if ((a1=is_expr_0(S)) &&
-            ((t=get_token(S)->type)=='=' ||
-                          t=='+'*256+'=' || t=='-'*256+'=' || t=='*'*256+'=' || t=='/'*256+'=' || t=='%'*256+'=' || 
-                          t=='|'*256+'=' || t=='&'*256+'=' || t=='^'*256+'=' ||
-                          t=='>'*65536+'>'*256+'=' || t== '<'*65536+'<'*256+'=') &&
-            //( ((t=get_token(S)->type) & 255) == '=' ) && 
-            (a2=is_expr(S))) {
+
+    if ((a1=is_expr_0(S)) &&      ((t=get_token(S)->type)=='=' ||
+            t=='+'*256+'=' || t=='-'*256+'=' || t=='*'*256+'=' || t=='/'*256+'=' || 
+            t=='%'*256+'=' || t=='|'*256+'=' || t=='&'*256+'=' || t=='^'*256+'=' ||
+            t=='>'*65536+'>'*256+'=' || t== '<'*65536+'<'*256+'=') && (a2=is_expr(S))) {
         v=vector_init(3);
         push(v,(void*)t); push(v,(void*)a1); push(v,(void*)a2);
         return new_ast(AST_SET,a1->o_type,v);
@@ -1000,42 +880,30 @@ ast * is_set_expr(TokenBuff * S) {
 }
 
 ast * is_dcl_expr(TokenBuff*S) {
-    int i;
-    ast*a;
+    // dcl_expr = arg [','expr_list]
+    //      =>
+    // AST_DCL,type of arg,[AST_EXP_LIST]
+    ast * a, * a1;
     token*t;
-    Vector*v;
+    Vector*v = vector_init(1);
     int token_p = S->buff->_cp;
 
-    t=get_token(S);
-    //if (t->type==TOKEN_SYM && strcmp("var",t->source->_table)==0) {
-    if (t->type==TOKEN_SYM && (i=string_isin(t->source->_table,dcl_string))!=-1) {
-        if ((t=get_token(S))->type == '(') {
-            v = vector_init(3);
-            if (a=is_arg_list(S)) {
-                if ((t=get_token(S))->type == ')') {
-                    push(v,(void*)a);
-                    if (a = is_expr_list(S)) {
-                        push(v,(void*)a);
-                        return new_ast(AST_DCL_F,i,v);
-                    }
-                    printf("expr_listがありません\n");
-                    Throw(1);
-                }
-                printf("')'が必要\n");Throw(1);
-            } else if ((t=get_token(S))->type == ')') {
-                push(v, new_ast(AST_ARG_LIST,OBJ_NONE,vector_init(1)));//空のarglistを作る
-                return new_ast(AST_DCL_F,i,v);
-            } else {
-                printf("')'かarglistが必要\n");Throw(1);
+    if (a = is_arg(S, TRUE)) { //printf("arg...ok\n");
+        //
+        if (get_token(S)->type == ',') {
+            if (a1 = is_expr_list(S)) {
+                vector_insert(a1->table, 0, a);
+                push(v, (void *)a1);
+                return new_ast(AST_DCL, a->o_type, v);
             }
-        } 
-        unget_token(S); 
-        if (a=is_expr_list(S)) {
-            v=vector_init(1);
-            push(v,(void*)a);
-            return new_ast(AST_DCL,i,v);
+            printf("SYnraxError:式リストが必要です\n");Throw(1);
         }
-    } //printf("!!!\n");
+        unget_token(S);
+        push(v, (void *)a);
+        a1 = new_ast(AST_EXP_LIST, OBJ_NONE,v);
+        v = vector_init(1);push(v, (void*)a1);
+        return new_ast(AST_DCL, a->o_type, v);
+    }
     S->buff->_cp=token_p;
     return NULL;
 }
@@ -1066,11 +934,12 @@ ast * is_expr(TokenBuff *S) {
     unget_token(S);
     if (a = is_dcl_expr(S)) return a;
     if (a = is_set_expr(S)) return a;
-    if (a = is_if_expr(S)) return a;
+    //if (a = is_if_expr(S)) return a;
     if (a = is_lambda_expr(S)) return a;
-    if (a = is_while_expr(S)) return a;
-    if (a = is_for_expr(S)) return a;
-    if (a = is_loop_expr(S)) return a;
+    //if (a = is_while_expr(S)) return a;
+    //if (a = is_for_expr(S)) return a;
+    //if (a = is_loop_expr(S)) return a;
+    if (a = is_special_expr(S, ':')) return a;
     if (a = is_class_def_expr(S)) return a;
     //if (a = is_expr_6(S)) return a;
     if (a = is_expr_2n(S,14)) return a;
@@ -1102,8 +971,9 @@ ast *  is_ml_expr(TokenBuff * S ) {
     return NULL;
 }
 ast * is_ml_expr_list(TokenBuff * S) {
-    // expr_list    : expr ',' expr_list
-    //              | expr
+    // ml_expr_list = expr {',' expr}
+    //              =>
+    // AST_EXP_LIST, non, [expr_ast, ..., expr_ast]
     ast * a1, * a2;
     token * t1, * t2;
     Vector * v;

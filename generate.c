@@ -1010,6 +1010,7 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
 }
 
 code_ret * codegen_while(ast *while_ast, Vector *env, int tail){
+    if (while_ast->table->_sp < 2) {printf("SyntaxError:while中の式の個数が正しくありません\n"); Throw(0);}
     code_ret *code_s = codegen(vector_ref(while_ast->table, 0), env, FALSE);
     if (code_s->ct->type != OBJ_INT ) {printf("SyntaxError:Must be Cond code!\n");Throw(0);}
     Vector * code = code_s->code; long n = vector_length(code);
@@ -1024,6 +1025,7 @@ code_ret * codegen_while(ast *while_ast, Vector *env, int tail){
 }
 
 code_ret * codegen_for(ast *for_ast, Vector *env, int tail){
+    if (for_ast->table->_sp < 3) {printf("SyntaxError:for中の式の個数が正しくありません\n"); Throw(0);}
     // init astの処理
     code_ret *code_s = codegen(vector_ref(for_ast->table, 0), env, tail);  // init ast
     Vector *code = code_s->code;push(code, (void*)DROP);
@@ -1066,8 +1068,15 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
     //code_s1 = codegen(vector_ref(a->table,2),env,tail);             // make false_code
     //Vector *code2=code_s1->code;code_type *ct2=code_s1->ct;
     //if (tail) push(code,(void*)TSEL); else push(code,(void*)SEL);
-    Vector *code1, *code2;
+    Vector *code1, *code2,* v;
     code_type *ct1, *ct2;
+    int n;
+
+    if ((n = a->table->_sp) < 2 ) {printf("SyntaxError:IF式中の式個数が正しくありません\n"); Throw(0);}
+    if (a->table->_sp < 3) {
+        v = vector_init(1);push(v,(void*)new_symbol("None",4));         // "None"を返したと同じにする
+        push(a->table, (void*)new_ast(AST_VAR, OBJ_NONE, v));
+    }
 
     if (tail) {
         code_s1 = codegen(vector_ref(a->table,1),env,TRUE);             // make true_code
