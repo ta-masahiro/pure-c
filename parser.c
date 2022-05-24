@@ -312,18 +312,18 @@ ast * is_list_br(TokenBuff * S, char bl, int pair_flg) {
     
     if ((get_token(S)->type)== bl) {
         //printf("!!!!!!!!!!!!!!!!!!%c %d\n",br,pair_flg );
-        if (a1 = is_list(S)) {                                                                 // check arg_list
-            if ((t1=get_token(S))->type== br){                                              //  '(' exp_list ')' ならばそのままAST_ARG_LISTを返す
-                    return a1;                                                                          //
-            } else if (t1->type=='.'*256+'.' && get_token(S)->type == br) {     //  '(' exp_list '..' ')'ならば 
+        if (a1 = is_list(S)) {                                                          // check arg_list
+            if ((t1=get_token(S))->type== br){                                          //  '(' exp_list ')' ならばそのままAST_ARG_LISTを返す
+                    return a1;                                                          //
+            } else if (t1->type=='.'*256+'.' && get_token(S)->type == br) {             //  '(' exp_list '..' ')'ならば 
                 if (pair_flg) {printf("SyntaxError:'%c'が必要です\n", br); Throw(1);}
-                a1->type=AST_EXP_LIST_DOTS;                                            // type をAST_EXP_LIST_DOTSにして返す
+                a1->type=AST_EXP_LIST_DOTS;                                             // type をAST_EXP_LIST_DOTSにして返す
                 return a1;
             }
             printf("SyntaxError:'%c'または'..'が必要です\n", br); Throw(1);
-        } else if (get_token(S)->type==br) {                                               //引数がない場合
-            a1=new_ast(terget_ast_type, OBJ_NONE, vector_init(1));                //空のexp_listを作り
-            return a1;                                                                                  // それを返す
+        } else if (get_token(S)->type==br) {                                            //引数がない場合
+            a1=new_ast(terget_ast_type, OBJ_NONE, vector_init(1));                      //空のexp_listを作り
+            return a1;                                                                  // それを返す
         }//「引数リストが)で終わっていない」というエラー
         unget_token(S);
         //printf("SyntaxError:式リストまたは'%c'が必要です\n", br); Throw(1);
@@ -341,7 +341,6 @@ ast * is_expr_0(TokenBuff *S) {
     // ※expr_0以下が形式上左辺式に使える
     //
     // exp_0            = APPLY exp_list_br
-    //                  | factor '.' factor                   // class =>1階層上に移すべし! 
     //                  | factor {pair_list_bk}
     //                  | factor {arg_list_br}
     //                  | factor {expr_list_br}
@@ -391,11 +390,36 @@ ast * is_expr_0(TokenBuff *S) {
     return NULL;
 }
 
+ast * is_expr_05(TokenBuff *S) {
+    //  expr_05     = expr_0 {'.' expr_0}                   ドット演算子
+    //              =>
+    //  AST_2OP, '.'type, [left_expr_ast, right_expr_ast]
+    ast * a, * a1;
+    Vector * v;
+    if (a = is_expr_0(S)) {
+        while (TRUE) {
+            if (get_token(S)->type != '.') {
+                unget_token(S);
+                return a;
+            }
+            if (a1 = is_expr_0(S)) {
+                v = vector_init(3);
+                push(v, (void*)(long)'.'); push(v, (void*)a); push(v, (void*)a1);
+                a = new_ast(AST_2OP, OBJ_NONE, v);
+            } else {
+                printf("Syntax error! not expression\n");
+                Throw(1);
+            }
+        }
+    }
+    return NULL;
+}
+
 #define max(a,b) (a ? a >= b: b)
 
 ast * is_expr_1(TokenBuff *S) {
-    // expr_1       = expr_0
-    //              | expr_0 '**' expr_1
+    // expr_1       = expr_05
+    //              | expr_05 '**' expr_1
     //              =>
     // AST_2OP, op_type, [left_expr_ast, right_expr_ast]
     ast*a1,*a2;
@@ -403,7 +427,7 @@ ast * is_expr_1(TokenBuff *S) {
     int token_p = S->buff->_cp;
     Vector*v;
     int op='*'*256+'*';
-    if (a1=is_expr_0(S)) {
+    if (a1=is_expr_05(S)) {
         if (t=(get_token(S)->type) != op) {
             unget_token(S);
             return a1;
@@ -929,10 +953,9 @@ ast * is_class_def_expr(TokenBuff *S) {
 
 ast * is_expr(TokenBuff *S) {
     ast * a;
-    //if (get_token(S) == NULL) return NULL;  // tokenがない場合
-    if (get_token(S)->type == TOKEN_EOF) return NULL;  // tokenがない場合
-    unget_token(S);
-    if (a = is_dcl_expr(S)) return a;
+    //if (get_token(S)->type == TOKEN_EOF) return NULL;  // tokenがない場合
+    //unget_token(S);
+    //if (a = is_dcl_expr(S)) return a;
     if (a = is_set_expr(S)) return a;
     //if (a = is_if_expr(S)) return a;
     if (a = is_lambda_expr(S)) return a;
@@ -948,7 +971,17 @@ ast * is_expr(TokenBuff *S) {
        is_while_expr(p)    ||
        is_and_or_expr(p)   ||
        return NULL;*/
-    //if (get_token(S) == NULL) return NULL;  // tokenがない場合
+    //printf("SyntaxErroor:Not a exprssion!\n");
+    //Throw(1);
+    return NULL;
+}
+
+ast * is_expr_ex(TokenBuff *S) {
+    ast * a;
+    if (get_token(S)->type == TOKEN_EOF) return NULL;  // tokenがない場合
+    unget_token(S);
+    if (a = is_dcl_expr(S)) return a;                   // dcl式はtopレベルでしか定義されないので(mlを除く)exprから外す
+    if (a = is_expr(S)) return a;
     printf("SyntaxErroor:Not a exprssion!\n");
     Throw(1);
 }
@@ -979,7 +1012,8 @@ ast * is_ml_expr_list(TokenBuff * S) {
     Vector * v;
     int token_p = S->buff ->_cp;
 
-    if (a1 = is_expr(S)) {
+    //if (a1 = is_expr(S)) {
+    if (a1 = is_expr_ex(S)) {                                   // mlの最上位にはdcl式を許す
         v=vector_init(3);
         while (TRUE) {
             if ((t1 = get_token(S)) ->type != ';') {
@@ -988,7 +1022,7 @@ ast * is_ml_expr_list(TokenBuff * S) {
                 return new_ast(AST_EXP_LIST,a1->o_type,v);
             }
             push(v,(void*)a1);
-            if (a1 = is_expr(S)) {
+            if (a1 = is_expr_ex(S)) {                           // mlの最上位にはdclを許す
                 ;
             } else {
                 printf("Syntax error in ml_expr_list\n");

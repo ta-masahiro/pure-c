@@ -953,7 +953,7 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
                 code_s = codegen_set(ast_j,env,tail);                                       // ast_jは型宣言詞抜きのset astなので型情報がセットされた上でcode化
                 code = code_s->code;//disassy(code,0,stdout);
                 push(code,(void*)DROP);                                                     // declear式は値を返さない;
-            }else {
+            } else {
                 printf("SyntaxError:IllegalDecleartype!\n");
                 Throw(1);
             }
@@ -972,6 +972,9 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
             //
             push(code,(void*)LDC);push(code,create_zero(OBJ_UFUNC));                // 「0」で初期化しておく
             push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
+        } else if (ast_j->type == AST_FTYPE) {                                      // 左辺式がAST_FTYPE 即ち関数を返す関数との宣言
+            //printf("FTYPEが呼ばれたよ！\n");Throw(0);
+            // ast_j:AST_FTYPE type,[arg_list, expr]
         } else {                                                                    // 宣言詞の後に続くのは変数(var),関数呼び出し(fcall)≒関数宣言 以外にない
             printf("SyntaxError:IllegalDecleaition!\n");
             Throw(0);
@@ -1447,7 +1450,8 @@ code_ret * str_compile(Symbol * s) {
     TokenBuff * SS = new_str_tokenbuff(s);
     ast * a ;
     Vector * env = vector_init(10);
-    if ((a = is_expr(SS)) && get_token(SS)->type == ';') return codegen(a,env,FALSE);
+    //if ((a = is_expr(SS)) && get_token(SS)->type == ';') return codegen(a,env,FALSE);
+    if ((a = is_expr_ex(SS)) && get_token(SS)->type == ';') return codegen(a,env,FALSE);
     else return NULL;
 }
 
@@ -1467,7 +1471,7 @@ void code_load(FILE *f) {
     ast *a;Vector * env = vector_init(10);
     TokenBuff * SS = new_tokenbuff(f);
     while (TRUE) {
-        if ((a = is_expr(SS)) && get_token(SS)->type == ';' ){
+        if ((a = is_expr_ex(SS)) && get_token(SS)->type == ';' ){
             //Vector * env = vector_init(10);
             code_eval(codegen(a,env,FALSE));
         } else break;
@@ -1538,7 +1542,7 @@ int main(int argc, char*argv[]) {
         Try {
             if (fp==stdin) putchar('>');fflush(stdout);
             //if (fp==stdin) write(1,PROMPT,1);
-            if ((a=is_expr(S)) && (tk=get_token(S))->type==';') {//printf("parse ok...\n");
+            if ((a=is_expr_ex(S)) && (tk=get_token(S))->type==';') {//printf("parse ok...\n");
                 if (DEBUG) ast_print(a,0);
                 s1_time = clock();clock_gettime(CLOCK_REALTIME,&S1_T);
                 code_s = codegen(a,env,FALSE);//PR(121);
@@ -1564,10 +1568,10 @@ int main(int argc, char*argv[]) {
             }  else {
                 //if (a==NULL) {//printf("file end!!\n");
                 if (a == NULL || tk-> type == TOKEN_EOF ) {
-                    //exit(0);
                     fclose(fp);
-                    fp=stdin;S=new_tokenbuff(fp);
-                    if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");
+                    //fp=stdin;S=new_tokenbuff(fp);
+                    //if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");
+                    exit(0);
                 } else {
                     printf("SyntaxErroor:Not a exprssion!\n");
                     Throw(1);
