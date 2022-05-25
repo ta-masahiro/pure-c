@@ -568,12 +568,14 @@ ast * is_arg(TokenBuff * S, int dcl_flg) {
     // 「型」指定構文かどうかを判定する　※arg_listおよびdeclearで呼ばる
     // arg          = [dcl_string] arg_list_br {arg_list_br}  expr　
     // 
-    ast * a, * a1, * type_ast = NULL;
+    ast * a, * a1;
     token * t;
     Vector * v;
     int i;
     obj_type o_type;
     ast_type a_type;
+    int ftype_flg = FALSE;
+
     int token_p = S->buff -> _cp;
     if ((t =get_token(S))->type == TOKEN_SYM) {
         if ((i = string_isin(t->source->_table, dcl_string)) != -1) o_type = i; 
@@ -581,21 +583,21 @@ ast * is_arg(TokenBuff * S, int dcl_flg) {
         else {unget_token(S); o_type = OBJ_GEN;}                                // それ以外(arg_list)から呼ばれたときは型指定文字を省略可
 
         if (a = is_arg_list_br(S)) {
+            ftype_flg = TRUE;
+             v=vector_init(1);
+             push(v, a);
             while (TRUE) {
-                v = vector_init(1);
-                push(v, (void*)a);
-                if ((a1 = is_arg_list_br(S)) == 0) {
-                    type_ast = new_ast(AST_FTYPE, o_type, v);
+                if ((a = is_arg_list_br(S)) == 0) {
+                    //type_ast = new_ast(AST_ARG_LIST, o_type, v);
                     break; 
                 }
-                push(v, (void * )a1 );
-                a = new_ast(AST_FTYPE, OBJ_NONE, v) ;
+                push(v, (void * )a);
             }
         }
         if (a1 = is_expr(S)) {
-            if (type_ast == NULL) {a1->o_type = o_type; return a1;}
-            push(type_ast->table, a1);
-            return type_ast;
+            if (ftype_flg == FALSE) {a1->o_type = o_type; return a1;}
+            push(v, a1);
+            return new_ast(AST_FTYPE, o_type,v);
         }
         //printf("SyntaxError式が必要です\n"); Throw(1);
     }

@@ -130,6 +130,24 @@ code_type * new_ct(obj_type type, code_type frt, Vector*at,int dot ) {
     return ct;
 }
 */
+int ct_eq(code_type * ct1, code_type * ct2) {
+    if (ct1 == ct2) return TRUE;
+    if (ct1->type == ct2->type && ct1->functon_ret_type == ct2->functon_ret_type && ct1->arg_type->_sp == ct2->arg_type->_sp) {
+        for (int i=0;i<ct1->arg_type->_sp;i++) if (ct1->arg_type->_table[i] != ct2->arg_type->_table[i]) return FALSE;
+        return TRUE;
+    }
+    return FALSE;
+}
+/*
+int ct_eq(code_type * ct1, code_type * ct2) {
+    if (ct1 == ct2) return TRUE;
+    if (ct1->type == ct2->type && ct_eq(ct1->functon_ret_type, ct2->functon_ret_type) && ct1->arg_type->_sp == ct2->arg_type->_sp) {
+        for (int i=0;i<ct1->arg_type->_sp;i++) if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i])==FALSE) return FALSE;
+        return TRUE;
+    }
+    return FALSE;
+}
+*/
 void* code_type_print(code_type*ct) {
     printf("Type: %s",dcl_string[ct->type]);
     if (ct->type == OBJ_UFUNC) {
@@ -973,8 +991,11 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
             push(code,(void*)LDC);push(code,create_zero(OBJ_UFUNC));                // 「0」で初期化しておく
             push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
         } else if (ast_j->type == AST_FTYPE) {                                      // 左辺式がAST_FTYPE 即ち関数を返す関数との宣言
-            //printf("FTYPEが呼ばれたよ！\n");Throw(0);
-            // ast_j:AST_FTYPE type,[arg_list, expr]
+            printf("FTYPEが呼ばれたよ！\n");Throw(0);
+            // ast_j:AST_FTYPE type,[arg_list, ..., arg_list, expr]
+            // まず返す型部分を処理
+
+            // 次に関数本体を処理　※AST_FCALLかASF_FCALLを要素とするAST_SETしか許されないことに注意
         } else {                                                                    // 宣言詞の後に続くのは変数(var),関数呼び出し(fcall)≒関数宣言 以外にない
             printf("SyntaxError:IllegalDecleaition!\n");
             Throw(0);
