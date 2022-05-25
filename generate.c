@@ -156,7 +156,16 @@ void* code_type_print(code_type*ct) {
     } 
     printf("\n");
 }
-
+/*
+void* code_type_print(code_type*ct) {
+    printf("Type: %s",dcl_string[ct->type]);
+    if (ct->type == OBJ_UFUNC) {
+        printf("FunctionRetType:"); code_type_print(ct->functon_ret_type); printf("FunctionDotted%d",ct->dotted);
+        printf("FUnctionArgType:");for (int i=0; i<ct->arg_type->_sp; i++) code_type_print(ct->arg_type->_table[i]);
+    } 
+    printf("\n");
+}
+*/
 void put_gv(Symbol*var_name, code_type* ct) {// printf("%s\n",var_name->_table);
     //global_var_type *gvt=(global_var_type*)malloc(sizeof(global_var_type));
     //gvt->type=var_type;
