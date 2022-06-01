@@ -8,16 +8,21 @@ void disassy(Vector*v,int i,FILE*fp);
 extern Hash* G;
 extern Hash* GLOBAL_VAR;
 extern Hash* PRIMITIVE_FUNC;
-
+/*
 typedef struct {
     obj_type type;
     obj_type functon_ret_type;  // todo -> code_typeを返すようにする
     Vector  *arg_type;          // todo -> arg_typeにはobj_typeでなくcode_typeを入れるようにする
     int dotted;
 } code_type;
-
+*/
+typedef struct code_type{
+    obj_type type;
+    struct code_type * functon_ret_type;  
+    Vector  *arg_type;
+    int dotted;
+} code_type;
 //code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot ) ;
-
 typedef struct {
     Vector      *code;              // intermediate code
     //obj_type    type;               // object type of code
@@ -27,7 +32,7 @@ typedef struct {
     code_type * ct;
 } code_ret;
 
-code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot );
+code_type * new_ct(obj_type type, code_type * frt, Vector*at,int dot );
 
 code_ret* new_code(Vector*code, code_type * ct);
 code_ret* codegen(ast*a,Vector*v,int tail);

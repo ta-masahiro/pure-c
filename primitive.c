@@ -718,9 +718,9 @@ void * make_primitive() {
     while (primitive_func[i] != NULL) {
         v=vector_init(3);
         for (j=0;j<primitive_function_ct[i][1];j++) {
-            push(v,(void*)(long)primitive_function_arglisti[i][j]);
+            push(v,(void*)new_ct(primitive_function_arglisti[i][j], NULL, NULL, FALSE));
         }
-        ct = new_ct(OBJ_PFUNC, primitive_function_ct[i][0],v,primitive_function_ct[i][2]);
+        ct = new_ct(OBJ_PFUNC, new_ct(primitive_function_ct[i][0], NULL, NULL, FALSE),v,primitive_function_ct[i][2]);
         //vv=vector_init(2);
         //push(vv,(void*)primitive_func[i]);push(vv,(void*)ct);
         s=primitive_function_name[i];long n=strlen(s);

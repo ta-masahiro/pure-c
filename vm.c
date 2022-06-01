@@ -50,20 +50,24 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0 };
 
-Vector *tosqs(Vector*code, const void** table) {
+Vector *tosqs(Vector*code, const void** table, Hash *G) {
     enum CODE op;
+    void ** d;
     Vector *C = vector_copy0(code);
     while (code->_cp < code->_sp) {
         op=(enum CODE)dequeue(code); //printf("%d ",op);
         vector_set(C, (C->_cp)++, (void*)table[op]); //printf("%ld\n",(long)table[op]);
         if (op == LDF || op== LDP || op == LOOP) {
-            vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table));
+            vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table, G));
         } else if (op == SEL || op == TSEL) {
-            vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table));
-            vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table));
+            vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table, G));
+            vector_set(C,(C->_cp)++,(void*)tosqs(dequeue(code),table, G));
         } else if (op == WHILE) {
             vector_set(C, (C->_cp)++, dequeue(code));
-            vector_set(C, (C->_cp)++, (void*)tosqs(dequeue(code),table));
+            vector_set(C, (C->_cp)++, (void*)tosqs(dequeue(code),table, G));
+        //}else if (op == LDG && (d = Hash_get(G, (Symbol*)dequeue(code)))) {      // LDG命令はその時点で値がfixしていればLDC命令に変更する
+        //    vector_set(C, --(C->_cp), (void *)table[LDC]);
+        //    vector_set(C, (C->_cp) ++, *d);
         } else {
             (code->_cp)+=op_size[op];
             (C->_cp)+=op_size[op];
@@ -115,7 +119,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH,&&_OTOA, &&_ATOO, \
             &&_ATOS,  &&_ALEN};
  
-    C = tosqs(Code,table);//vector_print(C);
+    C = tosqs(Code,table, G);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
 _STARt://printf("vm strat...\n");
     C->_cp = 0;
