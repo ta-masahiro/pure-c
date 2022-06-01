@@ -1408,23 +1408,23 @@ code_ret * codegen_class(ast *a, Vector * env, int tail) {
 
 code_ret * codegen(ast * a, Vector * env, int tail) {
     switch(a->type) {
-        case AST_ML:        printf("ML\n");return  codegen_ml      (a, env, tail);
-        case AST_IF:        printf("IF\n");return  codegen_if      (a, env, tail);
-        case AST_SET:       printf("SET\n");return  codegen_set     (a, env, tail);
-        case AST_LAMBDA:    printf("LAMBDA\n");return  codegen_lambda  (a, env, tail);
-        case AST_DCL:       printf("DCL\n");return  codegen_dcl     (a, env, tail);
-        case AST_FCALL:     printf("FCALL\n");return  codegen_fcall   (a, env, tail);
-        case AST_APPLY:     printf("APPLY\n");return  codegen_apply   (a, env, tail);
-        case AST_2OP:       printf("2OP\n");return  codegen_2op     (a, env, tail);
-        case AST_1OP:       printf("1OP\n");return  codegen_1op     (a, env, tail); 
-        case AST_VREF:      printf("VREF\n");return  codegen_vref    (a, env, tail);
-        case AST_SLS:       printf("SLS\n");return  codegen_sls     (a, env, tail);
-        case AST_VAR:       printf("VAR\n");return  codegen_var     (a, env, tail);
-        case AST_LIT:       printf("LIT\n");return  codegen_lit     (a, env, tail);
-        case AST_VECT:      printf("VECT\n");return  codegen_vect    (a, env, tail);
-        case AST_PAIR_LIST: printf("PAIR_LIST\n");return  codegen_dict    (a, env, tail);
-        case AST_WHILE:     printf("WILE\n");return  codegen_while   (a, env, tail);
-        case AST_FOR:       printf("FOR\n");return  codegen_for     (a, env, tail);
+        case AST_ML:        return  codegen_ml      (a, env, tail);
+        case AST_IF:        return  codegen_if      (a, env, tail);
+        case AST_SET:       return  codegen_set     (a, env, tail);
+        case AST_LAMBDA:    return  codegen_lambda  (a, env, tail);
+        case AST_DCL:       return  codegen_dcl     (a, env, tail);
+        case AST_FCALL:     return  codegen_fcall   (a, env, tail);
+        case AST_APPLY:     return  codegen_apply   (a, env, tail);
+        case AST_2OP:       return  codegen_2op     (a, env, tail);
+        case AST_1OP:       return  codegen_1op     (a, env, tail); 
+        case AST_VREF:      return  codegen_vref    (a, env, tail);
+        case AST_SLS:       return  codegen_sls     (a, env, tail);
+        case AST_VAR:       return  codegen_var     (a, env, tail);
+        case AST_LIT:       return  codegen_lit     (a, env, tail);
+        case AST_VECT:      return  codegen_vect    (a, env, tail);
+        case AST_PAIR_LIST: return  codegen_dict    (a, env, tail);
+        case AST_WHILE:     return  codegen_while   (a, env, tail);
+        case AST_FOR:       return  codegen_for     (a, env, tail);
 //        case AST_CLASS_VAR: return  codegen_cl_var  (a, env, tail);
 //        case AST_CLASS:     return  codegen_class   (a, env, tail);
         default: printf("syntaxError:Unknown AST!\n");Throw(0);

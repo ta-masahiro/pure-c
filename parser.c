@@ -157,7 +157,7 @@ ast * is_factor(TokenBuff *S) {
 
     if (a=is_nomad(S)) return a;
     if ((t=get_token(S)->type)=='(') {
-        if ((a=is_expr(S)) || (a=is_expr_list(S))) {
+        if ((a=is_expr_ex(S))) { //} || (a=is_expr_list(S))) {
             if ((get_token(S)->type)==')') {
                 return a;
             }
