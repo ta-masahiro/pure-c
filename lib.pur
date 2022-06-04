@@ -192,8 +192,8 @@ none heap_sort(vector v) = {
 vector poly_add(vector v1,vector v2)={while @v1 > @v2:v2<-0/1;while @v1 <@v2:v1<-0/1;vmap(lambda(x,y) x+y,v1,v2)};
 vector poly_s_mul(var x,vector v)=vmap(lambda(y) x*y,v);
 //vector cheb(n)=if n==0:[1/1]:if n==1:[0/1,1/1]:vector_add(vector_s_mul(2,[0/1]+cheb(n-1)),vector_s_mul(-1,cheb(n-2)));
-//vector cheb(int n)={vector C(int n,vector a,vector b)=if n==0:b:C(n--,poly_add(poly_s_mul(2/1,[0/1]+a),poly_s_mul(-1/1,b)),a);C(n,[0/1,1/1],[1/1])};
-vector cheb(int n)=(vector C(int n,vector a,vector b)=if n==0:b:C(n--,poly_add(poly_s_mul(2/1,[0/1]+a),poly_s_mul(-1/1,b)),a))(n,[0/1,1/1],[1/1]);
+vector cheb(int n)={vector C(int n,vector a,vector b)=if n==0:b:C(n--,poly_add(poly_s_mul(2/1,[0/1]+a),poly_s_mul(-1/1,b)),a);C(n,[0/1,1/1],[1/1])};
+//vector cheb(int n)=(vector C(int n,vector a,vector b)=if n==0:b:C(n--,poly_add(poly_s_mul(2/1,[0/1]+a),poly_s_mul(-1/1,b)),a))(n,[0/1,1/1],[1/1]);
 vector hilbert(int n)={vector A=[];int i,j;for i=-1:(i+=1)<n:{A<-[];for j=-1:(j+=1)<n:A[-1]<-(1/(torat(i+j+1)))};A};
 //
 //string r2decstr(rational r,int size)={string s="";int i,L;if r>=0:None:{s="-";r=-r};s=s+str(tolong(r))+".";r=r-tolong(r);for i=0:i<size && r != 0:{L=toint(r*10);s=s+str(L);r=10*r-L;i+=1};s};
