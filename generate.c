@@ -1359,8 +1359,9 @@ code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list 
                     v=vector_init(2);push(v,(void*)TOKEN_NONE);push(v,(void*)NULL);
                     push(a_arg_v,new_ast(AST_LIT,OBJ_UFUNC,v));
                     //
-                    ast *a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,0);  //関数名のASTを取り出して
-                    a3->o_type=OBJ_UFUNC;                                           //typeを関数に変更して             
+                    //ast *a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,0);  //関数名のASTを取り出して
+                    //a3->o_type=OBJ_UFUNC;                                           //typeを関数に変更して             
+                    ast *a3=(ast*)vector_ref(a2->table,1);  //関数名のASTを取り出して
                     push(d_arg_v,a3);                                                //仮引数リストに登録
                     push(v_expr_body,(void*)a2);    //body部にa2:Fname(...)=...のASTを挿入
                     // decl宣言式のコードを書くこと！
