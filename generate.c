@@ -909,7 +909,11 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
             // 現状仮引数に書いた関数を実引数に書いた関数をきっちり一致させるのはユーザ責任！<=修正が必要
             //
             //
-                if (ct_eq(ct_param,ct_dummy)==FALSE) { printf("SyntaxError: 仮引数と実引数の型が異なります!\n");Throw(0);}
+                if (ct_eq(ct_param,ct_dummy)==FALSE) {
+                    if (ct_eq(ct_param->functon_ret_type, ct_dummy->functon_ret_type) == FALSE) {printf("SyntaxError: 仮引数の関数戻り値と実引数の関数戻り値が異なります!\n仮引数");code_type_print(ct_param->functon_ret_type);printf("\n実引数");code_type_print(ct_dummy->functon_ret_type);printf("\n");Throw(0);}
+                    if (ct_dummy->dotted == FALSE) {printf("SyntaxError: 仮引数の関数引数と実引数の関数引数が異なります!\n仮引数");code_type_print(ct_param);printf("\n実引数");code_type_print(ct_dummy);printf("\n");Throw(0);}
+                    // !!!ほんとうはarg_typeをひとつづつ比較してerror判定すべき!!!!
+                }
             }
             code=vector_append(code,code_param);
         }
@@ -1189,6 +1193,7 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
     }
     // 通常の代入の場合
     switch(((ast*)vector_ref(set_ast->table,1))->type) {
+        // vector、array等への参照代入 v[i] = n 等
         case AST_VREF:  // AST_SET [set_type, AST_VREF [vect_expr,index] ], right_expr]
                         //          <0,0>               <1,0>     <1,1>    <2>
                         // -> right_code vect_name_code index_code VSET
@@ -1219,8 +1224,10 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                 push(code1,(void*)OSET);
                 return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
             }
+        // 関数定義の糖衣構文 ...のつもりだが一生このルーチンには来ないのでは？
         case AST_FCALL: // AST_SET [set_type,AST_FCALL [expr_name , expr_list],right_expr]
                         //          <0,0>              <1,0>        <1,1>      <2>
+            //printf("来たよ！！！\n");
             a1=(ast*)vector_ref(((ast*)vector_ref(set_ast->table,1))->table,0);                       //a1:expr name
             if (a1->type != AST_VAR) {printf("SyntaxError:Must be Function Name!\n");Throw(0);}                            
             s=(Symbol * )vector_ref(a1->table,0);                                            
@@ -1254,7 +1261,7 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                     if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!%d %d\n",ct1->type,ct2->type);Throw(0);}
                     push(code,(void*)conv_op[ct2->type][ct1->type]);
                 } else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
-                    if (ct_eq(ct1, ct2) == FALSE) {printf("関数の戻り値/パラメータの型が代入先と異なります!\n");Throw(0);}
+                    if (ct_eq(ct1, ct2) == FALSE) {printf("SyntaxError:関数の戻り値/パラメータの型が代入先と異なります!\n左辺:");code_type_print(ct1);printf("\n右辺");code_type_print(ct2);printf("\n");Throw(0);}
                 }
                 if ((long)vector_ref(pos,0)== 0) {
                     switch((long)vector_ref(pos,1)) {
@@ -1361,7 +1368,8 @@ code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list 
                     //
                     //ast *a3=(ast*)vector_ref(((ast*)vector_ref(a2->table,1))->table,0);  //関数名のASTを取り出して
                     //a3->o_type=OBJ_UFUNC;                                           //typeを関数に変更して             
-                    ast *a3=(ast*)vector_ref(a2->table,1);  //関数名のASTを取り出して
+                    ast *a3=(ast*)vector_ref(a2->table,1);  //FCALLのASTを取り出して
+                    a3->o_type = a1->o_type;                // そのtypeをdclのタイプにする
                     push(d_arg_v,a3);                                                //仮引数リストに登録
                     push(v_expr_body,(void*)a2);    //body部にa2:Fname(...)=...のASTを挿入
                     // decl宣言式のコードを書くこと！
