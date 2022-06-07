@@ -122,20 +122,20 @@ void *p_iabs(Vector *v)     {return (void*)labs((long)vector_ref(v,0));}
 void *p_fabs(Vector *v)     {long l = (long)vector_ref(v,0);double f = fabs(*(double*)&l); return (void*)*(long*)&f;}
 void *p_labs(Vector *v)     {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_abs(L,L);return (void*)L;}
 void *p_rabs(Vector *v)     {mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_set(Q,(mpq_ptr)vector_ref(v,0));mpq_abs(Q,Q);return (void*)Q;}
-void *p_lfabs(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_abs(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfabs(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDN);mpfr_abs(F,F,MPFR_RNDN);return (void*)F;}
 void *p_cabs(Vector *v)     {double c = cabs(*(complex*)vector_ref(v,0)); return (void*)(*(long*)&c);}
 // sqrt
 void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
 void *p_fsqrt(Vector *v)    {long l = (long)vector_ref(v,0);double f = sqrt(*(double*)&l); return (void*)*(long*)&f;}
 void *p_lsqrt(Vector *v)    {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_sqrt(L,L);return (void*)L;}
-void *p_lfsqrt(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_sqrt(F,F,MPFR_RNDA);return (void*)F;}
+void *p_lfsqrt(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDN);mpfr_sqrt(F,F,MPFR_RNDN);return (void*)F;}
 void *p_csqrt(Vector *v)    {complex *c = (complex*)malloc(sizeof(complex));*c = csqrt(*(complex*)vector_ref(v,0)); return (void*)c;}
 
 // long float
 void * lf_function(Vector *v, int (*function)(__mpfr_struct * f, const __mpfr_struct * g, mpfr_rnd_t r))  {
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);
-    function(F,F,MPFR_RNDA);
+    mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDN);
+    function(F,F,MPFR_RNDN);
     return (void*)F;
 }
 //
@@ -160,8 +160,8 @@ void *p_lflog(Vector *v)    {
     mpfr_t E;
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_init(E);mpfr_init(F);
-    mpfr_log(E,(mpfr_ptr)vector_ref(v,0),MPFR_RNDA);mpfr_log(F,(mpfr_ptr)vector_ref(v,1),MPFR_RNDA);
-    mpfr_div(F,F,E,MPFR_RNDA);
+    mpfr_log(E,(mpfr_ptr)vector_ref(v,0),MPFR_RNDN);mpfr_log(F,(mpfr_ptr)vector_ref(v,1),MPFR_RNDN);
+    mpfr_div(F,F,E,MPFR_RNDN);
     return (void*)F;
 }
 //
@@ -188,8 +188,9 @@ void *p_olog(Vector *v)     {return (void*)objdiv(objlogE((object*)vector_ref(v,
 //void *p_osqrt(Vector *v) {return (void*)objsqrt((object *)vector_ref(v,0));}
 void *p_ofloor(Vector * v) {return (void *)objfloor((object*)vector_ref(v,0));}
 // constnt
-void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_pi(r,MPFR_RNDA);return (void*)r;}
-void *p_llog2(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_log2(r,MPFR_RNDA);return (void*)r;}
+void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_pi(r,MPFR_RNDN);return (void*)r;}
+//void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(r);mpfr_const_pi(r,MPFR_RNDN);return (void*)r;}
+void *p_llog2(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_log2(r,MPFR_RNDN);return (void*)r;}
 void *p_fgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = tgamma(*(double*)&l); return (void*)*(long*)&f;}
 void *p_flgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = lgamma(*(double*)&l); return (void*)*(long*)&f;}
 //void *p_fgamma(Vector *v) {double *f = (double*)malloc(sizeof(double));*f = tgamma(*(double*)vector_ref(v,0)); return (void*)f;}

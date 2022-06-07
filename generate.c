@@ -142,9 +142,13 @@ int ct_eq(code_type * ct1, code_type * ct2) {
 */
 int ct_eq(code_type * ct1, code_type * ct2) {
     if (ct1 == ct2) return TRUE;
-    if (ct1->type == ct2->type && ct_eq(ct1->functon_ret_type, ct2->functon_ret_type) && ct1->arg_type->_sp == ct2->arg_type->_sp) {
-        for (int i=0;i<ct1->arg_type->_sp;i++) if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i])==FALSE) return FALSE;
-        return TRUE;
+    if (ct1 == NULL || ct2 == NULL) {printf("型情報がNULLです\n");return FALSE;}
+    if (ct1->type == ct2->type && ct_eq(ct1->functon_ret_type, ct2->functon_ret_type)) {
+        if (ct1->arg_type == NULL && ct2->arg_type == NULL) return TRUE;
+        if (ct1->arg_type->_sp == ct2->arg_type->_sp) {
+            for (int i=0;i<ct1->arg_type->_sp;i++) if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i])==FALSE) return FALSE;
+            return TRUE;
+        }
     }
     return FALSE;
 }
@@ -882,29 +886,31 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
     int doted;
     code_ret *code_s_param; 
     Vector *code_param;                 // 引数要素のコード
-    code_type *ct_param;                // 引数要素の型構造体
+    code_type *ct_param, *ct_dummy;                // 引数要素の型構造体
     obj_type type_param,type_dummy;     // 実引数要素の型、仮引数要素の型
     // 実引数を展開する
     //if (r_type != OBJ_NONE) {
     if (code_s_function->ct->arg_type != NULL) {           // arg_typeがNULLでないこと！
         m = v->_sp;//PR(2);                             // 仮引数の個数　number of dummy parameters
         //n = a1->table->_sp;//PR(3);                   // 実引数の個数　number of actual parameters
-        if (!(doted=code_s_function->ct->dotted) && n != m) { printf("SyntaxError: Illegal parameter number! d=%d a= %d\n",m,n);Throw(0);}
+        if (!(doted=code_s_function->ct->dotted) && n != m) { printf("SyntaxError: 仮引数と実引数の個数が異なります! 仮:%d 実: %d\n",m,n);Throw(0);}
         for(i = 0; i < n; i ++ ) {//PR(i);
             code_s_param = codegen((ast*)vector_ref(param_ast->table, i),env,FALSE);
             code_param = code_s_param->code; ct_param = code_s_param->ct; type_param = ct_param->type; // ct1/type1:actual parameter type
             if (doted && i >= m-1) type_dummy=OBJ_GEN ; 
-            else type_dummy = ((code_type *)vector_ref(v,i))->type ; // ct2/type2:dummy parameter type
+            else {ct_dummy=(code_type *)vector_ref(v,i); type_dummy =ct_dummy->type;}// ct2/type2:dummy parameter type
 
             if ((type_param != type_dummy ) && (type_param != OBJ_NONE)) {
                 if ((t_op=conv_op[type_param][type_dummy])==0) {printf("SyntaxError:IllegalArgmentType!\n");Throw(0);}
                 if (t_op != -1) {push(code_param,(void*)conv_op[type_param][type_dummy]);}
-            }
+            } else if (type_param == OBJ_UFUNC || type_param == OBJ_PFUNC ) {
             // type_param,type_dummyがfunctionの場合はそのret_typeが同じかどうか確かめたいが、現状引数である関数のパラメータ詳細を保持していない
             // (CT->arg_typeは型名しかもたずfunction型であることはわかっても戻り値等不明なため)
             // 現状仮引数に書いた関数を実引数に書いた関数をきっちり一致させるのはユーザ責任！<=修正が必要
             //
             //
+                if (ct_eq(ct_param,ct_dummy)==FALSE) { printf("SyntaxError: 仮引数と実引数の型が異なります!\n");Throw(0);}
+            }
             code=vector_append(code,code_param);
         }
 
@@ -1005,16 +1011,16 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
                 printf("SyntaxError:IllegalDecleartype!\n");
                 Throw(1);
             }
-        } else if (ast_j->type==AST_FCALL) {   //  typeが関数呼出し≒関数宣言(所謂プロトタイプ宣言)の場合である
+        } else if (ast_j->type==AST_FCALL) {                                                //  typeが関数呼出し≒関数宣言(所謂プロトタイプ宣言)の場合である
             // ast_j:ASF_FCALL [AST_VAR[],AST_ARG_LIST[ast0,ast1,.....]]
             //                  <0>       <1>          <1,0>,<1,1>,...g
-            arglist_ast = (ast*)vector_ref(ast_j->table,1);
-            f_name_ast = (ast*)vector_ref(ast_j->table,0);
-            if (f_name_ast->type != AST_VAR) {printf("SyntaxError:IllegalFunctionName!\n");Throw(1);}
-            Vector *d_args = make_arg_list_type(arglist_ast);
+            arglist_ast = (ast*)vector_ref(ast_j->table,1);                                 // 引数リスト
+            f_name_ast = (ast*)vector_ref(ast_j->table,0);                                  // 関数名部分
+            if (f_name_ast->type != AST_VAR) {printf("SyntaxError:関数宣言には関数名が必要です!\n");Throw(1);}
+            Vector *d_args = make_arg_list_type(arglist_ast);                               // 引数リストのCTを作る
             if (arglist_ast->type ==  AST_ARG_LIST_DOTS ||arglist_ast->type ==  AST_EXP_LIST_DOTS) dotted=TRUE; else dotted=FALSE;
             //
-            s=(Symbol*)vector_ref(f_name_ast->table,0);
+            s=(Symbol*)vector_ref(f_name_ast->table,0);                                     // s:関数名
             ct=new_ct(OBJ_UFUNC, new_ct(dcl_ast->o_type, NULL,NULL,FALSE),(Vector*)vector_ref(d_args,1),dotted);
             put_gv(s,ct);
             //
@@ -1247,8 +1253,9 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                 } else if (ct1->type != ct2->type) {
                     if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!%d %d\n",ct1->type,ct2->type);Throw(0);}
                     push(code,(void*)conv_op[ct2->type][ct1->type]);
+                } else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
+                    if (ct_eq(ct1, ct2) == FALSE) {printf("関数の戻り値/パラメータの型が代入先と異なります!\n");Throw(0);}
                 }
-                //
                 if ((long)vector_ref(pos,0)== 0) {
                     switch((long)vector_ref(pos,1)) {
                         case 0: push(code, (void*)SET00);break;
@@ -1278,23 +1285,30 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                 }else if (ct1->type != ct2->type) { 
                     if (conv_op[ct2->type][ct1->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
                     push(code,(void*)conv_op[ct2->type][ct1->type]);
+                //} else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
+                //    if (ct_eq(ct1, ct2) == FALSE) {printf("関数の戻り値/パラメータの型が代入先と異なります!\n");Throw(0);}
                 }
                 // ct1->type,ct2->typeがfunctionの場合はそのret_typeが同じかどうか確かめる
-                if ((ct1->type==OBJ_UFUNC || ct1->type == OBJ_PFUNC) && (ct1->functon_ret_type->type != ct2->functon_ret_type->type)) {
-                    if (conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
-                    //
-                    // codeは [... LDF [... RTN]]の形をしており通常はRETの前に型変換命令を入れる
-                    // tail call時のif命令だった場合は[... LDF [... TSEL [... RTN] [... RTN] RTN]]
-                    v=(Vector*)vector_ref(code,code->_sp-1);//disassy(v,0,stdout);// 関数のbodyのコード
-                    if (vector_ref(v,v->_sp-4) == (void*)TSEL) {    // tail call のIF式である
-                        v1=(Vector*)vector_ref(v,v->_sp-2);v2=(Vector*)vector_ref(v,v->_sp-3);
-                        vector_set(v1,v1->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);push(v1,(void*)RTN);
-                        vector_set(v2,v2->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);push(v2,(void*)RTN);
-                    } else {                                        // 通常の式である
-                        vector_set(v,v->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);//返還命令を入れて
-                        push(v,(void*)RTN);
+                if (ct1->type==OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
+                    if (ct1->functon_ret_type->type != ct2->functon_ret_type->type) {
+                        if (conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
+                        //
+                        // codeは [... LDF [... RTN]]の形をしており通常はRETの前に型変換命令を入れる
+                        // tail call時のif命令だった場合は[... LDF [... TSEL [... RTN] [... RTN] RTN]]
+                        v=(Vector*)vector_ref(code,code->_sp-1);//disassy(v,0,stdout);// 関数のbodyのコード
+                        if (vector_ref(v,v->_sp-4) == (void*)TSEL) {    // tail call のIF式である
+                            v1=(Vector*)vector_ref(v,v->_sp-2);v2=(Vector*)vector_ref(v,v->_sp-3);
+                            vector_set(v1,v1->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);push(v1,(void*)RTN);
+                            vector_set(v2,v2->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);push(v2,(void*)RTN);
+                        } else {                                        // 通常の式である
+                            vector_set(v,v->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);//返還命令を入れて
+                            push(v,(void*)RTN);
+                        }
                     }
-                }
+                    for(i=0;i<ct1->arg_type->_sp;i++) {
+                        if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i]) == FALSE) {printf("関数のパラメータの型が代入先と異なります!\n");Throw(0);}
+                    }
+                }    
                 push(code,(void*)GSET);push(code,(void*)s);
             }
             return new_code(code,ct1);
@@ -1542,10 +1556,11 @@ int main(int argc, char*argv[]) {
     code_ret *code_s;
     obj_type type; 
     code_type* ct;
-    if (mpfr_mp_memory_cleanup () != 0) {printf("MemoryAssignment Error!\n");exit(0);}
+    //if (mpfr_mp_memory_cleanup () != 0) {printf("MemoryAssignment Error!\n");exit(0);}
 #ifndef DEBUG
     mp_set_memory_functions((void *)GC_malloc, (void * )_realloc, (void * ) GC_free);
 #endif
+    if (mpfr_mp_memory_cleanup () != 0) {printf("MemoryAssignment Error!\n");exit(0);}
     mpfr_set_default_prec(256);
     Vector * t; 
     Vector * Stack = vector_init(500000); // 500だと５倍くらい遅い！なぜ？
