@@ -997,30 +997,39 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
                 }
                 push(code,(void*)GSET);push(code,(void*)s);
                 push(code,(void*)DROP);
-            } else if ((fcall_ast=(ast*)vector_ref(ast_j->table,1))->type==AST_FCALL) { //  左辺式がAST_CALL即ち関数宣言
-                arglist_ast = (ast*)vector_ref(fcall_ast->table,1);
-                f_name_ast = (ast*)vector_ref(fcall_ast->table,0);
-                if (f_name_ast->type != AST_VAR) {printf("SyntaxError:IllegalFunctionName!\n");Throw(1);}
-                Vector *d_args = make_arg_list_type(arglist_ast);
+            // 左辺式がAST_FCALL、即ち関数宣言の場合
+            // 型情報を作り型環境にsetしたら、dcl宣言詞抜きの関数代入文(そのまま)を作りAST_SETに丸投げする
+            } else if ((fcall_ast=(ast*)vector_ref(ast_j->table,1))->type==AST_FCALL) {     //
+                // fcall_ast:AST_FCALL [name_ast [名前部, 引数リスト], body_ast]
+                //                      <0>       <0,0>   <0,1>        <1>
+                arglist_ast = (ast*)vector_ref(fcall_ast->table,1);                         // 仮引数をAST_ARG_LISTに入れたもの
+                f_name_ast = (ast*)vector_ref(fcall_ast->table,0);                          // 関数名部分
+                if (f_name_ast->type != AST_VAR) {printf("SyntaxError:関数宣言において関数名が識別子ではありません!\n");Throw(1);}
+                Vector *d_args = make_arg_list_type(arglist_ast);                           // 仮引数CTのリスト 
+                                                                                            // d_arg[0]は名前とCTのpairをリスト化、d_arg[1]は順番にCTを並べただけ
                 if (arglist_ast->type ==  AST_ARG_LIST_DOTS ||arglist_ast->type ==  AST_EXP_LIST_DOTS) dotted=TRUE; else dotted=FALSE;
                 //
-                s=(Symbol*)vector_ref(f_name_ast->table,0);                                 // sは関数名
-                ct=new_ct(OBJ_UFUNC, new_ct(dcl_ast->o_type, NULL,NULL,FALSE),(Vector*)vector_ref(d_args,1),dotted); // CTを作り
-                put_gv(s,ct);                                                               // sにセット
+                s = (Symbol*)vector_ref(f_name_ast->table, 0);                              // sは関数名
+                ct = new_ct(OBJ_UFUNC, new_ct(dcl_ast->o_type, NULL, NULL, FALSE), (Vector*)vector_ref(d_args, 1), dotted); 
+                                                                                            // CTを作り
+                put_gv(s, ct);                                                              // sにセット
+                //=====================================================ここまで、すぐ下の「プロトタイプ宣言」と同じなのでコードを共通化すること==================
                 //Hash_put(G, s, NULL)
-                code_s = codegen_set(ast_j,env,tail);                                       // ast_jは型宣言詞抜きのset astなので型情報がセットされた上でcode化
+                code_s = codegen_set(ast_j,env,tail);                                       // ast_jは型宣言詞抜きのset ast;型情報がセットされたのでそのままcode化
                 code = code_s->code;//disassy(code,0,stdout);
-                push(code,(void*)DROP);                                                     // declear式は値を返さない;
+                push(code,(void*)DROP);                                                     // declear宣言式は最後の宣言以外値を返さない;
+                                                                                            // int i,j=3,k;の場合、最後に宣言されたkの値(即ち0)が返される
             } else {
-                printf("SyntaxError:IllegalDecleartype!\n");
+                printf("SyntaxError:代入可能な宣言式ではありません\n");
                 Throw(1);
             }
-        } else if (ast_j->type==AST_FCALL) {                                                //  typeが関数呼出し≒関数宣言(所謂プロトタイプ宣言)の場合である
+        //  typeが関数呼出し≒関数宣言(所謂プロトタイプ宣言)の場合である
+        } else if (ast_j->type==AST_FCALL) {                                            
             // ast_j:ASF_FCALL [AST_VAR[],AST_ARG_LIST[ast0,ast1,.....]]
             //                  <0>       <1>          <1,0>,<1,1>,...g
             arglist_ast = (ast*)vector_ref(ast_j->table,1);                                 // 引数リスト
             f_name_ast = (ast*)vector_ref(ast_j->table,0);                                  // 関数名部分
-            if (f_name_ast->type != AST_VAR) {printf("SyntaxError:関数宣言には関数名が必要です!\n");Throw(1);}
+            if (f_name_ast->type != AST_VAR) {printf("SyntaxError:関数宣言において関数名が識別子ではありません!\n");Throw(1);}
             Vector *d_args = make_arg_list_type(arglist_ast);                               // 引数リストのCTを作る
             if (arglist_ast->type ==  AST_ARG_LIST_DOTS ||arglist_ast->type ==  AST_EXP_LIST_DOTS) dotted=TRUE; else dotted=FALSE;
             //
