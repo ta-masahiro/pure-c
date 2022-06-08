@@ -962,41 +962,45 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
     code_type *ct;
     Symbol *s;
 
-    for(j = 0; j < ((ast*)vector_ref(dcl_ast->table, 0))->table->_sp; j++) {        // declear内のexpr_listを順番に見ていき
-        ast_j = (ast*)vector_ref(((ast*)vector_ref(dcl_ast->table,0))->table,j);    // ast_j:宣言式のj番目の式
-        if (ast_j->type==AST_VAR) {                                                 // int I,J,K;等初期代入がない場合
-            if (get_gv(s=(Symbol*)vector_ref(ast_j->table,0))!=NULL) {printf("Warning!:DupricateDifinition!\n");}  //警告を出して続行
-            // printf("!!!!\n");
-            ct=new_ct(dcl_ast->o_type,OBJ_NONE,(void*)0, dcl_ast->o_type == OBJ_UFUNC ? TRUE : FALSE);                     // 宣言された型でctを作り
-            put_gv(s,ct);                                                               // 型をgvに登録する
-            push(code,(void*)LDC);push(code,create_zero(dcl_ast->o_type));              // 「0」で初期化しておく
-            push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);          // declear式は値を返さない;
-        } else if (ast_j->type==AST_SET) {                                              // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
-            if (((ast*)vector_ref(ast_j->table,1))->type==AST_VAR) {                    //                        <1>                 <2>
-                //変数名を取り出してSymbol*sに取っておき、定義済(GVにある)なら警告
-                s = (Symbol*)vector_ref(((ast*)vector_ref(ast_j->table,1))->table,0);
-                if (get_gv(s) !=0) printf("Warning!:DupricateDifinition!\n");           //警告を出して続行
+    for(j = 0; j < ((ast *)vector_ref(dcl_ast->table, 0))->table->_sp; j++) {           // declear内のexpr_listを順番に見ていき
+        ast_j = (ast* )vector_ref(((ast* )vector_ref(dcl_ast->table, 0))->table, j);    // ast_j:宣言式のj番目の式
+
+        // 「int I,J,K;」等初期代入がない場合
+        if (ast_j->type == AST_VAR) {                                                   
+            if (get_gv(s = (Symbol* )vector_ref(ast_j->table, 0)) != NULL) printf("Warning:%sが重複定義ですが実行します!\n", s->_table);  
+                                                                                        //変数名を取り出してsに取っておき、定義済みなら警告を出して続行
+            ct = new_ct(dcl_ast->o_type, (void*)0, (void*)0, dcl_ast->o_type == OBJ_UFUNC ? TRUE : FALSE);  // 宣言された型でctを作り !!!!
+            put_gv(s, ct);                                                              // 型をgvに登録する
+            push(code, (void *)LDC); push(code, create_zero(dcl_ast->o_type));          // 「0」で初期化しておく
+            push(code, (void* )GSET); push(code,(void*)s); push(code,(void*)DROP);      // declear式は値を返さない;
+        // 初期代入がある場合
+        } else if (ast_j->type == AST_SET) {                                            
+            // 識別子単独(変数)への代入の場合                                           // a2: AST_SET [set_type, AST_VAR [var_name], expr_ast]
+            if (((ast *)vector_ref(ast_j->table, 1))->type == AST_VAR) {                //                        <1>                 <2>
+                s = (Symbol*)vector_ref(((ast*)vector_ref(ast_j->table,1))->table,0);   // 変数名を取り出してSsに取っておき
+                if (get_gv(s) !=0) printf("Warning!:%sが重複定義ですが実行します!\n", s->_table);           // 定義済みなら警告を出して続行
                 // 右辺式のコードを生成
                 code_s_right = codegen((ast*)vector_ref(ast_j->table,2),env,FALSE);
-                code = vector_append(code, (void*)code_s_right->code);ct=code_s_right->ct;
+                code = vector_append(code, (void*)code_s_right->code); ct = code_s_right->ct;
                 // 変数名sに型を設定する
                 // ここにおいて右辺値の型はct、dcl宣言された型はdcl_ast->o_typeである
-                if (dcl_ast->o_type==OBJ_UFUNC || dcl_ast->o_type==OBJ_PFUNC) {         //型宣言詞がfunctionの場合  =>=> この構文は削除予定!!
-                    if (ct->type==OBJ_UFUNC || ct->type==OBJ_PFUNC) {                   //右辺値もfunctionなら正常
-                        put_gv(s,ct);                                                   //そのまま変数名に割り当てる
+                if (dcl_ast->o_type==OBJ_UFUNC || dcl_ast->o_type==OBJ_PFUNC) {         // 型宣言詞がfunctionの場合  =>=> この構文は削除予定!!
+                    if (ct->type==OBJ_UFUNC || ct->type==OBJ_PFUNC) {                   // 右辺値もfunctionなら正常
+                        put_gv(s,ct);                                                   // 右辺CTをのそのまま変数名(関数名)に割り当てる
                     } else {
-                        printf("SyntaxError:Must be Function!\n");                      // 左辺値がfunctionなのに右辺値がそうでないならエラー
+                        printf("SyntaxError:関数に関数以外のものを代入しようとしています!\n");  // 左辺値がfunctionなのに右辺値がそうでないならエラー
                         Throw(0) ;
                     }
                 } else {                                                                //型宣言が関数タイプでないときは
                     put_gv(s,new_ct(dcl_ast->o_type,OBJ_NONE,(void*)0,FALSE));          //宣言された型を変数名sに割り当てるが
                     if (dcl_ast->o_type != ct->type) {                                  //右辺値の型と宣言型が異なる場合には型変換命令を入れる
+                        if (conv_op[ct->type][dcl_ast->o_type] == 0) {printf("SyntaxError:宣言された変数に割り当てるための型変換不能です!\n"); Throw(0);} 
                         push(code, (void*)conv_op[ct->type][dcl_ast->o_type]);
-                        ct->type=dcl_ast->o_type;                                       //返す型は型返還後のもの、すなわち宣言型する
+                        ct->type=dcl_ast->o_type;                                       //返す型は変換後のもの、すなわち最初に宣言された型である
                     }
                 }
-                push(code,(void*)GSET);push(code,(void*)s);
-                push(code,(void*)DROP);
+                push(code,(void*)GSET);push(code,(void*)s);                             // !!!!コードまで作っているが、型情報のみ作成しあとはAST_SETに丸投げしたほうが良い
+                push(code,(void*)DROP);                                                 // !!!変更予定
             // 左辺式がAST_FCALL、即ち関数宣言の場合
             // 型情報を作り型環境にsetしたら、dcl宣言詞抜きの関数代入文(そのまま)を作りAST_SETに丸投げする
             } else if ((fcall_ast=(ast*)vector_ref(ast_j->table,1))->type==AST_FCALL) {     //
@@ -1036,7 +1040,7 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
             s=(Symbol*)vector_ref(f_name_ast->table,0);                                     // s:関数名
             ct=new_ct(OBJ_UFUNC, new_ct(dcl_ast->o_type, NULL,NULL,FALSE),(Vector*)vector_ref(d_args,1),dotted);
             put_gv(s,ct);
-            //
+            // 以下、空の関数を仮セット
             push(code,(void*)LDC);push(code,create_zero(OBJ_UFUNC));                // 「0」で初期化しておく
             push(code,(void*)GSET);push(code,(void*)s);push(code,(void*)DROP);      // declear式は値を返さない;
         } else if (ast_j->type == AST_FTYPE) {                                      // 左辺式がAST_FTYPE 即ち関数を返す関数との宣言
@@ -1183,6 +1187,43 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
     }
 }
 
+void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2) {
+    obj_type ct1_f_ret, ct2_f_ret;
+    enum CODE t_code;
+    Vector *v, *v1, *v2;
+    int i, max_arg;
+    if (ct1->type != ct2->type) {
+        if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:宣言された変数に割り当てるための型変換不能です!%d %d\n",ct1->type,ct2->type);Throw(0);}
+        push(code,(void*)conv_op[ct2->type][ct1->type]);
+    } else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
+        //if (ct_eq(ct1, ct2) == FALSE) {printf("SyntaxError:関数の戻り値/パラメータの型が代入先と異なります!\n左辺:");code_type_print(ct1);printf("\n右辺");code_type_print(ct2);printf("\n");Throw(0);}
+        ct1_f_ret = ct1->functon_ret_type->type; 
+        ct2_f_ret = ct2->functon_ret_type->type; 
+        t_code = conv_op[ct2_f_ret][ct1_f_ret];
+        if (ct1_f_ret != ct2_f_ret) {
+            if (t_code == 0) {printf("SyntaxError:宣言された変数に割り当てるための型変換不能です!%d %d\n",ct1_f_ret, ct2_f_ret);Throw(0);}
+            //
+            // codeは [... LDF [... RTN]]の形をしており通常はRETの前に型変換命令を入れる
+            // tail call時のif命令だった場合は[... LDF [... TSEL [... RTN] [... RTN] RTN]]
+            v = (Vector*)vector_ref(code, code->_sp-1);     //disassy(v,0,stdout);// 関数のbodyのコード
+            if (vector_ref(v,v->_sp-4) == (void*)TSEL) {    // tail call のIF式である
+                v1=(Vector*)vector_ref(v,v->_sp-2);v2=(Vector*)vector_ref(v,v->_sp-3);
+                vector_set(v1,v1->_sp-1, (void*)t_code); push(v1,(void*)RTN);
+                vector_set(v2,v2->_sp-1, (void*)t_code); push(v2,(void*)RTN);
+            } else {                                        // 通常の式である
+                if (vector_ref(v, v->_sp-3) == (void *)TCALL) vector_set(v, v->_sp-3, (void *)CALL);            // TCALLの場合、変換コードを通らないのでCALLに変える
+                vector_set(v,v->_sp-1,(void*)t_code);//printf("変換コード%d\n", t_code);//返還命令を入れて
+                push(v,(void*)RTN);
+            }
+        }
+        if (ct1->dotted) max_arg = ct1->arg_type->_sp-1 ; else max_arg = ct1->arg_type->_sp;
+        for(i = 0; i < max_arg; i++) {
+            if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i]) == FALSE) {printf("関数のパラメータの型が代入先と異なります!\n");Throw(0);}
+        }
+    }
+
+}
+
 code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_type, AST_left_expr, AST_right_expr]
                                                                 //          <0>       <1>            <2>
     // case of '+=' '-=' '*=' '/=' '%=' '|=' '&=' '^='
@@ -1191,7 +1232,9 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
     code_type *ct, *ct1;
     ast *a1 ;
     Symbol *s;
-    int i,j,_2op;
+    int i , j, _2op, max_arg;
+    obj_type ct1_f_ret, ct2_f_ret;
+    enum CODE t_code;
     // 演算代入の場合は2項演算命令と代入命令のastを作る
     if ((long)vector_ref(set_ast->table,0) != '=') {        // set_typeが'='以外の場合は演算代入である
         _2op=(((long)vector_ref(set_ast->table,0)) >> 8);   // 演算子は上位8bit
@@ -1233,10 +1276,9 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                 push(code1,(void*)OSET);
                 return new_code(vector_append(code,code1),new_ct(OBJ_GEN,OBJ_NONE,(void*)0,FALSE));
             }
-        // 関数定義の糖衣構文 ...のつもりだが一生このルーチンには来ないのでは？
+        // 関数定義の糖衣構文
         case AST_FCALL: // AST_SET [set_type,AST_FCALL [expr_name , expr_list],right_expr]
                         //          <0,0>              <1,0>        <1,1>      <2>
-            //printf("来たよ！！！\n");
             a1=(ast*)vector_ref(((ast*)vector_ref(set_ast->table,1))->table,0);                       //a1:expr name
             if (a1->type != AST_VAR) {printf("SyntaxError:Must be Function Name!\n");Throw(0);}                            
             s=(Symbol * )vector_ref(a1->table,0);                                            
@@ -1256,8 +1298,9 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
             code=code_s->code;code_type *ct2=code_s->ct;
             //if (type2==OBJ_UFUNC) {v2=code_s->arg_type;r_type2=code_s->function_r_type;dot2=code_s->dotted;}
             s=(Symbol*)vector_ref(((ast*)vector_ref(set_ast->table,1))->table,0);
-            Vector *_pos=var_location(s,env);
+            Vector *_pos = var_location(s,env);
             if (_pos) {
+                // _posがNULLでない場合、即ちローカル変数の場合
                 Vector *pos=(Vector*)vector_ref(_pos,0);
                 ct1=(code_type*)(long)vector_ref(_pos,1);   //ct1は変数名のコードタイプ
                 if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==NULL )) {
@@ -1266,11 +1309,8 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                     i=(env->_sp)-(long)vector_ref(pos,0)-1;j=(long)vector_ref(pos,1);   //env内のポジションを計算して
                     Data *d=(Data*)malloc(sizeof(Data));d->key=s;d->val=ct1;                  //入れるべきデータを作って
                     vector_set((Vector*)vector_ref(env,i),j,(void*)d);//printf("||changed||\n");env_print(env);                  //セットする
-                } else if (ct1->type != ct2->type) {
-                    if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:CanotConvertType!%d %d\n",ct1->type,ct2->type);Throw(0);}
-                    push(code,(void*)conv_op[ct2->type][ct1->type]);
-                } else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
-                    if (ct_eq(ct1, ct2) == FALSE) {printf("SyntaxError:関数の戻り値/パラメータの型が代入先と異なります!\n左辺:");code_type_print(ct1);printf("\n右辺");code_type_print(ct2);printf("\n");Throw(0);}
+                }else { 
+                    check_ct_for_codegen_set(code,ct1,ct2); // 左辺右辺のCTをcheckし、変換可能なら変換し、NGならエラー処理を行う
                 }
                 if ((long)vector_ref(pos,0)== 0) {
                     switch((long)vector_ref(pos,1)) {
@@ -1286,44 +1326,21 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                         case 1: push(code, (void*)SET11);break;
                         case 2: push(code, (void*)SET12);break;
                         case 3: push(code, (void*)SET13);break;
-                        default:push(code,(void*)SET);push(code,(void*)pos);
+                        default:push(code, (void*)SET); push(code, (void*)pos);
                     }
                 } else {
-                    push(code,(void*)SET);push(code,(void*)pos);
+                    push(code, (void *)SET); push(code, (void *)pos);
                 }
+            // 以下、グローバル変数の場合(ローカル変数に名前がない場合)
             } else {
-                if ((ct1=get_gv(s))==NULL) {            //変数テーブルに名前がないなら
+                if ((ct1 = get_gv(s)) == NULL) {            // 変数テーブルに名前がないなら(グローバル変数に登録されていない)
                     //printf("SyntaxError:variable not defined!");return NULL;
-                    put_gv(s,ct2);ct1=ct2;              //新たにct2=右辺値のコードタイプで変数を作り左辺値のコードタイプは右辺値と同一
+                    put_gv(s,ct2);ct1=ct2;                  //新たにct2=右辺値のコードタイプで変数を作り左辺値のコードタイプは右辺値と同一
                 } else if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
-                    ct1=ct2;put_gv(s,ct1);
+                    ct1 = ct2; put_gv(s, ct1);
                     //if (ct2->type==OBJ_UFUNC) {gvt->type=OBJ_UFUNC;gvt->arg_type=v;gvt->functon_ret_type=r_type;put_gv(s,gvt);}
-                }else if (ct1->type != ct2->type) { 
-                    if (conv_op[ct2->type][ct1->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
-                    push(code,(void*)conv_op[ct2->type][ct1->type]);
-                //} else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
-                //    if (ct_eq(ct1, ct2) == FALSE) {printf("関数の戻り値/パラメータの型が代入先と異なります!\n");Throw(0);}
-                }
-                // ct1->type,ct2->typeがfunctionの場合はそのret_typeが同じかどうか確かめる
-                if (ct1->type==OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
-                    if (ct1->functon_ret_type->type != ct2->functon_ret_type->type) {
-                        if (conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]==0) {printf("!!!!SyntaxError:CanotConvertType!\n");Throw(0);}
-                        //
-                        // codeは [... LDF [... RTN]]の形をしており通常はRETの前に型変換命令を入れる
-                        // tail call時のif命令だった場合は[... LDF [... TSEL [... RTN] [... RTN] RTN]]
-                        v=(Vector*)vector_ref(code,code->_sp-1);//disassy(v,0,stdout);// 関数のbodyのコード
-                        if (vector_ref(v,v->_sp-4) == (void*)TSEL) {    // tail call のIF式である
-                            v1=(Vector*)vector_ref(v,v->_sp-2);v2=(Vector*)vector_ref(v,v->_sp-3);
-                            vector_set(v1,v1->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);push(v1,(void*)RTN);
-                            vector_set(v2,v2->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);push(v2,(void*)RTN);
-                        } else {                                        // 通常の式である
-                            vector_set(v,v->_sp-1,(void*)conv_op[ct2->functon_ret_type->type][ct1->functon_ret_type->type]);//返還命令を入れて
-                            push(v,(void*)RTN);
-                        }
-                    }
-                    for(i=0;i<ct1->arg_type->_sp;i++) {
-                        if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i]) == FALSE) {printf("関数のパラメータの型が代入先と異なります!\n");Throw(0);}
-                    }
+                } else {
+                     check_ct_for_codegen_set(code,ct1,ct2);// 左辺右辺のCTをcheckし、変換可能なら変換し、NGならエラー処理を行う
                 }    
                 push(code,(void*)GSET);push(code,(void*)s);
             }
@@ -1418,18 +1435,15 @@ code_ret * codegen_ml(ast *a, Vector *env, int tail) {  //AST_ML [AST_expr_list 
         return new_code(code,code_s->ct);
     } else {
         v1=vector_init(2);v2=vector_init(1);
-        push(v1,(void*)new_ast(AST_ARG_LIST,OBJ_NONE, d_arg_v));//printf("##########\n<<<v1>>>\n");ast_print(new_ast(AST_ARG_LIST,OBJ_NONE,d_arg_v),0);//dummy arg list
-        //push(v2,new_ast(AST_EXP_LIST,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v_expr_body));
-        push(v2,new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body));//printf("##########\n<<<v2>>>\n");ast_print(new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body),0);
-        //push(v1,(void*)new_ast(AST_ML,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v2));//ast_print(new_ast(AST_ML,v5),0) ;      // v3:[AST_EXP_LIST,AST_ML]
-        push(v1,(void*)new_ast(AST_ML,OBJ_NONE,v2));//ast_print(new_ast(AST_ML,OBJ_NONE,v2),0) ;      // v3:[AST_EXP_LIST,AST_ML]
-        //a1=new_ast(AST_LAMBDA,((ast*)vector_ref(v_expr_body,v_expr_body->_sp-1))->o_type,v1);ast_print(a1,0);
-        a1=new_ast(AST_LAMBDA,OBJ_NONE,v1);//printf("########\n<<<a1>>>\n");ast_print(a1,0);//ここまでOK!
+        push(v1,(void*)new_ast(AST_ARG_LIST,OBJ_NONE, d_arg_v));
+        push(v2,new_ast(AST_EXP_LIST,OBJ_NONE,v_expr_body));
+        push(v1,(void*)new_ast(AST_ML,OBJ_NONE,v2));
+        a1=new_ast(AST_LAMBDA,OBJ_NONE,v1);
         //
         v3=vector_init(3);
         push(v3,(void*)a1);
-        push(v3,(void*)new_ast(AST_EXP_LIST,OBJ_NONE,a_arg_v));//ast_print(new_ast(AST_EXP_LIST,OBJ_NONE,a_arg_v),0);   // actual arg list
-        a2=new_ast(AST_FCALL,a1->o_type,v3);//ast_print(a2,0);                   // AST_FCALL [AST_LAMBDA [AST_EXP_LIST [..],AST_ML [...]],AST_EXP_LIST [...]]
+        push(v3,(void*)new_ast(AST_EXP_LIST,OBJ_NONE,a_arg_v));
+        a2=new_ast(AST_FCALL,a1->o_type,v3);                   // AST_FCALL [AST_LAMBDA [AST_EXP_LIST [..],AST_ML [...]],AST_EXP_LIST [...]]
         return codegen(a2,env,tail);
     }
 }

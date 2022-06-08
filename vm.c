@@ -210,6 +210,9 @@ _GSET:
     v = vector_ref(S, S ->_sp - 1);
     sym = (Symbol *)dequeue(C);
     Hash_put(G, sym, v);
+#ifdef DEBUG
+    printf("%s defined!\n",sym->_table);
+#endif
     goto * dequeue(C);
 _OADD:
     push(S, (void * )objadd((object*)pop(S),(object*)pop(S)));
