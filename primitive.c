@@ -198,7 +198,7 @@ void *p_flgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = lgamma(
 void *p_ogamma(Vector *v) {return (void*)objgamma((object*)vector_ref(v,0));}
 void *p_olgamma(Vector *v) {return (void*)objlgamma((object*)vector_ref(v,0));}
 //
-void *p_sum(Vector *v) {object* o = objcpy(vector_ref(v,0));int i;for(i=v->_cp+1;i<v->_sp;i++) o = objadd(o,vector_ref(v,i));return (void*)o;}
+void *p_sum(Vector *v) {if (v->_sp == 0) return (void*)newINT(0); object* o = objcpy(vector_ref(v,0));int i;for(i=1;i<v->_sp;i++) o = objadd(o,vector_ref(v,i));return (void*)o;}
 void *p_vsum(Vector *v) {return p_sum((Vector*)vector_ref(v,0));}
 void *p_irange(Vector* v) {
     int i,n=(int)(long)vector_ref(v,0);

@@ -1187,12 +1187,29 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
     }
 }
 
+//void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2, Vector *env, int local_flg) {
 void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2) {
+    // AST_SETのコード生成において code:生成された代入式のコード ct1:代入左辺式の型 ct2:代入右辺式の型
+    // ct1とct2を比較し
+    // ct1に型が設定されていない、またはct1が関数タイプであってret_type(関数戻り値の型)が設定されていなければ右辺ct2をそのまま左辺ct1にコピー
+    // ct1、ct2共に関数でありその戻り値が異なる場合は、それらが変換可能なら変換するコードを生成し、不可能ならエラーを投げる
+    //                       それぞれの引数の型が異なる場合は、エラーを投げる
+    // codeは上書きされる(必要に応じて型変換コードが挿入される)
     obj_type ct1_f_ret, ct2_f_ret;
     enum CODE t_code;
     Vector *v, *v1, *v2;
     int i, max_arg;
-    if (ct1->type != ct2->type) {
+    /* if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==NULL )) {
+        ct1=ct2;
+        if (local_flg) {
+            //envに保存してある戻り型情報がない関数型変数のコードタイプをct2で置き換える
+            i=(env->_sp)-(long)vector_ref(pos,0)-1;j=(long)vector_ref(pos,1);   //env内のポジションを計算して
+            Data *d=(Data*)malloc(sizeof(Data));d->key=s;d->val=ct1;                  //入れるべきデータを作って
+            vector_set((Vector*)vector_ref(env,i),j,(void*)d);//printf("||changed||\n");env_print(env);                  //セットする
+        } else {
+
+        } 
+    } else */ if (ct1->type != ct2->type) {
         if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:宣言された変数に割り当てるための型変換不能です!%d %d\n",ct1->type,ct2->type);Throw(0);}
         push(code,(void*)conv_op[ct2->type][ct1->type]);
     } else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
@@ -1202,21 +1219,20 @@ void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2) {
         t_code = conv_op[ct2_f_ret][ct1_f_ret];
         if (ct1_f_ret != ct2_f_ret) {
             if (t_code == 0) {printf("SyntaxError:宣言された変数に割り当てるための型変換不能です!%d %d\n",ct1_f_ret, ct2_f_ret);Throw(0);}
-            //
             // codeは [... LDF [... RTN]]の形をしており通常はRETの前に型変換命令を入れる
             // tail call時のif命令だった場合は[... LDF [... TSEL [... RTN] [... RTN] RTN]]
-            v = (Vector*)vector_ref(code, code->_sp-1);     //disassy(v,0,stdout);// 関数のbodyのコード
-            if (vector_ref(v,v->_sp-4) == (void*)TSEL) {    // tail call のIF式である
+            v = (Vector*)vector_ref(code, code->_sp-1);     //disassy(v,0,stdout);                          // 関数のbodyのコード
+            if (vector_ref(v,v->_sp-4) == (void*)TSEL) {                                                    // tail call のIF式である
                 v1=(Vector*)vector_ref(v,v->_sp-2);v2=(Vector*)vector_ref(v,v->_sp-3);
                 vector_set(v1,v1->_sp-1, (void*)t_code); push(v1,(void*)RTN);
                 vector_set(v2,v2->_sp-1, (void*)t_code); push(v2,(void*)RTN);
             } else {                                        // 通常の式である
-                if (vector_ref(v, v->_sp-3) == (void *)TCALL) vector_set(v, v->_sp-3, (void *)CALL);            // TCALLの場合、変換コードを通らないのでCALLに変える
-                vector_set(v,v->_sp-1,(void*)t_code);//printf("変換コード%d\n", t_code);//返還命令を入れて
+                if (vector_ref(v, v->_sp-3) == (void *)TCALL) vector_set(v, v->_sp-3, (void *)CALL);        // TCALLの場合、変換コードを通らないのでCALLに変える
+                vector_set(v,v->_sp-1,(void*)t_code);//printf("変換コード%d\n", t_code);                    //返還命令を入れて
                 push(v,(void*)RTN);
             }
         }
-        if (ct1->dotted) max_arg = ct1->arg_type->_sp-1 ; else max_arg = ct1->arg_type->_sp;
+        if (ct1->dotted) max_arg = ct1->arg_type->_sp-1 ; else max_arg = ct1->arg_type->_sp;                // 可変引数を許可する場合は引数は最後の一つ手前まで比較する
         for(i = 0; i < max_arg; i++) {
             if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i]) == FALSE) {printf("関数のパラメータの型が代入先と異なります!\n");Throw(0);}
         }

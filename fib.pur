@@ -1,3 +1,7 @@
-{function fib; 
-fib(int n, long a, long b) = if n == 0:b:fib(n -- , a + b, a); 
-fib(100000, 1L, 0L)}; 
+{ 
+    long Fib(int n, long a, long b) = 
+        if n == 0:
+            b:
+            Fib(n -- , a + b, a); 
+    print(Fib(100000, 1L, 0L))
+}; 
