@@ -17,7 +17,7 @@ Hash * Hash_init(unsigned int size) {
 }
 
 void Hash_resize(Hash * h, unsigned int newSize) {
-    printf("Hash_resize: %d -> %d [%d]\n", h ->size, newSize, h ->entries);
+    //printf("Hash_resize: %d -> %d [%d]\n", h ->size, newSize, h ->entries);
     Data *oldTable = h ->hashTable;
     unsigned int oldSize = h ->size;
     unsigned int initval = h ->initval; 
@@ -132,6 +132,16 @@ void Hash_del(Hash * hashT, Symbol *key) {
 }
 
 Vector * get_Hash_keys(Hash *h) {
+    Vector *r = vector_init(10);
+    Symbol *key;
+    for(int i=0; i < (h->size); i++) {
+        key = h->hashTable[i].key;
+        if (key != NULL) push(r,    key);
+    }
+    return r;
+}
+
+Vector * get_Hash_vals(Hash *h) {
     Vector *r = vector_init(10);
     Symbol *key;
     for(int i=0; i < (h->size); i++) {

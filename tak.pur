@@ -1,4 +1,10 @@
-{int count; 
-function tak;
-tak = lambda(int x,int y,int z) {count = count ++ ; if x<=y:z:tak(tak(x--,y,z),tak(y--,z,x),tak(z--,x,y))};
-print(tak(19,8,0), count)};  
+{
+    int count; 
+    int tak(int x, int y, int z) = {
+        count += 1;
+        if x<=y:
+            z:
+            tak(tak(x--,y,z),tak(y--,z,x),tak(z--,x,y))
+    };
+    print(tak(19,8,0), count)
+};  
