@@ -25,6 +25,7 @@ char* ast_type_str[] = {"None","MultiFunction","If","Set","Lambda","While","Clas
                         "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","for","FunctionDeclear","FunctionType","\0"};
 
 void ast_print(ast*a, int tablevel) {
+    if (a == NULL) {printf("ASTがNULLです!!!\n");Throw(1);}
     int i;
     for (i = 0; i<tablevel; i ++ ) printf("\t");
     ast_type t = a->type;
@@ -73,7 +74,7 @@ void ast_print(ast*a, int tablevel) {
             ast_print((ast*)a ->table->_table[0], tablevel + 1);
             ast_print((ast*)a ->table->_table[1],tablevel+1);
             break;
-        default:printf("Unknown AST\n");Throw(1);
+        default:printf("Unknown AST: %d\n",t);Throw(1);
     }
 }
 
