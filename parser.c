@@ -262,8 +262,8 @@ ast * is_pair_list(TokenBuff * S) {
     return NULL;
 }
 ast * is_expr_list(TokenBuff * S) {
-    // expr_list    : expr ',' expr_list
-    //              | expr
+    // expr_list    : expr {',' expr_list}
+    //
     ast * a1, * a2;
     token * t1, * t2;
     Vector * v;
@@ -919,6 +919,8 @@ ast * is_dcl_expr(TokenBuff*S) {
         //
         if (get_token(S)->type == ',') {
             if (a1 = is_expr_list(S)) {
+                // expr_listの各exprに型を与える
+                for(int i = 0; i < a1->table->_sp; i++) ((ast *)(a1->table->_table[i]))->o_type = a->o_type;
                 vector_insert(a1->table, 0, a);
                 push(v, (void *)a1);
                 return new_ast(AST_DCL, a->o_type, v);

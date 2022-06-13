@@ -110,36 +110,11 @@ Hash* GLOBAL_VAR;       // global nameの型を保持
 Hash* PRIMITIVE_FUNC;   // primitive関数を保持
 Hash* CLASS_NAME;       // class名を保持
 Hash * IMPORT_NAME;
-/*
-typedef struct {
-    obj_type type;
-    obj_type functon_ret_type;
-    Vector  *arg_type;
-    int dotted;
-} code_type;
-*/
-/*
-code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot ) {
-    code_type* ct=(code_type*)malloc(sizeof(code_type));
-    ct->type=type;ct->functon_ret_type=frt;ct->arg_type=at,ct->dotted=dot;
-    return ct;
-}
-*/
 code_type * new_ct(obj_type type, code_type *frt, Vector * at, int dot ) {
     code_type* ct=(code_type*)malloc(sizeof(code_type));
     ct->type = type; ct->functon_ret_type = frt; ct->arg_type = at, ct->dotted = dot;
     return ct;
 }
-/*
-int ct_eq(code_type * ct1, code_type * ct2) {
-    if (ct1 == ct2) return TRUE;
-    if (ct1->type == ct2->type && ct1->functon_ret_type == ct2->functon_ret_type && ct1->arg_type->_sp == ct2->arg_type->_sp) {
-        for (int i=0;i<ct1->arg_type->_sp;i++) if (ct1->arg_type->_table[i] != ct2->arg_type->_table[i]) return FALSE;
-        return TRUE;
-    }
-    return FALSE;
-}
-*/
 int ct_eq(code_type * ct1, code_type * ct2) {
     if (ct1 == ct2) return TRUE;
     if (ct1 == NULL || ct2 == NULL) {printf("型情報がNULLです\n");return FALSE;}
@@ -152,16 +127,6 @@ int ct_eq(code_type * ct1, code_type * ct2) {
     }
     return FALSE;
 }
-/*
-void* code_type_print(code_type*ct) {
-    printf("Type: %s",dcl_string[ct->type]);
-    if (ct->type == OBJ_UFUNC) {
-        printf("FunctionRetType:%s FunctionDotted %d FunctionArgType:",dcl_string[ct->functon_ret_type],ct->dotted);
-        vector_print(ct->arg_type);
-    } 
-    printf("\n");
-}
-*/
 void code_type_print(code_type*ct) {
     if (ct==NULL) {printf("NULL CTdata ");return ;}
     printf("Type: %s  ",dcl_string[ct->type]);
@@ -323,13 +288,13 @@ Data * make_ftype_ct(ast * arg) {
     return d; 
 }
 
-code_type * make_ct(ast *arg) {
+Data * make_ct(ast *arg) {
     // 受け取ったAST (arg_listに対応したASTであること）に対応したCTを作る
     switch(arg->type) {
-        case AST_VAR:
-        case AST_FCALL:
-        case AST_FTYPE:
-        default:
+        case AST_VAR: return make_var_ct(arg);
+        case AST_FCALL: return make_fcall_ct(arg);
+        case AST_FTYPE: return make_ftype_ct(arg);
+        default: printf("SyntaxError:型を定義できる変数ではありません\n");Throw(0);
     }
 }
 
@@ -363,6 +328,7 @@ Vector *make_arg_list_type(ast *arg_list_ast) {//途中！　
         } else if (arg_ast_i->type == AST_FCALL) {
             // AST_FCALL [AST_NAME,[AST_EXP_LIST [AST,AST,...]]]
             //            <0>       <1>           <1,1>...
+            /*
             ast *f_arg=(ast*)vector_ref(arg_ast_i->table,1);
             Vector *d_args=make_arg_list_type(f_arg);
             Vector *_args=(Vector*)vector_ref(d_args,0);
@@ -375,6 +341,8 @@ Vector *make_arg_list_type(ast *arg_list_ast) {//途中！　
             d->key=(Symbol*)vector_ref(fname->table,0);
             //
             d->val=new_ct(OBJ_UFUNC, new_ct(arg_ast_i->o_type, NULL,NULL,dotted),_v,dotted);
+            */
+            d = make_fcall_ct(arg_ast_i);
             push(args,(void*)d);push(v,(void*)d->val);
         // 関数を返す関数のプロトタイプの場合
         } else if (arg_ast_i->type == AST_FTYPE) {
@@ -1785,7 +1753,7 @@ int main(int argc, char*argv[]) {
     void* value;
     ast *a;
     TokenBuff *S;
-    int tokencp, tokensp, debug = FALSE, timeit = FALSE, quiet = FALSE;
+    int tokencp, tokensp, debug = FALSE, timeit = FALSE, quiet = FALSE, str_mode = FALSE;
     Vector*env;
     Vector*code;
     code_ret *code_s;
@@ -1815,7 +1783,7 @@ int main(int argc, char*argv[]) {
     int i=1; 
     token * tk;
     CEXCEPTION_T e;
-    Symbol *underbar_sym=new_symbol("_",1);
+    Symbol *underbar_sym=new_symbol("_",1), *script;
     while (i < argc) {
         if (strcmp(argv[i], "-t") == 0) {timeit = TRUE; i ++; continue;}
         if (strcmp(argv[i], "-q") == 0) {quiet  = TRUE; i ++; continue;}
@@ -1825,8 +1793,9 @@ int main(int argc, char*argv[]) {
             if (fp == NULL) {printf("file %s doesn't exist\n", argv[i]); return  - 1; }
             i ++; continue;
         }
+        if (strcmp(argv[i], "-s") == 0) {str_mode = TRUE; i++; script = new_symbol(argv[i], strlen(argv[i])); i++ ; fp = NULL; continue;}
     }
-    if (fp == stdin) printf("PURE REPL Version 0.3.2 Copyright 2022.06.10 M.Taniguro\n");fflush(stdout);
+    if (fp == stdin) printf("PURE REPL Version 0.3.3 Copyright 2022.06.12 M.Taniguro\n");fflush(stdout);
     //DEBUG=TRUE;
     //
 #ifndef DEBUG
@@ -1834,7 +1803,8 @@ int main(int argc, char*argv[]) {
     if (fp == stdin) printf("Library version %s loaded\n", ((Symbol*)*Hash_get(G, new_symbol("Library_ver",11)))->_table);
 #endif
     //
-    S = new_tokenbuff(fp);
+    if (str_mode) S = new_str_tokenbuff(script);
+    else S = new_tokenbuff(fp);
     //tokenbuff=vector_init(100);
     signal(SIGINT,ctrc_handler);
     while (TRUE) {
@@ -1869,7 +1839,7 @@ int main(int argc, char*argv[]) {
             }  else {
                 //if (a==NULL) {//printf("file end!!\n");
                 if (a == NULL || tk-> type == TOKEN_EOF ) {
-                    fclose(fp);
+                    if (fp) fclose(fp);
                     //fp=stdin;S=new_tokenbuff(fp);
                     //if (fp==stdin) printf("PURE REPL Version 0.3.0 Copyright 2021.08.11 M.Taniguro\n");
                     exit(0);
