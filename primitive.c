@@ -709,13 +709,15 @@ void * make_primitive() {
     Hash_put(G,char_I,(void*)c);
     //Hash_put(G,char_PAI,(void*)mp_pai);
     //Hash_put(G,char_LOG2,(void*)mp_log2);
-    Hash_put(G,char_NONE,(void*)0);
+    //Hash_put(G,char_NONE,(void*)0);
     Hash_put(G,char_stdin,(void*)stdin);
     Hash_put(G,char_stdout,(void*)stdout);
     Hash_put(GLOBAL_VAR,char_I,new_ct(OBJ_CMPLX,OBJ_NONE,(void*)0,FALSE));
+    Hash_put(GLOBAL_VAR,char_stdin,new_ct(OBJ_IO,OBJ_NONE,(void*)0,FALSE));
+    Hash_put(GLOBAL_VAR,char_stdout,new_ct(OBJ_IO,OBJ_NONE,(void*)0,FALSE));
     //Hash_put(GLOBAL_VAR,char_PAI,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));
     //Hash_put(GLOBAL_VAR,char_LOG2,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));
-    Hash_put(GLOBAL_VAR,char_NONE,new_ct(OBJ_NONE,OBJ_NONE,(void*)0,FALSE));
+    //Hash_put(GLOBAL_VAR,char_NONE,new_ct(OBJ_NONE,OBJ_NONE,(void*)0,FALSE));
     while (primitive_func[i] != NULL) {
         v=vector_init(3);
         for (j=0;j<primitive_function_ct[i][1];j++) {

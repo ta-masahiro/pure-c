@@ -11,7 +11,7 @@ void disassy(Vector*v,int i,FILE*fp);
 int op2_1[] = {'+', '-', '*', '/', '%', '*'*256+'*','<'*256+'-', '|', '&', '^', '>'*256+'>', '<'*256+'<', '>', '<', '='*256+'=', '!'*256+'=', '>'*256+'=', '<'*256+'=',0};
 //char*op2_alt_name[]={"add","sub","mul","div","mod","pow","push",NULL,NULL,"sr","sl","gt","lt","eq","neq","ge","le"};
 enum CODE op2_2[18][19] = {
-                {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,IBXOR,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_NONEはINTと同じに   
+                {IMUL, IMUL, IMUL, IMUL, IMUL, IMUL, 0,    IMUL, IMUL,IMUL,IMUL, IMUL, IMUL, IMUL, IEQ, INEQ, IEQ, IEQ, 0},   // OBJ_NONEは比較命令以外はNoneを返す   
               //{ADD,  SUB,  MUL,  DIV,  MOD,  POW,  PUSH, BOR,  BAND, BXOR, SR,  SL,  GT,  LT,  EQ,  NEQ,  GEQ,  LEQ , 0},
                 {IADD, ISUB, IMUL, IDIV, IMOD, IPOW, 0,    IBOR, IBAND,IBXOR,ISR, ISL, IGT, ILT, IEQ, INEQ, IGEQ, ILEQ, 0},   // OBJ_INT
                 {LADD, LSUB, LMUL, LDIV, LMOD, LPOW, 0,    LBOR, LBAND,LBXOR,LSR, LSL, LGT, LLT, L_EQ,LNEQ, LGEQ, LLEQ, 0},   // OBJ_LINT
@@ -799,6 +799,9 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     //      1/2,1/3,1/4乗も特別
     // 加減算命令
     //      ±2までは特別に
+    } else if (type_left != type_right && (type_left == OBJ_NONE || type_right == OBJ_NONE)) {
+        type_left = type_right = OBJ_NONE;
+    
     // その他一般の場合
     } else if (type_left < type_right) {
         op_code = conv_op[type_left][type_right];
@@ -1238,8 +1241,10 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
 
     if ((n = a->table->_sp) < 2 ) {printf("SyntaxError:IF式中の式個数が正しくありません\n"); Throw(0);}
     if (a->table->_sp < 3) {
-        v = vector_init(1);push(v,(void*)new_symbol("None",4));         // "None"を返したと同じにする
-        push(a->table, (void*)new_ast(AST_VAR, OBJ_NONE, v));
+        //v = vector_init(1);push(v,(void*)new_symbol("None",4));         // "None"を返したと同じにする
+        //push(a->table, (void*)new_ast(AST_VAR, OBJ_NONE, v));
+        v = vector_init(1); push(v, (void *)TOKEN_NONE);
+        push(a->table, (void *)new_ast(AST_LIT, OBJ_NONE, v));
     }
 
     if (tail) {
@@ -1321,9 +1326,20 @@ void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2) {
                 push(v,(void*)RTN);
             }
         }
-        if (ct1->dotted) max_arg = ct1->arg_type->_sp-1 ; else max_arg = ct1->arg_type->_sp;                // 可変引数を許可する場合は引数は最後の一つ手前まで比較する
-        for(i = 0; i < max_arg; i++) {
-            if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i]) == FALSE) {printf("関数のパラメータの型が代入先と異なります!\n");Throw(0);}
+        if (ct1->dotted == FALSE && ct2->dotted == TRUE) {
+            max_arg = ct2->arg_type->_sp-1;
+            for(i= 0; i< max_arg; i++) {
+                if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i]) == FALSE) {printf("関数のパラメータの型が代入先と異なります!\n");Throw(0);}
+            }
+            ct2 = ct1;
+        } else {
+
+            if (ct1->dotted) max_arg = ct1->arg_type->_sp-1 ; else max_arg = ct1->arg_type->_sp;                // 可変引数を許可する場合は引数は最後の一つ手前まで比較する
+            //printf("max arg=%d",max_arg);
+            for(i = 0; i < max_arg; i++) {
+                //printf("i=%d ",i);code_type_print(ct1->arg_type->_table[i]);printf("\n");code_type_print(ct2->arg_type->_table[i]);printf("\n");
+                if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i]) == FALSE) {printf("関数のパラメータの型が代入先と異なります!\n");Throw(0);}
+            }
         }
     }
 

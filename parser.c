@@ -129,6 +129,10 @@ ast * is_var(TokenBuff *S) {
     token * t = get_token(S);
     if (t -> type == TOKEN_SYM ) {
         v = vector_init(1);
+        if (strcmp(t->source->_table, "None") == 0 ) {
+            push(v, (void *)TOKEN_NONE);
+            return new_ast(AST_LIT, OBJ_NONE, v);
+        }
         push(v, (void*)t->source);//printf("!!!\n");
         return new_ast(AST_VAR, OBJ_NONE,v);
     }else {

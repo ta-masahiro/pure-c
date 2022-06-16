@@ -943,7 +943,8 @@ int objFCMP(double x, double y)     {return (x>y)?1:((x == y)?0: - 1);}
 int objLFCMP(mpfr_ptr x, mpfr_ptr y)        {return mpfr_cmp(x, y);}
 
 object * objadd(object * x, object * y) {
-    if (x==NULL || y==NULL) none_error();
+    //if (x==NULL || y==NULL) none_error();
+    if (x==NULL || y==NULL) return NULL;
     int type_x = x -> type;
     int type_y = y -> type;
     switch(type_x) {
@@ -1020,8 +1021,10 @@ object * objadd(object * x, object * y) {
             if (type_y == OBJ_SYM) {
                 return newSTR(symbol_append((Symbol*)x->data.ptr,(Symbol*)y->data.ptr));
             }
+        case OBJ_GEN: return objadd((object *)x->data.ptr, y);
         default:printf("runtime error illegal add op\n");Throw(3);
     }
+    if (type_y == OBJ_GEN)      return objadd(x, (object *)y->data.ptr);
 }
 
 object * objsub(object * x, object * y) {
@@ -1530,7 +1533,8 @@ object*objsl(object*x,object*y) {
 }
 
 int objcmp(object * x, object * y) {
-    if (x==NULL || y==NULL) none_error();
+    if (x==NULL && y==NULL) return 0;
+    if (x == NULL || y == NULL) return -2;
     int type_x = x -> type;
     int type_y = y -> type;
     Vector*v1,*v2; Symbol* s1,*s2;
@@ -1683,6 +1687,7 @@ object*objinc(object *x) {
         case OBJ_FLT : o->data.flt += 1.0; return o;
         case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_add_ui(F,F,1,MPFR_RNDN); o->data.ptr=(void*)F;return o;
         case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=(*c)+1.0;return o;
+        case OBJ_GEN: return objinc(x->data.ptr);
         default:printf("runtime error illegal INC op\n");return NULL;
     }
 }
@@ -1698,7 +1703,8 @@ object*objdec(object *x) {
         case OBJ_FLT : o->data.flt -= 1.0; return o;
         case OBJ_LFLT: F=(mpfr_ptr)o->data.ptr; mpfr_sub_ui(F,F,1,MPFR_RNDN); o->data.ptr=(void*)F;return o;
         case OBJ_CMPLX:c=(complex*)o->data.ptr;*c=(*c)-1.0;return o;
-        default:printf("runtime error illegal DEC op\n");return NULL;
+        case OBJ_GEN: return objdec(x->data.ptr);
+        default:printf("runtime error illegal DEC op: %d\n", x->type);return NULL;
     }
 }
 object * objsqrt(object *x) {
@@ -1714,6 +1720,7 @@ object * objsqrt(object *x) {
         case OBJ_FLT : o->data.flt = sqrt(o->data.flt); return o;
         case OBJ_LFLT: mpfr_sqrt((mpfr_ptr)o->data.ptr, (mpfr_ptr)x->data.ptr, MPFR_RNDN); return o;
         case OBJ_CMPLX:*(complex*)o->data.ptr = csqrt(*(complex*)x->data.ptr); return o;
+        case OBJ_GEN: return objsqrt(x->data.ptr);
         default:printf("runtime error illegal SQRT op\n");return NULL;
     }
 }

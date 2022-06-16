@@ -245,4 +245,5 @@ none cprint(var x, string ccc)={
 	lambda(x,c) print(color_map[ccc]+str(x)+"\x1b[39m")
 }(x,ccc);// cをcccにすると動かない
 //print("Library ver 0.02 loded.");
-Library_ver="0.03";
+var (x..) memois(var fn(x..))={dic={};var d;lambda(x..)if (d=dic[x]):d:dic[x]=fn(x..)};//var tak(x,y,z)=if x<=y:z:tak(tak(x--,y,z),tak(y--,z,x),tak(z--,x,y));tak=memois(tak);
+Library_ver="0.04";
