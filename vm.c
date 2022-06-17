@@ -1331,7 +1331,8 @@ _LFTOO:
     push(S,(void*)newLFLT((mpfr_ptr)pop(S)));
     goto*dequeue(C);
 _LFTOS:
-    push(S,(void*)objtype2str(OBJ_LFLT,pop(S)));
+    //push(S,(void*)objtype2str(OBJ_LFLT,pop(S)));
+    push(S,(void*)objtype2symbol(OBJ_LFLT,pop(S)));
     goto *dequeue(C);
 _CADD:
     cy=(complex*)pop(S);cx=(complex*)pop(S);
