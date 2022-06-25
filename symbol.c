@@ -141,3 +141,5 @@ void symbol_push_c(Symbol * s, unsigned char t) {
 
     //return s;
 }
+
+void symbol_print(Symbol *s) {puts(s->_table);}

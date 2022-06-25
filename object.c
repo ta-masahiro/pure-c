@@ -1930,6 +1930,32 @@ Symbol * objtype2symbol(obj_type type, void* value) {
     }
 }
 
+Symbol * symbol2escsymbol(Symbol * s) {
+    unsigned char * p = s->_table;
+    unsigned char buff[5];
+    Symbol * S = new_symbol("", 0);
+    for(int i = 0; i < s->_sp; i++) {
+        switch(p[i]) {
+            case '\a': symbol_push_c(S, '\\');symbol_push_c(S, 'a'); break;
+            case '\b': symbol_push_c(S, '\\');symbol_push_c(S, 'b'); break;
+            case '\n': symbol_push_c(S, '\\');symbol_push_c(S, 'n'); break;
+            case '\r': symbol_push_c(S, '\\');symbol_push_c(S, 'r'); break;
+            case '\f': symbol_push_c(S, '\\');symbol_push_c(S, 'g'); break;
+            case '\t': symbol_push_c(S, '\\');symbol_push_c(S, 't'); break;
+            case '\v': symbol_push_c(S, '\\');symbol_push_c(S, 'v'); break;
+            case '\\': symbol_push_c(S, '\\');symbol_push_c(S, '\\'); break;
+            case '\"': symbol_push_c(S, '\\');symbol_push_c(S, '"'); break;
+            case '\0': symbol_push_c(S, '\\');symbol_push_c(S, '0'); break;
+            default:
+                if (p[i] < 32 || p[i] >= 127) {
+                    sprintf(buff, "%x",p[i]);
+                    symbol_push_c(S, '\\');symbol_push_c(S, 'x'); symbol_cat(S, new_symbol(buff,  strlen(buff)));
+                } else symbol_push_c(S, p[i]);
+        }
+    }
+    return S;
+}
+
 Symbol * objtype2key(obj_type type, void* value) {
     int new_size,buf_size=1024;
     char *str, buf[1024];
@@ -2425,11 +2451,33 @@ object *objlgamma(object *x) {
 
 Symbol * objtype2hashkeySymbol(obj_type t, void *o) {
     void ** v = (void **)malloc(sizeof(void*));
+    double cr,ci;
+    Symbol *r = new_symbol("", 0);
+    int n = 1;
     switch(t) {
         case OBJ_INT: case OBJ_FLT:
             v[0] = (void*)o;
             return new_symbol((char*)v, 8);
-        case OBJ_LINT:
+        case OBJ_LINT:return new_symbol((char *)(((mpz_ptr)o)->_mp_d), sizeof(mp_limb_t)*((mpz_ptr)o)->_mp_size);
+        case OBJ_RAT: return symbol_append(objtype2hashkeySymbol(OBJ_LINT, &(((mpq_ptr)o)->_mp_den)), objtype2hashkeySymbol(OBJ_LINT, &(((mpq_ptr)o)->_mp_den)));
+        case OBJ_CMPLX: cr = creal(*(complex*)o); ci = cimag(*(complex*)o);
+            return symbol_append(objtype2hashkeySymbol(OBJ_FLT, (void *)(long*)&cr), objtype2hashkeySymbol(OBJ_FLT, (void*)(long *)&ci));
+        case OBJ_LFLT:return new_symbol((char *)(((__mpfr_struct *)o)->_mpfr_d), sizeof(mp_limb_t)*((__mpfr_struct *)o)->_mpfr_prec);
+        case OBJ_GEN: return objtype2hashkeySymbol(((object *)o)->type, ((object *)o)->data.ptr);
+        case OBJ_SYM: return (Symbol *)o;
+        case OBJ_VECT:
+            for (int i = 0; i < ((Vector *)o)->_sp; i++) {
+                object * oi = ((object *)vector_ref((Vector*)o, i));
+                symbol_cat(r, objtype2hashkeySymbol(oi->type, oi->data.ptr));
+            }
+            return r;
+        case OBJ_ARRAY:
+            for (int i =0; i < ((array *)o)->dim ;i++) n*= ((array*)o)->sizes[i];
+            return new_symbol((char *)(((array*)o)->table._ptr), n*sizeof(void*));
+            return r;
+        case OBJ_UFUNC: case OBJ_PFUNC: case OBJ_CNT: case OBJ_IO: 
+            return new_symbol((char*)o, sizeof(void*));
+        case OBJ_DICT: return objtype2symbol(t, o);
         default:printf("RntimeError:Illegal argument!\n");Throw(3);
     }
 }

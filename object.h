@@ -173,4 +173,6 @@ object * objlgamma(object*x);
 Vector * array2vector(array * a, int *array_index, int size_index);
 array * vector2array(Vector *v);
 Symbol * array2sym(array * a, int *array_index, int size_index) ;
+Symbol * symbol2escsymbol(Symbol *S);
+Symbol * objtype2hashkeySymbol(obj_type t, void *o);
 #endif

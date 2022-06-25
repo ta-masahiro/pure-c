@@ -20,4 +20,5 @@ unsigned char symbol_pop_c(Symbol *s);
 void symbol_push(Symbol *s, Symbol *c);
 void symbol_push_c(Symbol *s, unsigned char c); 
 int symbol_search(Symbol *s, Symbol *c);
+void symbol_print(Symbol *S);
 #endif

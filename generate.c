@@ -60,21 +60,21 @@ enum CODE conv_op[18][19] =
                         {{0,  0,    ITOL, ITOR, ITOF,  0,    ITOO,  ITOO },    //OBJ_NONEには0が入っているのでINTとみなす
                     //  NONE  INT   LONG  RAT   FLOAT LFLOAT CMPLX  GEN    SYSFUNC PFUNC UFUNC CNT   VECT DICT PAIR SYM   ARRAY IO  KEY
                         {0,   0,    ITOL, ITOR, ITOF, ITOLF, ITOC,  ITOO,  0,      0,    0,    0,    0,   0,   0,   ITOS, 0,    0,  ITOK  },
-                        {0,   LTOI, 0   , LTOR, LTOF, LTOLF, LTOC,  LTOO,  0,      0,    0,    0,    0,   0,   0,   LTOS, 0,    0,  LTOS  },
-                        {0,   RTOI, RTOL, 0   , RTOF, RTOLF, RTOC,  RTOO,  0,      0,    0,    0,    0,   0,   0,   RTOS, 0,    0,  RTOS  },
+                        {0,   LTOI, 0   , LTOR, LTOF, LTOLF, LTOC,  LTOO,  0,      0,    0,    0,    0,   0,   0,   LTOS, 0,    0,  LTOK  },
+                        {0,   RTOI, RTOL, 0   , RTOF, RTOLF, RTOC,  RTOO,  0,      0,    0,    0,    0,   0,   0,   RTOS, 0,    0,  RTOK  },
                         {0,   FTOI, FTOL, FTOR, 0   , FTOLF, FTOC,  FTOO,  0,      0,    0,    0,    0,   0,   0,   FTOS, 0,    0,  FTOK  },
-                        {0,   LFTOI,LFTOL,LFTOR,LFTOF,0,     LFTOC, LFTOO, 0,      0,    0,    0,    0,   0,   0,   LFTOS,0,    0,  LFTOS },
-                        {0,   0,    0,    0,    0,    0,     0,     CTOO,  0,      0,    0,    0,    0,   0,   0,   CTOS, 0,    0,  CTOS  },
-                        {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, OTOC,  0,     0,      0,    0,    0,    OTOV,OTOD,0,   OTOS, OTOA, 0,  OTOS  },
+                        {0,   LFTOI,LFTOL,LFTOR,LFTOF,0,     LFTOC, LFTOO, 0,      0,    0,    0,    0,   0,   0,   LFTOS,0,    0,  LFTOK },
+                        {0,   0,    0,    0,    0,    0,     0,     CTOO,  0,      0,    0,    0,    0,   0,   0,   CTOS, 0,    0,  CTOK  },
+                        {0,   OTOI, OTOL, OTOR, OTOF, OTOLF, OTOC,  0,     0,      0,    0,    0,    OTOV,OTOD,0,   OTOS, OTOA, 0,  OTOK  },
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//SYSFUNC
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,   -1,    0,    0,   0,   0,   0,    0,    0,  0  },//PFUNC
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,     -1,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//UFUNC
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//CNT
                         {0,   0,    0,    0,    0,    0,     0,     VTOO,  0,      0,    0,    0,    0,   0,   0,   VTOS, 0,    0,  VTOK  },//VECTOR
-                        {0,   0,    0,    0,    0,    0,     0,     DTOO,  0,      0,    0,    0,    0,   0,   0,   DTOS, 0,    0,  DTOS  },//DICT
+                        {0,   0,    0,    0,    0,    0,     0,     DTOO,  0,      0,    0,    0,    0,   0,   0,   DTOS, 0,    0,  DTOK  },//DICT
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//PAIR
                         {0,   STOI, STOL, STOR, STOF, 0,     0,     STOO,  0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//SYM
-                        {0,   0,    0,    0,    0,    0,     0,     ATOO,  0,      0,    0,    0,    0,   0,   0,   ATOS, 0,    0,  ATOS  },//ARRAY
+                        {0,   0,    0,    0,    0,    0,     0,     ATOO,  0,      0,    0,    0,    0,   0,   0,   ATOS, 0,    0,  ATOK  },//ARRAY
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  } //IO 
                         };
 /* 後で完成させること
@@ -1850,7 +1850,7 @@ int main(int argc, char*argv[]) {
                     if (timeit)  printf("compile time[sec]:%f\tevalueate time[sec]:%f\n",\
                         (double)(S2_T.tv_sec-S1_T.tv_sec)+(double)(S2_T.tv_nsec-S1_T.tv_nsec)/(1000*1000*1000),\
                         (double)(E_T.tv_sec-S2_T.tv_sec)+(double)(E_T.tv_nsec-S2_T.tv_nsec)/(1000*1000*1000));
-                    if (!quiet) { printf("%s ", objtype2str(type, value));}
+                    if (!quiet) { symbol_print(symbol2escsymbol(objtype2symbol(type, value)));}
                     printf("ok\n");
                 }
                 Hash_put(G, underbar_sym,value);put_gv(underbar_sym,ct);

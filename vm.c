@@ -25,7 +25,7 @@ char * code_name[] =
      "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE","LOOP_SET",
      "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","VSLS_","V_SLS","SSLS_","S_SLS",
      "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD", "SPUSH","OTOA", "ATOO",
-     "ATOS",  "ALEN", "$$$" };
+     "ATOS",  "ALEN", "LTOK", "RTOK", "LFTOK","CTOK", "OTOK", "DTOK", "ATOK", "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -48,7 +48,7 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
         1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0 };
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,};
 
 Vector *tosqs(Vector*code, const void** table, Hash *G) {
     enum CODE op;
@@ -117,7 +117,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE,&&_LOOP_SET,\
             &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR,&&_VSLS_,&&_V_SLS,&&_SSLS_,&&_S_SLS,\
             &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH,&&_OTOA, &&_ATOO, \
-            &&_ATOS,  &&_ALEN};
+            &&_ATOS,  &&_ALEN, &&_LTOK, &&_RTOK, &&_LFTOK,&&_CTOK, &&_OTOK, &&_DTOK, &&_ATOK};
  
     C = tosqs(Code,table, G);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -1054,11 +1054,17 @@ _STOC:
 _ITOS:
     push(S,(void*)objtype2symbol(OBJ_INT,pop(S)));
     goto* dequeue(C);
-_LTOS: _LTOK:
+_LTOS:
     push(S,(void*)objtype2symbol(OBJ_LINT,pop(S)));
     goto* dequeue(C);
-_RTOS: _RTOK:
+_LTOK:
+    push(S,(void*)objtype2hashkeySymbol(OBJ_LINT,pop(S)));
+    goto* dequeue(C);
+_RTOS:
     push(S,(void*)objtype2symbol(OBJ_RAT,pop(S)));
+    goto* dequeue(C);
+_RTOK:
+    push(S,(void*)objtype2hashkeySymbol(OBJ_RAT,pop(S)));
     goto* dequeue(C);
 _FTOS:
     push(S,(void*)objtype2symbol(OBJ_FLT,pop(S)));
@@ -1066,8 +1072,11 @@ _FTOS:
 _OTOS: _OTOK:
     push(S,(void*)objtype2symbol(OBJ_GEN,pop(S)));
     goto* dequeue(C);
-_VTOS: _VTOK:
+_VTOS:
     push(S,(void*)objtype2symbol(OBJ_VECT,pop(S)));
+    goto* dequeue(C);
+_VTOK:
+    push(S,(void*)objtype2hashkeySymbol(OBJ_VECT,pop(S)));
     goto* dequeue(C);
 /*
 _VMUL:
@@ -1334,6 +1343,10 @@ _LFTOS:
     //push(S,(void*)objtype2str(OBJ_LFLT,pop(S)));
     push(S,(void*)objtype2symbol(OBJ_LFLT,pop(S)));
     goto *dequeue(C);
+_LFTOK:
+    //push(S,(void*)objtype2str(OBJ_LFLT,pop(S)));
+    push(S,(void*)objtype2hashkeySymbol(OBJ_LFLT,pop(S)));
+    goto *dequeue(C);
 _CADD:
     cy=(complex*)pop(S);cx=(complex*)pop(S);
     cz = (complex * )malloc(sizeof(complex)); *cz=*cx+(*cy);
@@ -1410,6 +1423,9 @@ _CTOO:
 _CTOS:
     push(S,(void*)objtype2symbol(OBJ_CMPLX,pop(S)));
     goto *dequeue(C);
+_CTOK:
+    push(S,(void*)objtype2hashkeySymbol(OBJ_CMPLX,pop(S)));
+    goto *dequeue(C);
 _WHILE:
     n = (long)dequeue(C); 
     v = dequeue(C);
@@ -1438,7 +1454,7 @@ _OTOD:
     if (o->type != OBJ_VECT) {printf("Runtime Error! argment must be Dict!\n");Throw(3);}
     push(S, o->data.ptr);
     goto*dequeue(C);
-_DTOS:
+_DTOS: _DTOK:
     push(S,(void*)objtype2symbol(OBJ_DICT,pop(S)));
     goto* dequeue(C);
 _ITOK:
@@ -1459,6 +1475,9 @@ _ATOO:
 _ATOS:
     si=0;
     push(S, (void*)array2sym((array*)pop(S),&si,0));
+    goto *dequeue(C);
+ _ATOK:
+    push(S, (void*)objtype2hashkeySymbol(OBJ_ARRAY, (array*)pop(S)));
     goto *dequeue(C);
 _OTOA:
     push(S, (void*)((object*)pop(S))->data.ptr);

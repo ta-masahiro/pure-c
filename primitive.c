@@ -390,7 +390,7 @@ void *p_eigen(Vector *v) {
     return (void*)r;
     }
 void * p_array_type_change(Vector *v){array*a=(array*)vector_ref(v,0);change_array_type(a,(int)(long)vector_ref(v,1));return (void*)a;}
-
+void * p_sym2escsym(Vector *v) { return (void*)symbol2escsymbol((Symbol *)vector_ref(v,0));}
 Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_puts,p_getc, p_get_time, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,
@@ -405,7 +405,7 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_trial_div, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
                                  p_compile, p_dis_assy, p_eval, p_load, p_keys, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_array_inv, p_make_eye, p_make_zero,
-                                 p_eigen, p_array_type_change, NULL };
+                                 p_eigen, p_array_type_change, p_sym2escsym, NULL };
 char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "get_time", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
@@ -420,7 +420,7 @@ char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "init_irand", "init_lrand", "irand", "lrand", "trial_div", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
                                 "compile", "dis_assy", "eval", "load", "keys", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "array_inv", "make_eye", "make_zero", 
-                                "eigen", "array_type_change",NULL};
+                                "eigen", "array_type_change", "sym2escsym", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},                                     // exit
                                 {OBJ_SYM},                                      // forget
@@ -552,6 +552,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_INT, OBJ_INT},                             // make_zero
                                 {OBJ_ARRAY},                                    // eigen
                                 {OBJ_ARRAY, OBJ_INT},                           // array_type_change
+                                {OBJ_SYM},
                                 };
 
 int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
@@ -685,6 +686,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_ARRAY,2, FALSE},   // make_zero
                                 {OBJ_VECT, 1, FALSE},   // eigen
                                 {OBJ_ARRAY,2, FALSE},   // array_type_change
+                                {OBJ_SYM,  1, FALSE},
                                  };
 
 void * make_primitive() {
