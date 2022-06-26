@@ -128,8 +128,13 @@ v2a
 solv_liner
 make_eye
 make_zero
+eigen
+array_type_change
+sym2escsym
+
 __PRIMITIVE__
 __GLOBAL__
+
 list
 vlist
 split
