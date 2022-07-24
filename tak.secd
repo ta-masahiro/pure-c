@@ -6,10 +6,10 @@
         LD02
         LDF
         [
-;             LD10
-;             INC
-;             SET10
-;             POP
+//              LD10
+//              INC
+//              SET10
+//              POP
             LD00
             LD01
             LEQ
@@ -20,24 +20,24 @@
             ]
             [
                 LD00
-                ; LDC 1
-                ; SUB
+                //  LDC 1
+                //  SUB
                 DEC
                 LD01
                 LD02
                 LD11
                 CALL 3
                 LD01
-                ; LDC 1
-                ; SUB
+                //  LDC 1
+                //  SUB
                 DEC 
                 LD02
                 LD00
                 LD11
                 CALL 3
                 LD02
-                ; LDC 1
-                ; SUB
+                //  LDC 1
+                //  SUB
                 DEC
                 LD00
                 LD01

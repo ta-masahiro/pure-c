@@ -1,10 +1,10 @@
 [
     LDF
     [
-        ; LDG count
-        ; INC
-        ; GSET count
-        ; POP
+        //  LDG count
+        //  INC
+        //  GSET count
+        //  POP
         LD [0 0]
         LD [0 1]
         LEQ
@@ -15,24 +15,24 @@
         ]
         [
             LD [0 0]
-            ; LDC 1
-            ; SUB
+            //  LDC 1
+            //  SUB
             DEC
             LD [0 1]
             LD [0 2]
             LDG T
             CALL 3
             LD [0 1]
-            ; LDC 1
-            ; SUB
+            //  LDC 1
+            //  SUB
             DEC
             LD [0 2]
             LD [0 0]
             LDG T
             CALL 3
             LD  [0 2]
-            ; LDC 1
-            ; SUB
+            //  LDC 1
+            //  SUB
             DEC
             LD [0 0]
             LD [0 1]

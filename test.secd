@@ -11,7 +11,7 @@
         ]
         [
             ldl3
-            ; 
+            //  
             ldl3
             ldl1 
             ldl0 
@@ -19,7 +19,7 @@
             dec 
             ldl3 
             calls 4
-            ;
+            // 
             ldl3  
             ldl0 
             ldl2 
@@ -27,7 +27,7 @@
             dec 
             ldl3 
             calls 4
-            ;
+            // 
             ldl3  
             ldl2 
             ldl1 
@@ -35,7 +35,7 @@
             dec 
             ldl3 
             calls 4
-            ;  
+            //   
             ldl3 
             tcalls 4 
             rtns

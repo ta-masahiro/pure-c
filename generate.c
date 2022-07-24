@@ -219,7 +219,7 @@ void* create_zero(obj_type type) {
         case OBJ_LINT:z = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(z); return (void*)z;
         case OBJ_RAT: q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_init(q); return (void*)q;
         case OBJ_FLT: d = (double*)malloc(sizeof(double));*d=0; return (void*)d;
-        case OBJ_LFLT:lf = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set_si(lf,0,MPFR_RNDA); return (void*)lf;
+        case OBJ_LFLT:lf = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set_si(lf,0,MPFR_RNDN); return (void*)lf;
         case OBJ_CMPLX: c=(complex*)malloc(sizeof(complex));*c=0;return (void*)c;
         case OBJ_GEN: return newINT(0);
         case OBJ_SYM: return (void*)new_symbol("",0);
@@ -486,7 +486,7 @@ code_ret *codegen_lit(ast*lit_ast,Vector*env,int tail) {
         case TOKEN_LEFLT:
             //char**testbuf=(char**)malloc(1024*sizeof(char));
             lf=(mpfr_ptr)malloc(sizeof(__mpfr_struct));
-            mpfr_init_set_str(lf, str_symbol->_table, 10,MPFR_RNDA);
+            mpfr_init_set_str(lf, str_symbol->_table, 10, MPFR_RNDN);
             //mpfr_strtofr(lf,str_symbol->_table,test_buf,10,MPFR_RNDA);
             push(code,(void*)lf);
             return new_code(code,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));

@@ -16,7 +16,7 @@
             LD  [0 2]
             OADD
             LD  [0 1]
-            ; LPR
+            //  LPR
             LDG fib
             TCALL 3
             RTN
