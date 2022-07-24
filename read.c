@@ -106,13 +106,13 @@ Vector * get_code(TokenBuff *S, Hash * G) {
                 push(t, (void*)token_source_to_object(tk = get_token(S)));
                 break;
             case LD:
-                if ((tk = get_token(S))->type != '[') {printf("Error! [がない\n");break;}
+                if ((tk = get_token(S))->type != '[' && tk->type != '(') {printf("Error! [がない\n");break;}
                 ref = vector_init(2);
                 if ((tk = get_token(S))->type != TOKEN_INT) {printf("Error!数値が必要(LD第一引数)\n");}
                 push(ref, (void*)strtol(tk->source->_table, NULL, 10));
                 if ((tk = get_token(S))->type != TOKEN_INT) {printf("Error!数値が必要(LD第二引数)\n");}
                 push(ref, (void*)strtol(tk->source->_table, NULL, 10));
-                if ((tk = get_token(S))->type != ']') {printf("Error! ]がない\n");break;}
+                if ((tk = get_token(S))->type != ']' && tk->type != ')') {printf("Error! ]がない\n");break;}
                 push(t,(void*)ref);
                 break; 
             case SEL:case TSEL:
@@ -253,10 +253,12 @@ int main(int argc, char * argv[]) {
      // Hash_put(G, "hash_delete", (void * )hash_delete); 
     // print_hashTable(G); 
     if (argc <= 1 ) s = new_tokenbuff(stdin);
-    else {
-        fp = fopen(argv[1], "r");
-        if (fp == NULL) {printf("file %s doesn't exist\n", argv[1]); return  - 1; }
+    else if (strcmp(argv[1], "-f") == 0) {
+        fp = fopen(argv[2], "r");
+        if (fp == NULL) {printf("file %s doesn't exist\n", argv[2]); return  - 1; }
         s = new_tokenbuff(fp); 
+    } else if (strcmp(argv[1], "-s") == 0) {
+        s = new_str_tokenbuff(new_symbol(argv[2], strlen(argv[2])));
     }
     while (TRUE) {
          while (TRUE) {
