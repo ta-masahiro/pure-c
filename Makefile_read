@@ -1,16 +1,16 @@
 PROGRAM := vm-test
-OBJS := hash.o vector.o read.o vm.o object.o symbol.o CException.o lexer.o array.o
+OBJS := hash.o vector.o read.o vm.o object.o symbol.o CException.o lexer.o array.o primitive.o 
 
 
 CC := gcc
 #FLAGS := -g -O0
-FLAGS := -O3
+FLAGS := -O3 -DVMTEST
 LDLIBS :=  -lgc -lgmp  -lmpfr -lm  -lblas  -llapacke
 
 $(PROGRAM): $(OBJS)
 	$(CC) -o $(PROGRAM) $(FLAGS) $^ $(LDLIBS)
 
-$(OBJS): general.h hash.h vector.h vm.h object.h symbol.h lexparse.h array.h
+$(OBJS): general.h hash.h vector.h vm.h object.h symbol.h lexparse.h array.h 
 
 .SUFFIXES: .c .o
 .c.o:

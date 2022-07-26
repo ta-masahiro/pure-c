@@ -226,6 +226,11 @@ void * _realloc(void * ptr, size_t old_size, size_t new_size) {
     return GC_realloc(ptr, new_size); 
 }
 
+extern void make_primitive();
+Hash * G;
+Hash * GLOBAL_VAR;
+Hash * PRIMITIVE_FUNC;  
+
 int main(int argc, char * argv[]) {
     char c; 
     long v; 
@@ -242,8 +247,10 @@ int main(int argc, char * argv[]) {
     Vector * C, * CC ; 
     Vector * R = vector_init(500); 
     Vector * EE = vector_init(50); 
-    Hash * G = Hash_init(128); // must be 2^n 
-
+    //Hash * G = Hash_init(128); // must be 2^n 
+    G = Hash_init(256); // must be 2^n 
+    GLOBAL_VAR = Hash_init(256);
+    make_primitive();
     //primitive関数のセット
     Hash_put(G, new_symbol("sum", 4), (void*)sum);
     Hash_put(G, new_symbol("list", 5), (void*)list);

@@ -5,12 +5,14 @@ unsigned long mulmod(unsigned long a,unsigned long b,unsigned long c);
 
 //extern Hash * PRIMITIVE_FUNC;
 void * p_exit() {exit(0);}
+#ifndef VMTEST
 void * p_forget(Vector *v) {
     Hash_del(G, (Symbol*)vector_ref(v,0));
     Hash_del(GLOBAL_VAR, (Symbol*)vector_ref(v,0));
     Hash_del(PRIMITIVE_FUNC, (Symbol*)vector_ref(v,0));
     return NULL;
 }
+#endif
 void * p_set_prec(Vector *v) {
     if (v->_sp==1) mpfr_set_default_prec((long)vector_ref(v,0));
     else if(v->_sp==2) mpfr_set_prec(obj2lflt((object*)vector_ref(v,1)),(long)vector_ref(v,0));
@@ -346,14 +348,16 @@ void * p_popen(Vector *v) {
 extern code_ret * str_compile(Symbol *s);
 extern object * code_eval(code_ret *s);
 extern void disassy(Vector * code, int indent, FILE*fp);
+#ifndef VMTEST
 extern void code_load(FILE *f);
 void * p_compile(Vector * v) {void * vv = str_compile((Symbol*)vector_ref(v,0));if (vv) return vv;printf("Canot Compile!\n");Throw(3);}
 void * p_dis_assy(Vector *v) {disassy(((code_ret *)vector_ref(v,0))->code, 0, stdout);return NULL;}
 void * p_eval(Vector *v) {return (void*)code_eval((code_ret *)vector_ref(v,0));}
 void * p_load(Vector * v) {FILE * f = fopen(((Symbol*)vector_ref(v,0))->_table,"r");code_load(f);fclose(f);return NULL;}
+#endif
 void * p_keys(Vector *v) {
     Hash *h = (Hash*)vector_ref(v,0);
-    Vector *r = vector_init(10);
+    Vector *r = vector_init(10 );
     Symbol *key;
     for(int i=0; i < (h->size); i++) {
         key = h->hashTable[i].key;
@@ -391,7 +395,11 @@ void *p_eigen(Vector *v) {
     }
 void * p_array_type_change(Vector *v){array*a=(array*)vector_ref(v,0);change_array_type(a,(int)(long)vector_ref(v,1));return (void*)a;}
 void * p_sym2escsym(Vector *v) { return (void*)symbol2escsymbol((Symbol *)vector_ref(v,0));}
-Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
+Funcpointer primitive_func[]  = {p_exit,
+#ifndef VMTEST 
+                                 p_forget, 
+#endif
+                                 p_set_prec,p_get_prec,
                                  p_print, p_printf, p_open, p_close, p_gets, p_puts,p_getc, p_get_time, p_fsin, p_fcos, p_ftan, 
                                  p_fasin, p_facos, p_fatan, p_fsinh, p_fcosh, p_ftanh, p_fasinh, p_facosh, p_fatanh,
                                  p_flog10, p_flogE, p_flog, p_fexp, p_iabs, p_fabs, p_isqrt, p_fsqrt,
@@ -404,9 +412,16 @@ Funcpointer primitive_func[]  = {p_exit, p_forget, p_set_prec,p_get_prec,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_fact, p_fib, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_trial_div, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
-                                 p_compile, p_dis_assy, p_eval, p_load, p_keys, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_array_inv, p_make_eye, p_make_zero,
+#ifndef VMTEST
+                                 p_compile, p_dis_assy, p_eval, p_load,
+#endif 
+                                 p_keys, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_array_inv, p_make_eye, p_make_zero,
                                  p_eigen, p_array_type_change, p_sym2escsym, NULL };
-char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
+char*primitive_function_name[]={"exit",
+#ifndef VMTEST 
+                                "forget",
+#endif 
+                                "set_prec","get_prec",
                                 "print", "printf", "open", "close", "gets", "puts","getc", "get_time", "fsin", "fcos", "ftan", 
                                 "fasin", "facos", "fatan", "fsinh", "fcosh","ftanh", "fasinh", "facosh", "fatanh",
                                 "flog10", "flogE", "flog", "fexp", "iabs", "fabs", "isqrt", "fsqrt",
@@ -419,7 +434,10 @@ char*primitive_function_name[]={"exit", "forget", "set_prec","get_prec",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins", "fact", "fib", "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "trial_div", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
-                                "compile", "dis_assy", "eval", "load", "keys", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "array_inv", "make_eye", "make_zero", 
+#ifndef VMTEST
+                                "compile", "dis_assy", "eval", "load", 
+#endif
+                                "keys", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "array_inv", "make_eye", "make_zero", 
                                 "eigen", "array_type_change", "sym2escsym", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},                                     // exit
@@ -538,10 +556,12 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN},                                      // copy
                                 {OBJ_SYM},                                      // system
                                 {OBJ_SYM},                                      // popen
+#ifndef VMTEST
                                 {OBJ_SYM},                                      // compile
                                 {OBJ_CNT},                                      // dis_assy
                                 {OBJ_CNT},                                      // eval
                                 {OBJ_SYM},                                      // load
+#endif                                
                                 {OBJ_DICT},                                     // keys
                                 {OBJ_RAT},{OBJ_RAT},{OBJ_CMPLX},{OBJ_CMPLX},{OBJ_CMPLX},    // num,den,real,imag,arg
                                 {OBJ_ARRAY},                                    // a2v
@@ -672,10 +692,12 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE},   // copy
                                 {OBJ_NONE, 1, FALSE},   // system
                                 {OBJ_SYM,  1, FALSE},   // popen
+#ifndef VMTEST                                
                                 {OBJ_CNT,  1, FALSE},   // compile
                                 {OBJ_NONE, 1, FALSE},   // dis_assy
                                 {OBJ_GEN,  1, FALSE},   // eval
                                 {OBJ_NONE, 1, FALSE},   // load
+#endif
                                 {OBJ_VECT, 1, FALSE},   // keys
                                 {OBJ_LINT,1,FALSE},{OBJ_LINT,1,FALSE},{OBJ_FLT,1,FALSE},{OBJ_FLT,1,FALSE},{OBJ_FLT,1,FALSE},    // num,den,real,imag,arg
                                 {OBJ_VECT, 1, FALSE},   // atov
@@ -714,13 +736,17 @@ void * make_primitive() {
     //Hash_put(G,char_NONE,(void*)0);
     Hash_put(G,char_stdin,(void*)stdin);
     Hash_put(G,char_stdout,(void*)stdout);
+#ifndef VMTEST 
     Hash_put(GLOBAL_VAR,char_I,new_ct(OBJ_CMPLX,OBJ_NONE,(void*)0,FALSE));
     Hash_put(GLOBAL_VAR,char_stdin,new_ct(OBJ_IO,OBJ_NONE,(void*)0,FALSE));
     Hash_put(GLOBAL_VAR,char_stdout,new_ct(OBJ_IO,OBJ_NONE,(void*)0,FALSE));
     //Hash_put(GLOBAL_VAR,char_PAI,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));
     //Hash_put(GLOBAL_VAR,char_LOG2,new_ct(OBJ_LFLT,OBJ_NONE,(void*)0,FALSE));
     //Hash_put(GLOBAL_VAR,char_NONE,new_ct(OBJ_NONE,OBJ_NONE,(void*)0,FALSE));
+#endif
     while (primitive_func[i] != NULL) {
+        s=primitive_function_name[i];long n=strlen(s);
+#ifndef VMTEST        
         v=vector_init(3);
         for (j=0;j<primitive_function_ct[i][1];j++) {
             push(v,(void*)new_ct(primitive_function_arglisti[i][j], NULL, NULL, FALSE));
@@ -728,17 +754,19 @@ void * make_primitive() {
         ct = new_ct(OBJ_PFUNC, new_ct(primitive_function_ct[i][0], NULL, NULL, FALSE),v,primitive_function_ct[i][2]);
         //vv=vector_init(2);
         //push(vv,(void*)primitive_func[i]);push(vv,(void*)ct);
-        s=primitive_function_name[i];long n=strlen(s);
         Hash_put(PRIMITIVE_FUNC,new_symbol(s,n),(void*)ct);
+#endif
         vv=vector_init(3);
         push(vv,(void*)FUNC_PRIM);push(vv,(void*)primitive_func[i]);
         //Hash_put(G,new_symbol(s,n),(void*)primitive_func[i]);
         Hash_put(G,new_symbol(s,n),(void*)vv);
         i++;
     }
+#ifndef VMTEST
     Hash_put(GLOBAL_VAR,new_symbol("__PRIMITIVE__",13),new_ct(OBJ_DICT,OBJ_NONE,(void*)0,FALSE));
     Hash_put(G,new_symbol("__PRIMITIVE__", 13),(void*)PRIMITIVE_FUNC);
     Hash_put(GLOBAL_VAR,new_symbol("__GLOBAL__",10),new_ct(OBJ_DICT,OBJ_NONE,(void*)0,FALSE));
+#endif
     Hash_put(G,new_symbol("__GLOBAL__", 10),(void*)G);
     //print_hashTable(PRIMITIVE_FUNC);print_hashTable(G);
 }
