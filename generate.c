@@ -73,7 +73,7 @@ enum CODE conv_op[18][19] =
                         {0,   0,    0,    0,    0,    0,     0,     VTOO,  0,      0,    0,    0,    0,   0,   0,   VTOS, 0,    0,  VTOK  },//VECTOR
                         {0,   0,    0,    0,    0,    0,     0,     DTOO,  0,      0,    0,    0,    0,   0,   0,   DTOS, 0,    0,  DTOK  },//DICT
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//PAIR
-                        {0,   STOI, STOL, STOR, STOF, 0,     0,     STOO,  0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  },//SYM
+                        {0,   STOI, STOL, STOR, STOF, 0,     0,     STOO,  0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  -1 },//SYM
                         {0,   0,    0,    0,    0,    0,     0,     ATOO,  0,      0,    0,    0,    0,   0,   0,   ATOS, 0,    0,  ATOK  },//ARRAY
                         {0,   0,    0,    0,    0,    0,     0,     0,     0,      0,    0,    0,    0,   0,   0,   0,    0,    0,  0  } //IO 
                         };
@@ -253,7 +253,8 @@ Data * make_fcall_ct(ast * arg) {
     Vector *_args=(Vector*)vector_ref(d_args, 0);
     Vector *_v=(Vector*)vector_ref(d_args, 1);
     int dotted;
-    if (strcmp(((Data*)vector_ref(_args,_args->_sp-1))->key->_table, "..") == 0) dotted = TRUE; else dotted = FALSE;
+    //if (strcmp(((Data*)vector_ref(_args,_args->_sp-1))->key->_table, "..") == 0) dotted = TRUE; else dotted = FALSE;
+    if (_args->_sp != 0 && strcmp(((Data*)vector_ref(_args,_args->_sp-1))->key->_table, "..") == 0) dotted = TRUE; else dotted = FALSE;
 
     Data *d = (Data*)malloc(sizeof(Data));
     ast *fname = (ast*)vector_ref(arg->table, 0);
@@ -958,6 +959,9 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
                     // !!!ほんとうはarg_typeをひとつづつ比較してerror判定すべき!!!!
                 }
             }
+            //if (code_s_function->ct->type == OBJ_PFUNC) code=vector_append(code_param,code);
+            //else code=vector_append(code,code_param);
+            //code=vector_append(code_param,code);
             code=vector_append(code,code_param);
         }
 
@@ -1785,6 +1789,7 @@ int main(int argc, char*argv[]) {
     mpfr_set_default_prec(256);
     Vector * t; 
     Vector * Stack = vector_init(500000); // 500だと５倍くらい遅い！なぜ？
+    //Vector * Stack = vector_init(500); // 500だと５倍くらい遅い！なぜ？
     //Vector * C, * CC ; 
     Vector * Ret = vector_init(500); 
     Vector * Env = vector_init(5); 
@@ -1883,7 +1888,10 @@ int main(int argc, char*argv[]) {
             //S->buff->_cp = tokencp;S->buff->_sp=tokensp;
             continue;
         }
-        if (debug) token_print(S); 
+        if (debug) {
+            token_print(S);
+            printf("\nS size:%d S sp:%d E sp:%d\n",Stack->_size,Stack->_sp,env->_sp);
+        } 
         //S->buff->_cp=0;S->buff->_sp=0;
     }
 

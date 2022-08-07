@@ -10,33 +10,32 @@
             rtns
         ]
         [
+            ldl0
+            dec
+            ldl1
+            ldl2 
             ldl3
-            //  
-            ldl3
-            ldl1 
-            ldl0 
-            ldl2
-            dec 
-            ldl3 
+            dup 
             calls 4
             // 
-            ldl3  
-            ldl0 
-            ldl2 
             ldl1
             dec 
-            ldl3 
+            ldl2
+            ldl0 
+            ldl3
+            dup 
             calls 4
             // 
-            ldl3  
-            ldl2 
-            ldl1 
-            ldl0
+            ldl2
             dec 
-            ldl3 
+            ldl0 
+            ldl1
+            ldl3
+            dup 
             calls 4
             //   
-            ldl3 
+            ldl3
+            dup 
             tcalls 4 
             rtns
         ] 
@@ -45,4 +44,4 @@
     gset tak 
     stop
 ]
-[ldg tak ldc 0 ldc 8 ldc 19 ldg tak calls 4 stop]
+[ldc 19 ldc 8 ldc 0 ldg tak dup calls 4 stop]

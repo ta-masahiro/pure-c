@@ -101,8 +101,11 @@ typedef enum {
     AST_LOOP,           //26:AST_LOOP,[count_ast,ast]
     AST_CLASS_VAR,      //27:AST_CLASS_VAR,[class_ast,var_ast]
     AST_FOR,            //28:AST_FOR,[init ast,cond ast,loop ast]
-    AST_DCL_F,           //29:AST_DCL_F expr_list_ast ※関数を返す関数の宣言文
-    AST_FTYPE           //30:AST_FTYPE type,[arg_list,expr]
+    AST_DCL_F,          //29:AST_DCL_F expr_list_ast ※関数を返す関数の宣言文
+    AST_FTYPE,          //30:AST_FTYPE type,[arg_list,expr]
+    AST_MAC_C,          //31:AST_MAC_C ,[value]         定数マクロ
+    AST_MAC_F,          //32:AST_MAC_F,[[ast_list],ast] 関数マクロ
+    AST_MAC_S           //33:AST_MAC_S,....             構文マクロ
 } ast_type; 
 
 

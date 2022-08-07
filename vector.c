@@ -47,6 +47,14 @@ Vector * vector_copy(Vector * v) {
     return r;
 }
 
+Vector *vector_copy_n(Vector *v, int n) {
+    // 先頭からn個copyする
+    Vector * r = vector_init(n );
+    memcpy(r ->_table, v ->_table, n*sizeof(void*));
+    r->_sp = n; r ->_cp = v ->_cp; 
+    return r;
+}
+
 void vector_resize(Vector * s) {
     int oldN = s ->_size; 
     int maxN = 3 * oldN / 2 + 1;     /* 1.5倍に拡大  */   
@@ -57,6 +65,23 @@ void vector_resize(Vector * s) {
     s ->_table = table;  
     s ->_size = maxN;
     //printf("vector resize:%d to %d\n", oldN, maxN); // vector_print(s);    
+}
+
+void vector_upsize(Vector *s, int up) {
+    // 現在のvectorをupだげ増やせるようにする
+    // s->_table、s->_sizeが変更されるかもしれない
+    // s->_spは変更しない
+    int rq_size, old_size;
+    void **table;
+    if ((rq_size = s->_sp + up) > (old_size = s->_size)) { //
+        table = (void **)realloc(s->_table, rq_size*(sizeof(void*)));
+        if (table == NULL)  {
+            printf("reallock failed!\n"); 
+            free(s -> _table); exit(0); }
+        s ->_table = table;  
+        s ->_size = rq_size;
+        printf("vector upsize:%d to %d\n", old_size, rq_size);
+    }
 }
 
 Vector * vector_append(Vector*v1,Vector*v2) {
@@ -88,6 +113,16 @@ void vector_print(Vector * s) {
         printf("%ld ", (long)(s ->_table[i])); 
     }
     printf("]\n"); 
+}
+
+Vector * vector_rev_copy_nm(Vector *v, int n, int m) {
+    // n番目からm番目までm-n+1個を逆順でcopyする
+    Vector *r = vector_init(n);
+    for (int i = n; i <= m; i++) {
+        r->_table[i] = v->_table[m - i];
+    }
+    r->_sp = m - n + 1;
+    return r;
 }
 
  /* 以下は適当なテスト   

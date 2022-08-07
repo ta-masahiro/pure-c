@@ -2,98 +2,96 @@
 #include <time.h>
 gmp_randstate_t  RAND_STATE;
 unsigned long mulmod(unsigned long a,unsigned long b,unsigned long c);
-
-//extern Hash * PRIMITIVE_FUNC;
-void * p_exit() {exit(0);}
+//
+// primtive関数は引数としてvoid**(void*へのpointer)と引数の個数をもらい
+// 第一引数の場所に結果をsetする
+// func(void **p, int n)のとき第一引数は*p、第二引数は*(p+1)、第ｎ引数は*(p+n-1)
+// 値を返さない関数はNULLをsetすること
+//
+void p_exit() {exit(0);}
 #ifndef VMTEST
-void * p_forget(Vector *v) {
-    Hash_del(G, (Symbol*)vector_ref(v,0));
-    Hash_del(GLOBAL_VAR, (Symbol*)vector_ref(v,0));
-    Hash_del(PRIMITIVE_FUNC, (Symbol*)vector_ref(v,0));
-    return NULL;
+// 共通global環境、コンパイラの変数テーブル、primitive関数テーブルから削除する
+void p_forget(void** sp, int n) {
+    Hash_del(G, (Symbol*)*sp);
+    Hash_del(GLOBAL_VAR, (Symbol*)*sp);
+    Hash_del(PRIMITIVE_FUNC, (Symbol*)*sp);
+    *(sp) = NULL;
 }
 #endif
-void * p_set_prec(Vector *v) {
-    if (v->_sp==1) mpfr_set_default_prec((long)vector_ref(v,0));
-    else if(v->_sp==2) mpfr_set_prec(obj2lflt((object*)vector_ref(v,1)),(long)vector_ref(v,0));
+void p_set_prec(void **sp, int n) {
+    if (n == 1) mpfr_set_default_prec((long)*sp);
+    else if(n == 2) mpfr_set_prec(obj2lflt((object*)*(sp+1)),(long)*sp);
     //else {printf("no!\n");Throw(3); 
-    return NULL;
+    *(sp) = NULL;
 }
-void* p_get_prec(Vector *v) {
+void p_get_prec(void **sp, int n) {
     int i;
-    if (v->_sp==0) i=mpfr_get_default_prec();
-    else i=mpfr_get_prec(obj2lflt((object*)vector_ref(v,0)));
-    return (void*)(long)i;
+    if (n == 0) {i = mpfr_get_default_prec(); sp++;}
+    else i = mpfr_get_prec(obj2lflt((object*)*sp));
+    *(sp) = (void*)(long)i;
 }
 // io
-void*p_print(Vector*v) {
-    int i;
-    for(i=0;i<v->_sp;i++) {
-        fputs(objtostr((object*)vector_ref(v,i)),stdout); 
+void p_print(void **sp, int n) {
+    for(int i = 0; i < n; i ++) {
+        fputs(objtostr((object*)*(sp + i)),stdout); 
         fputs(" ",stdout);
     }
     fputs("\n",stdout);
-    return NULL;
+    *(sp) = NULL;
 }
-void*p_printf(Vector*v) {
-    object *o=(object*)vector_ref(v,1);
-    char *s =((Symbol*)vector_ref(v,0))->_table;
+void p_printf(void **sp,int n) {
+    char *s = ((Symbol*)*(sp))->_table;
+    object *o=(object*)*(sp+1);
     switch(o->type) {
-        case OBJ_INT:   printf(s,(long)o->data.intg);break;
-        case OBJ_LINT:  mpfr_printf(s,(mpz_ptr)o->data.ptr);break;
-        case OBJ_RAT:   mpfr_printf(s,(mpq_ptr)o->data.ptr);break; 
-        case OBJ_FLT:   printf(s,(double)o->data.flt);break;
-        case OBJ_LFLT:  mpfr_printf(s,(mpfr_ptr)o->data.ptr);break;
-        case OBJ_CMPLX: printf(s,*(complex*)o->data.ptr);break;
+        case OBJ_INT:   printf(s, (long)o->data.intg);          break;
+        case OBJ_LINT:  mpfr_printf(s, (mpz_ptr)o->data.ptr);   break;
+        case OBJ_RAT:   mpfr_printf(s, (mpq_ptr)o->data.ptr);   break; 
+        case OBJ_FLT:   printf(s, (double)o->data.flt);         break;
+        case OBJ_LFLT:  mpfr_printf(s, (mpfr_ptr)o->data.ptr);  break;
+        case OBJ_CMPLX: printf(s, *(complex*)o->data.ptr);      break;
     }
-    return NULL;
+    *(sp) = NULL;
 }
-void *p_open(Vector*v) {
-    FILE *f;
-    Symbol*path=vector_ref(v,0);
-    Symbol* mode=vector_ref(v,1);
-    //object*o=(object*)malloc(sizeof(object));
-    //o->type=OBJ_IO;
-    //o->data.ptr=(void*)fopen(path->_table,mode->_table);
-    f=(FILE*)fopen(path->_table,mode->_table);
-    //if (o->data.ptr == NULL) printf("I/O Error in openning:%s",path->_table);
+void p_open(void **sp, int n) {
+    Symbol *path = *(sp);
+    Symbol *mode = *(sp+1);
+    FILE *f = (FILE*)fopen(path->_table,mode->_table);
     if (f == NULL) printf("I/O Error in openning:%s\n",path->_table);
-    return (void*)f;
+    *(sp) = (void*)f;
 }
 
-void*p_close(Vector*v) {
-    fclose((FILE*)vector_ref(v,0));
-    return NULL;
+void p_close(void **sp, int n) {
+    fclose((FILE*)*sp);
+    *(sp) == NULL;
+}
+#define BUFSIZE 4096
+void p_gets(void **sp, int m) {
+    char buff[BUFSIZE];
+    if (fgets(buff, BUFSIZE, (FILE*)*sp)==NULL) {printf("RuntimeError:Canot Fgets\n"); Throw(3);}
+    long n = strlen(buff);
+    Symbol *s = new_symbol(buff, n);
+    *(sp) = (void*)s;
 }
 
-void *p_gets(Vector*v) {
-    char buff[4096];
-    //if (fgets(buff,4095,(FILE*)vector_ref(v,0))==NULL) return NULL;
-    if (fgets(buff,4095,(FILE*)vector_ref(v,0))==NULL) {printf("RuntimeError:Canot Fgets\n");Throw(3);}
-    long n=strlen(buff);
-    Symbol*s=new_symbol(buff,n);
-    //object*o=(object*)malloc(sizeof(object));
-    //o->type=OBJ_SYM;
-    //o->data.ptr=s;
-    //return (void*)o;
-    return (void*)s;
+void p_puts(void **sp, int n) {
+    if (fputs(((Symbol*)*sp)->_table, (FILE*)*(sp+1)) == EOF) {;}
+    *(sp) = NULL;
 }
 
-void* p_puts(Vector *v) {
-    if (fputs(((Symbol*)vector_ref(v,0))->_table,(FILE*)vector_ref(v,1))==EOF) {;}
-    return NULL;
-}
-
-void * p_getc(Vector*v) {
+void p_getc(void **sp, int n) {
     
-    char c=fgetc(vector_ref(v,0));
+    char c=fgetc((FILE*)*sp);
     Symbol *s = new_symbol(&c,1);
-    return (void*)s;    
+    *(sp) = (void*)s;    
 }
-void * p_get_time() {struct timespec Time;clock_gettime(CLOCK_REALTIME,&Time);double d = Time.tv_sec+Time.tv_nsec/(1.0e+9);return (void*)*(long *)&d;}
+void p_get_time(void **sp, int n) {
+    struct timespec Time;
+    clock_gettime(CLOCK_REALTIME,&Time);
+    double d = Time.tv_sec+Time.tv_nsec/(1.0e+9);
+    *(sp) = (void*)*(long *)&d;}
 // 数学関数
 // float
-#define math_func(g) void * p_f##g(Vector *v) {long l = (long)vector_ref(v,0);double f = g(*(double*)&l); return (void*)*(long*)&f;}
+#define math_func(g) void p_f##g(void **sp, int n) {long l = (long)*sp;double f = g(*(double*)&l); *(sp) = (void*)*(long*)&f;}
 math_func(sin)
 math_func(cos)
 math_func(tan)
@@ -109,174 +107,194 @@ math_func(atanh)
 math_func(log10)
 math_func(log1p)
 math_func(exp)
-void *p_flogE(Vector *v) {
-    long l = (long)vector_ref(v,0);
+// 自然対数
+void p_flogE(void **sp, int n) {
+    long l = (long)*sp;
     double f = log(*(double*)&l); 
-    return (void*)*(long*)&f;
+    *(sp) = (void*)*(long*)&f;
 }
-void *p_flog(Vector *v) {
-    long l = (long)vector_ref(v,0),ll = (long)vector_ref(v,1);
+// xを底とするyの対数 LOG(x,y)
+void p_flog(void **sp, int n) {
+    long l = (long)*(sp);long ll = (long)*(sp+1);
     double f = log(*(double*)&ll)/log(*(double*)&l); 
-    return (void*)*(long*)&f;
+    *(sp) = (void*)*(long*)&f;
 }
-//abs
-void *p_iabs(Vector *v)     {return (void*)labs((long)vector_ref(v,0));}
-void *p_fabs(Vector *v)     {long l = (long)vector_ref(v,0);double f = fabs(*(double*)&l); return (void*)*(long*)&f;}
-void *p_labs(Vector *v)     {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_abs(L,L);return (void*)L;}
-void *p_rabs(Vector *v)     {mpq_ptr Q = (mpq_ptr)malloc(sizeof(MP_RAT));mpq_set(Q,(mpq_ptr)vector_ref(v,0));mpq_abs(Q,Q);return (void*)Q;}
-void *p_lfabs(Vector *v)    {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDN);mpfr_abs(F,F,MPFR_RNDN);return (void*)F;}
-void *p_cabs(Vector *v)     {double c = cabs(*(complex*)vector_ref(v,0)); return (void*)(*(long*)&c);}
+// abs
+void p_iabs  (void **sp, int n)   {*(sp) = (void*)labs((long)*sp);}
+void p_fabs  (void **sp, int n)   {long     l = (long)*sp; double f = fabs(*(double*)&l); (*sp) = (void*)*(long*)&f;}
+void p_labs  (void **sp, int n)   {mpz_ptr  L = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init_set(L,(mpz_ptr)*sp); mpz_abs(L,L); *(sp) = (void*)L;}
+void p_rabs  (void **sp, int n)   {mpq_ptr  Q = (mpq_ptr)malloc(sizeof(MP_RAT)); mpq_set(Q,(mpq_ptr)*sp); mpq_abs(Q,Q); *(sp) = (void*)Q;}
+void p_lfabs (void **sp, int n)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct)); mpfr_init_set(F,(mpfr_ptr)*sp,MPFR_RNDN); mpfr_abs(F,F,MPFR_RNDN); *(sp) = (void*)F;}
+void p_cabs  (void **sp, int n)   {double   c = cabs(*(complex*)*sp); *(sp) = &c;}
 // sqrt
-void *p_isqrt(Vector *v)    {return (void*)(long)sqrt((double)(long)vector_ref(v,0));}
-void *p_fsqrt(Vector *v)    {long l = (long)vector_ref(v,0);double f = sqrt(*(double*)&l); return (void*)*(long*)&f;}
-void *p_lsqrt(Vector *v)    {mpz_ptr L = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init_set(L,(mpz_ptr)vector_ref(v,0));mpz_sqrt(L,L);return (void*)L;}
-void *p_lfsqrt(Vector *v)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDN);mpfr_sqrt(F,F,MPFR_RNDN);return (void*)F;}
-void *p_csqrt(Vector *v)    {complex *c = (complex*)malloc(sizeof(complex));*c = csqrt(*(complex*)vector_ref(v,0)); return (void*)c;}
+void p_isqrt (void **sp, int n)   {*(sp) = (void*)(long)sqrt((double)(long)*sp);}
+void p_fsqrt (void **sp, int n)   {long     l = (long)*sp;double f = sqrt(*(double*)&l); *(sp) = (void*)*(long*)&f;}
+void p_lsqrt (void **sp, int n)   {mpz_ptr  L = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init_set(L,(mpz_ptr)*sp); mpz_sqrt(L,L);*(sp) = (void*)L;}
+void p_lfsqrt(void **sp, int n)   {mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct)); mpfr_init_set(F,(mpfr_ptr)*sp,MPFR_RNDN); mpfr_sqrt(F,F,MPFR_RNDN);*(sp) = (void*)F;}
+void p_csqrt (void **sp, int n)   {complex *c = (complex*)malloc(sizeof(complex)); *c = csqrt(*(complex*)*sp); *(sp) = (void*)c;}
 
 // long float
-void * lf_function(Vector *v, int (*function)(__mpfr_struct * f, const __mpfr_struct * g, mpfr_rnd_t r))  {
+void lf_function(void **sp, int (*function)(__mpfr_struct * f, const __mpfr_struct * g, mpfr_rnd_t r))  {
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init_set(F,(mpfr_ptr)vector_ref(v,0),MPFR_RNDN);
-    function(F,F,MPFR_RNDN);
-    return (void*)F;
+    mpfr_init_set(F,(mpfr_ptr)*sp, MPFR_RNDN);
+    function(F, F, MPFR_RNDN);
+    *(sp) = (void*)F;
 }
 //
-void *p_lfsin  (Vector *v) {return lf_function(v, mpfr_sin  );}
-void *p_lfcos  (Vector *v) {return lf_function(v, mpfr_cos  );}
-void *p_lftan  (Vector *v) {return lf_function(v, mpfr_tan  );}
-void *p_lfasin (Vector *v) {return lf_function(v, mpfr_asin );}
-void *p_lfacos (Vector *v) {return lf_function(v, mpfr_acos );}
-void *p_lfatan (Vector *v) {return lf_function(v, mpfr_atan );}
-void *p_lfsinh (Vector *v) {return lf_function(v, mpfr_sinh );}
-void *p_lfcosh (Vector *v) {return lf_function(v, mpfr_cosh );}
-void *p_lftanh (Vector *v) {return lf_function(v, mpfr_tanh );}
-void *p_lfasinh(Vector *v) {return lf_function(v, mpfr_asinh);}
-void *p_lfacosh(Vector *v) {return lf_function(v, mpfr_acosh);}
-void *p_lfatanh(Vector *v) {return lf_function(v, mpfr_atanh);}
-void *p_lflog10(Vector *v) {return lf_function(v, mpfr_log10);}
-void *p_lflogE (Vector *v) {return lf_function(v, mpfr_log  );}
-void *p_lflog1p(Vector *v) {return lf_function(v, mpfr_log1p);}
-void *p_lfexp  (Vector *v) {return lf_function(v, mpfr_exp  );}
-void *p_lflog(Vector *v)    {
+void p_lfsin  (void **sp, int n) { lf_function(sp, mpfr_sin  );}
+void p_lfcos  (void **sp, int n) { lf_function(sp, mpfr_cos  );}
+void p_lftan  (void **sp, int n) { lf_function(sp, mpfr_tan  );}
+void p_lfasin (void **sp, int n) { lf_function(sp, mpfr_asin );}
+void p_lfacos (void **sp, int n) { lf_function(sp, mpfr_acos );}
+void p_lfatan (void **sp, int n) { lf_function(sp, mpfr_atan );}
+void p_lfsinh (void **sp, int n) { lf_function(sp, mpfr_sinh );}
+void p_lfcosh (void **sp, int n) { lf_function(sp, mpfr_cosh );}
+void p_lftanh (void **sp, int n) { lf_function(sp, mpfr_tanh );}
+void p_lfasinh(void **sp, int n) { lf_function(sp, mpfr_asinh);}
+void p_lfacosh(void **sp, int n) { lf_function(sp, mpfr_acosh);}
+void p_lfatanh(void **sp, int n) { lf_function(sp, mpfr_atanh);}
+void p_lflog10(void **sp, int n) { lf_function(sp, mpfr_log10);}
+void p_lflogE (void **sp, int n) { lf_function(sp, mpfr_log  );}
+void p_lflog1p(void **sp, int n) { lf_function(sp, mpfr_log1p);}
+void p_lfexp  (void **sp, int n) { lf_function(sp, mpfr_exp  );}
+void p_lflog(void **sp, int n)   {
     //mpfr_ptr E = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
     mpfr_t E;
     mpfr_ptr F = (mpfr_ptr)malloc(sizeof(__mpfr_struct));
-    mpfr_init(E);mpfr_init(F);
-    mpfr_log(E,(mpfr_ptr)vector_ref(v,0),MPFR_RNDN);mpfr_log(F,(mpfr_ptr)vector_ref(v,1),MPFR_RNDN);
-    mpfr_div(F,F,E,MPFR_RNDN);
-    return (void*)F;
+    mpfr_init(E); mpfr_init(F);
+    mpfr_log(E, (mpfr_ptr)*(sp--), MPFR_RNDN); mpfr_log(F, (mpfr_ptr)*sp, MPFR_RNDN);
+    mpfr_div(F, F, E, MPFR_RNDN);
+    *(sp) = (void*)F;
 }
 //
-void *p_oabs(Vector *v) {return (void*)objabs((object*)vector_ref(v,0));}
-void *p_osqrt(Vector *v) {return (void*)objsqrt((object*)vector_ref(v,0));}
+void p_oabs  (void **sp, int n) {*(sp) = (void*)objabs((object*)*sp);}
+void p_osqrt (void **sp, int n) {*(sp) = (void*)objsqrt((object*)*sp);}
 //
-void *p_osin(Vector *v) {return (void*)objsin((object*)vector_ref(v,0));}
-void *p_ocos(Vector *v) {return (void*)objcos((object*)vector_ref(v,0));}
-void *p_otan(Vector *v) {return (void*)objtan((object*)vector_ref(v,0));}
-void *p_oasin(Vector *v) {return (void*)objasin((object*)vector_ref(v,0));}
-void *p_oacos(Vector *v) {return (void*)objacos((object*)vector_ref(v,0));}
-void *p_oatan(Vector *v) {return (void*)objatan((object*)vector_ref(v,0));}
-void *p_osinh(Vector *v) {return (void*)objsinh((object*)vector_ref(v,0));}
-void *p_ocosh(Vector *v) {return (void*)objcosh((object*)vector_ref(v,0));}
-void *p_otanh(Vector *v) {return (void*)objtanh((object*)vector_ref(v,0));}
-void *p_oasinh(Vector *v) {return (void*)objasinh((object*)vector_ref(v,0));}
-void *p_oacosh(Vector *v) {return (void*)objacosh((object*)vector_ref(v,0));}
-void *p_oatanh(Vector *v) {return (void*)objatanh((object*)vector_ref(v,0));}
-void *p_olog10(Vector *v)   {return (void*)objlog10((object*)vector_ref(v,0));}
-void *p_ologE (Vector *v)   {return (void*)objlogE((object*)vector_ref(v,0));}
-void *p_olog1p(Vector *v)   {return (void*)objlog10((object*)vector_ref(v,0));}
-void *p_oexp  (Vector *v)   {return (void*)objexp((object*)vector_ref(v,0));}
-void *p_olog(Vector *v)     {return (void*)objdiv(objlogE((object*)vector_ref(v,1)), objlogE((object*)vector_ref(v,0)));}
-//void *p_osqrt(Vector *v) {return (void*)objsqrt((object *)vector_ref(v,0));}
-void *p_ofloor(Vector * v) {return (void *)objfloor((object*)vector_ref(v,0));}
+void p_osin  (void **sp, int n) {*(sp) = (void*)objsin((object*)*sp);}
+void p_ocos  (void **sp, int n) {*(sp) = (void*)objcos((object*)*sp);}
+void p_otan  (void **sp, int n) {*(sp) = (void*)objtan((object*)*sp);}
+void p_oasin (void **sp, int n) {*(sp) = (void*)objasin((object*)*sp);}
+void p_oacos (void **sp, int n) {*(sp) = (void*)objacos((object*)*sp);}
+void p_oatan (void **sp, int n) {*(sp) = (void*)objatan((object*)*sp);}
+void p_osinh (void **sp, int n) {*(sp) = (void*)objsinh((object*)*sp);}
+void p_ocosh (void **sp, int n) {*(sp) = (void*)objcosh((object*)*sp);}
+void p_otanh (void **sp, int n) {*(sp) = (void*)objtanh((object*)*sp);}
+void p_oasinh(void **sp, int n) {*(sp) = (void*)objasinh((object*)*sp);}
+void p_oacosh(void **sp, int n) {*(sp) = (void*)objacosh((object*)*sp);}
+void p_oatanh(void **sp, int n) {*(sp) = (void*)objatanh((object*)*sp);}
+void p_olog10(void **sp, int n) {*(sp) = (void*)objlog10((object*)*sp);}
+void p_ologE (void **sp, int n) {*(sp) = (void*)objlogE((object*)*sp);}
+void p_olog1p(void **sp, int n) {*(sp) = (void*)objlog10((object*)*sp);}
+void p_oexp  (void **sp, int n) {*(sp) = (void*)objexp((object*)*sp);}
+void p_olog  (void **sp, int n) {*(sp-1) = (void*)objdiv(objlogE((object*)*(sp-1)), objlogE((object*)*sp));}
+void p_ofloor(void **sp, int n) {*(sp) = (void *)objfloor((object*)*sp);}
 // constnt
-void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_pi(r,MPFR_RNDN);return (void*)r;}
-//void *p_lpi(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(r);mpfr_const_pi(r,MPFR_RNDN);return (void*)r;}
-void *p_llog2(Vector *v) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)vector_ref(v,0));mpfr_const_log2(r,MPFR_RNDN);return (void*)r;}
-void *p_fgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = tgamma(*(double*)&l); return (void*)*(long*)&f;}
-void *p_flgamma(Vector *v)    {long l = (long)vector_ref(v,0);double f = lgamma(*(double*)&l); return (void*)*(long*)&f;}
-//void *p_fgamma(Vector *v) {double *f = (double*)malloc(sizeof(double));*f = tgamma(*(double*)vector_ref(v,0)); return (void*)f;}
-//void *p_flgamma(Vector *v) {double *f = (double*)malloc(sizeof(double));*f = lgamma(*(double*)vector_ref(v,0)); return (void*)f;}
-void *p_ogamma(Vector *v) {return (void*)objgamma((object*)vector_ref(v,0));}
-void *p_olgamma(Vector *v) {return (void*)objlgamma((object*)vector_ref(v,0));}
+void p_lpi(void **sp, int n) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)*sp);mpfr_const_pi(r,MPFR_RNDN);*(sp) = (void*)r;}
+//void p_lpi(void **sp, int n) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init(r);mpfr_const_pi(r,MPFR_RNDN);*(sp) = (void*)r;}
+void p_llog2(void **sp, int n) {mpfr_ptr r = (mpfr_ptr)malloc(sizeof(__mpfr_struct));mpfr_init2(r,(long)*sp);mpfr_const_log2(r,MPFR_RNDN);*(sp) = (void*)r;}
+void p_fgamma(void **sp, int n)    {long l = (long)*sp;double f = tgamma(*(double*)&l); *(sp) = (void*)*(long*)&f;}
+void p_flgamma(void **sp, int n)    {long l = (long)*sp;double f = lgamma(*(double*)&l); *(sp) = (void*)*(long*)&f;}
+//void p_fgamma(void **sp, int n) {double *f = (double*)malloc(sizeof(double));*f = tgamma(*(double*)sp); *(sp) = (void*)f;}
+//void p_flgamma(void **sp, int n) {double *f = (double*)malloc(sizeof(double));*f = lgamma(*(double*)sp); *(sp) = (void*)f;}
+void p_ogamma(void **sp, int n) {*(sp) = (void*)objgamma((object*)*sp);}
+void p_olgamma(void **sp, int n) {*(sp) = (void*)objlgamma((object*)*sp);}
 //
-void *p_sum(Vector *v) {if (v->_sp == 0) return (void*)newINT(0); object* o = objcpy(vector_ref(v,0));int i;for(i=1;i<v->_sp;i++) o = objadd(o,vector_ref(v,i));return (void*)o;}
-void *p_vsum(Vector *v) {return p_sum((Vector*)vector_ref(v,0));}
-void *p_irange(Vector* v) {
-    int i,n=(int)(long)vector_ref(v,0);
-    Vector *r=vector_init(n);
-    for (i=0;i<n;i++) push(r,(void*)newINT((long)i));
-    return (void*)r;
+void p_sum(void **sp, int n) {
+    if (n == 0) {
+        *(sp) = (void*)newINT(0); 
+        return;} 
+    object* o = objcpy(*sp);
+    for(int i = 1; i < n; i++) o = objadd(o, (object *)*(sp+i)); 
+    *(sp) = (void*)o;
+}
+void p_vsum(void **sp, int n) {
+    object *o =newINT(0);
+    Vector *v;//printf("%d\n",n);
+    for(int j = 0; j < n; j++) {
+        if (((object*)*(sp + j))->type != OBJ_VECT) {printf("DataError:引数はvectorの必要があります\n");Throw(3);}
+        v = (Vector*)(((object*)*(sp + j))->data.ptr);//printf("%d\n",v->_sp);
+        //if (v->_sp == 0) continue; 
+        for(int i = 0; i < v->_sp; i ++) {
+            o = objadd(o, (object*)(v->_table[i])); //printf("%s\n",objtostr(o));
+        }
+    }
+    *sp = (void*)o;
+}
+void p_irange(void ** sp, int m) {
+    int n = (int)(long)*sp;
+    Vector *r = vector_init(n);
+    for (int i = 0; i < n; i ++) push(r, (void*)newINT((long)i));
+    *(sp) = (void*)r;
 }
 // vector swap : vector[i]<->vector[j]
-void * p_vswap(Vector *v) {
-    Vector *t=(Vector*)vector_ref(v,0);
-    int i=(int)(long)vector_ref(v,1);
-    int j=(int)(long)vector_ref(v,2);
-    void* w=t->_table[i];t->_table[i]=t->_table[j];t->_table[j]=w;
-    return (void*)0;
+void p_vswap(void **sp, int n) {
+    Vector *t = (Vector*)*(sp);
+    int i = (int)(long)*(sp+1);
+    int j = (int)(long)*(sp+2);
+    void* w = t->_table[i]; t->_table[i] = t->_table[j]; t->_table[j] = w;
+    *(sp) = NULL;
 }
 //  sorting !!うまく動いていない
 int __cmp__(const void* x,const void* y) {return objcmp((object*)x,(object*)y);}
-void *p_sort(Vector *vv) {
-    Vector *v=(Vector *)vector_ref(vv,0);
-    int data_size=v->_sp;
-    void * data_pt=v->_table;
+void p_sort(void **sp, int n) {
+    Vector *v=(Vector *)*sp;
+    int data_size  = v->_sp;
+    void * data_pt = v->_table;
     //qsort(v->_table, v->_sp, sizeof(void*), cmp);
     qsort(data_pt, v->_sp, 8, __cmp__);
     //qsort(v->_table, v->_sp, 8, objcmp);
-    return (void*)0;
+    *(sp) = NULL;
 }
-void * p_ddel(Vector * v) {Hash_del((Hash*)vector_ref(v,0), (Symbol*)vector_ref(v,1));return NULL;}
-void * p_vdel(Vector * v) {long index=(long)vector_ref(v,1);Vector*vv=(Vector*)vector_ref(v,0);if (index<0) index=vv->_sp+index;vector_delete(vv, index); return NULL;}
-void * p_vins(Vector * v) {vector_insert(vector_ref(v,0), (long)vector_ref(v,1), vector_ref(v,2)); return NULL;}
+void p_ddel(void **sp, int n) {Hash_del((Hash*)*sp, (Symbol*)*(sp +1)); *(sp) = NULL;}
+void p_vdel(void **sp, int n) {Vector*vv=(Vector*)*(sp) ;long index=(long)*(sp+1); if (index<0) index=vv->_sp+index;vector_delete(vv, index); *(sp) = NULL;}
+void p_vins(void **sp, int n) {vector_insert((Vector*)*sp, (long)*(sp + 1), (void*)*(sp + 2)); *(sp) = NULL;}
 
-void * p_cmp(Vector * v) {return (void*)(long)objcmp((object*)vector_ref(v,0), (object*)vector_ref(v,1));}
-void * p_fact(Vector * v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(r); mpz_fac_ui(r, (long)vector_ref(v,0)); return (void*)r;}
-void * p_fib(Vector * v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(r); mpz_fib_ui(r, (long)vector_ref(v,0)); return (void*)r;}
+void p_cmp(void **sp, int n) {*(sp) = (void*)(long)objcmp((object*)*sp, (object*)*(sp+1));}
+void p_fact(void **sp, int n) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(r); mpz_fac_ui(r, (long)*sp); *(sp) = (void*)r;}
+void p_fib(void **sp, int n) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(r); mpz_fib_ui(r, (long)*sp); *(sp) = (void*)r;}
 // 数論関数
-void * p_lis_prime(Vector *v) {int reps=(v->_sp<=1)?20:(int)(long)vector_ref(v,1);return  (void*)(long)mpz_probab_prime_p(vector_ref(v,0),reps);}
-void * p_lnext_prime(Vector *v) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)vector_ref(v,0));return (void*)r;}
+void p_lis_prime(void **sp, int n) {int reps = (1<=1)?20:(int)(long)*(sp+1); *(sp) = (void*)(long)mpz_probab_prime_p((mpz_ptr)*sp, reps);}
+void p_lnext_prime(void **sp, int n) {mpz_ptr r=(mpz_ptr)malloc(sizeof(MP_INT));mpz_nextprime(r,(mpz_ptr)*sp); *(sp) = (void*)r;}
 // 乱数
 static unsigned long _X=123456789,_Y=362436069,_Z=521288629,_W=88675123;
-//void * p_init_irand(Vector * v) {_Z ^=(unsigned long)vector_ref(v,0);_Z ^= _Z >>21;_Z ^= _Z<< 35; _Z ^= _Z >>4; _Z *=2685821657736338717L;return (void*)0;}
-void * p_init_irand(Vector * v) {_W ^=(unsigned long)vector_ref(v,0);_W ^= _W >>21;_W ^= _W<< 35; _W ^= _W >>4; _W *=2685821657736338717L;return (void*)0;}
-//void * p_init_irand(Vector * v) {unsigned long t;_W ^=(unsigned long)vector_ref(v,0);_W ^= _W >>21;_W ^= _W<< 35; _W ^= _W >>4; _W *=2685821657736338717L;
+//void p_init_irand(void **sp, int n) {_Z ^=(unsigned long)sp;_Z ^= _Z >>21;_Z ^= _Z<< 35; _Z ^= _Z >>4; _Z *=2685821657736338717L;return (void*)0;}
+void p_init_irand(void **sp, int n) {_W ^=(unsigned long)*sp;_W ^= _W >>21;_W ^= _W<< 35; _W ^= _W >>4; _W *=2685821657736338717L;*sp = NULL;}
+//void p_init_irand(void **sp, int n) {unsigned long t;_W ^=(unsigned long)sp;_W ^= _W >>21;_W ^= _W<< 35; _W ^= _W >>4; _W *=2685821657736338717L;
 //    for(int i=0;i<3;i++) {t=(_X ^ (_X << 11));_X=_Y;_Y=_Z;_Z=_W;(_W = (_W ^ (_W >>19)) ^ (t ^ (t >>8)));};return (void*)0;}
-void * p_init_lrand(Vector * v) { gmp_randseed(RAND_STATE, (mpz_ptr)vector_ref(v, 0));return (void*)0;}
-void * p_irand(Vector * v) {unsigned long t=(_X ^ (_X << 11));_X=_Y;_Y=_Z;_Z=_W;return (void*) (_W = (_W ^ (_W >>19)) ^ (t ^ (t >>8)));}
-void * p_lrand(Vector *v) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(r); mpz_urandomm(r, RAND_STATE, (mpz_ptr)vector_ref(v, 0));return (void *)r;}
+void p_init_lrand(void **sp, int n) { gmp_randseed(RAND_STATE, (mpz_ptr)*sp); *sp = NULL;}
+void p_irand(void **sp, int n) {unsigned long t=(_X ^ (_X << 11));_X=_Y;_Y=_Z;_Z=_W; *sp = (void*) (_W = (_W ^ (_W >>19)) ^ (t ^ (t >>8)));}
+void p_lrand(void **sp, int n) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(r); mpz_urandomm(r, RAND_STATE, (mpz_ptr)*sp); *sp =(void *)r;}
 #include "ntheory.c"
-void * p_trial_div(Vector *v) {return (void*)trial_div((mpz_ptr)vector_ref(v,0));}
-void * p_pollard_rho(Vector *v) {
+void p_trial_div(void **sp, int n) {*sp = (void*)trial_div((mpz_ptr)*sp);}
+void p_pollard_rho(void **sp, int m) {
     mpz_ptr r= (mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(r);
     void * n;
-    if (mpz_probab_prime_p((mpz_ptr)(n=vector_ref(v,0)),20)) return (void*)n;
-    if (pollard_rho((mpz_ptr)n, r, (mpz_ptr)vector_ref(v,1), (mpz_ptr)vector_ref(v,2), (long)vector_ref(v,3), (long)vector_ref(v,4))) {
-        return (void*)r;
+    if (mpz_probab_prime_p((mpz_ptr)(n=*sp),20)) {*(sp) = (void*)n; return;}
+    if (pollard_rho((mpz_ptr)n, r, (mpz_ptr)*(sp+1), (mpz_ptr)*(sp+2), (long)*(sp+3), (long)*(sp+4))) {
+        *(sp) = (void*)r; return;
     }
     mpz_ptr iz=(mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init_set_ui(iz,0);
-    return (void*)iz;
+    *(sp) = (void*)iz;
 }
-void * p_pollard_pm1(Vector *v) {
+void p_pollard_pm1(void **sp, int m) {
     mpz_ptr r= (mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(r); mpz_ptr n;
-    if (mpz_probab_prime_p(n=(mpz_ptr)vector_ref(v,0),20)) return (void*)n;
-    if (pollard_pm1(n, r, (long)vector_ref(v,1), (long)vector_ref(v,2))) {
-        return (void*)r;
+    if (mpz_probab_prime_p(n=(mpz_ptr)*sp,20)) {*(sp) = (void*)n; return;}
+    if (pollard_pm1(n, r, (long)*(sp+1), (long)*(sp+2))) {
+        *(sp) = (void*)r; return;
     }
-    mpz_ptr iz=(mpz_ptr)malloc(sizeof(MP_INT));
-    mpz_init_set_ui(iz,0);
-    return (void*)iz;
+    mpz_ptr iz = (mpz_ptr)malloc(sizeof(MP_INT));
+    mpz_init_set_ui(iz, 0);
+    *(sp) = (void*)iz;
 }
-void * p_fermat(Vector *v) {
+void p_fermat(void **sp, int m) {
     mpz_ptr r= (mpz_ptr)malloc(sizeof(MP_INT));
     mpz_init(r); mpz_ptr n;
-    if (mpz_probab_prime_p(n=(mpz_ptr)vector_ref(v,0),20)) return (void*)n;
+    if (mpz_probab_prime_p(n=(mpz_ptr)*sp,20)) {*sp = (void*)n; return;}
     fermat(n,r);
-    return (void*)r;
+    *sp = (void*)r;
 }
 /*
 #include "ecm.h"
@@ -313,24 +331,24 @@ int lucasLehmerTest(int p) {
     if (mpz_cmp_ui(s, 0) == 0) return TRUE;
     return FALSE;
 }
-void * p_lucas(Vector * v) {return (void*)(long)lucasLehmerTest((int)(long)vector_ref(v,0));}
+void p_lucas(void **sp, int n) {*sp = (void*)(long)lucasLehmerTest((int)(long)*sp);}
 //
-void * p_str(Vector *v) {return (void*)obj2symbol((object*)vector_ref(v,0));}
-//void * p_hex_str(Vector *v) {long d,rem,val=(long)vector_ref(v,0);char*s=(char*)malloc(18*sizeof(char));if (val<0) {val=-val;s[0]='-';} else s[0]=' ';int i;for(i=1;i<17;i++) {d=val/16;rem=val-d*16;s[17-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[17]='\0';return (void*)new_symbol(s,17);}
-void * p_hex_str(Vector *v) {unsigned long d,rem,val=(long)vector_ref(v,0);char*s=(char*)malloc(17*sizeof(char));int i;for(i=0;i<16;i++) {d=val/16;rem=val-d*16;s[15-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[16]='\0';return (void*)new_symbol(s,17);}
-void * p_as_float(Vector *v) {return vector_ref(v,0);}
-void * p_as_int(Vector *v) {return vector_ref(v,0);}
-void * p_type(Vector *v) {return (void*)(long)((object *)vector_ref(v,0))->type;}
-void * p_str_search(Vector *v) {return (void*)(long)symbol_search((Symbol*)vector_ref(v,0), (Symbol*)vector_ref(v,1));}
-void * p_copy(Vector *v) {return (void*)objcpy((object*)vector_ref(v,0));}
-void * p_system(Vector *v) { if (system(((Symbol*)vector_ref(v,0))->_table) == 0 ) perror("canot exec command"); return NULL;}
-void * p_popen(Vector *v) {
+void p_str(void **sp, int n) {*sp = (void*)obj2symbol((object*)*sp);}
+//void p_hex_str(void **sp, int n) {long d,rem,val=(long)*sp;char*s=(char*)malloc(18*sizeof(char));if (val<0) {val=-val;s[0]='-';} else s[0]=' ';int i;for(i=1;i<17;i++) {d=val/16;rem=val-d*16;s[17-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[17]='\0';*sp = (void*)new_symbol(s,17);}
+void p_hex_str(void **sp, int n) {unsigned long d,rem,val=(long)*sp;char*s=(char*)malloc(17*sizeof(char));int i;for(i=0;i<16;i++) {d=val/16;rem=val-d*16;s[15-i]= (rem<10) ? rem +'0' : rem -10+ 'A';val=d;}s[16]='\0';*sp = (void*)new_symbol(s,17);}
+void p_as_float(void **sp, int n) {;}
+void p_as_int(void **sp, int n) {;}
+void p_type(void **sp, int n) {*sp = (void*)(long)((object *)*sp)->type;}
+void p_str_search(void **sp, int n) {*(sp) = (void*)(long)symbol_search((Symbol*)*sp, (Symbol*)*(sp+1));}
+void p_copy(void **sp, int n) {*sp = (void*)objcpy((object*)*sp);}
+void p_system(void **sp, int n) { if (system(((Symbol*)*sp)->_table) != 0 ) perror("canot exec command"); *sp = NULL;}
+void p_popen(void **sp, int n) {
     FILE * fp;
     char *buff,*dummy;
-    char * cmdline = ((Symbol *)vector_ref(v,0))->_table;
+    char * cmdline = ((Symbol *)*sp)->_table;
     if ( (fp=popen(cmdline,"r")) ==NULL) {
 		perror ("can not exec commad");
-		return NULL;
+		*sp = NULL; return;
 	}
     buff = (char*)malloc(8192*sizeof(char));
 	//if (fgets(buff, sizeof(buff), fp) == NULL) {printf("FileErroe!\n");Throw(3);}
@@ -343,43 +361,43 @@ void * p_popen(Vector *v) {
 		s = symbol_append(s, new_symbol(buff,strlen(buff)));
 	}
     pclose(fp);
-    return (void*)s;
+    *sp = (void*)s;
 }
 extern code_ret * str_compile(Symbol *s);
 extern object * code_eval(code_ret *s);
 extern void disassy(Vector * code, int indent, FILE*fp);
 #ifndef VMTEST
 extern void code_load(FILE *f);
-void * p_compile(Vector * v) {void * vv = str_compile((Symbol*)vector_ref(v,0));if (vv) return vv;printf("Canot Compile!\n");Throw(3);}
-void * p_dis_assy(Vector *v) {disassy(((code_ret *)vector_ref(v,0))->code, 0, stdout);return NULL;}
-void * p_eval(Vector *v) {return (void*)code_eval((code_ret *)vector_ref(v,0));}
-void * p_load(Vector * v) {FILE * f = fopen(((Symbol*)vector_ref(v,0))->_table,"r");code_load(f);fclose(f);return NULL;}
+void p_compile(void **sp, int n) {void * vv = str_compile((Symbol*)*sp);if (vv) {*sp = vv;return;} else {printf("Canot Compile!\n");Throw(3);}}
+void p_dis_assy(void **sp, int n) {disassy(((code_ret *)*sp)->code, 0, stdout);*sp = NULL;}
+void p_eval(void **sp, int n) {*sp = (void*)code_eval((code_ret *)*sp);}
+void p_load(void **sp, int n) {FILE * f = fopen(((Symbol*)*sp)->_table,"r");code_load(f);fclose(f);*sp = NULL;}
 #endif
-void * p_keys(Vector *v) {
-    Hash *h = (Hash*)vector_ref(v,0);
+void p_keys(void **sp, int n) {
+    Hash *h = (Hash*)*sp;
     Vector *r = vector_init(10 );
     Symbol *key;
     for(int i=0; i < (h->size); i++) {
         key = h->hashTable[i].key;
         if (key != NULL) push(r, newOBJ(OBJ_SYM, (void*) key));
     }
-    return (void*)r;
+    *sp = (void*)r;
 }
 
-void * p_num(Vector *v) {mpz_ptr l=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(l);mpq_get_num(l,(mpq_ptr)vector_ref(v,0));return (void*)l;}
-void * p_den(Vector *v) {mpz_ptr l=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(l);mpq_get_den(l,(mpq_ptr)vector_ref(v,0));return (void*)l;}
-void * p_real(Vector *v) {double r=creal(*(complex*)vector_ref(v,0));return (void*)(*(long*)&r);}
-void * p_imag(Vector *v) {double r=cimag(*(complex*)vector_ref(v,0));return (void*)(*(long*)&r);}
-void * p_arg(Vector * v) {double r=carg(*(complex*)vector_ref(v,0));return (void*)(*(long*)&r);}
+void p_num(void **sp, int n) {mpz_ptr l=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(l);mpq_get_num(l,(mpq_ptr)*sp);*sp = (void*)l;}
+void p_den(void **sp, int n) {mpz_ptr l=(mpz_ptr)malloc(sizeof(MP_INT));mpz_init(l);mpq_get_den(l,(mpq_ptr)*sp);*sp = (void*)l;}
+void p_real(void **sp, int n) {double r=creal(*(complex*)*sp);*sp = (void*)(*(long*)&r);}
+void p_imag(void **sp, int n) {double r=cimag(*(complex*)*sp);*sp = (void*)(*(long*)&r);}
+void p_arg(void **sp, int n) {double r=carg(*(complex*)*sp);*sp = (void*)(*(long*)&r);}
 //
-void *p_a2v(Vector * v) {int array_index=0;return (void *)array2vector((array*)vector_ref(v,0), &array_index, 0);}
-void *p_v2a(Vector * v) {return (void *)vector2array((Vector*)vector_ref(v,0));}
-void *p_solv_liner(Vector *v) {return (void *)solv_liner((array*)vector_ref(v,0), (array*)vector_ref(v,1));}
-void *p_make_zero(Vector *v) {int size[2];size[0]=(int)(long)vector_ref(v,0);size[1]=(int)(long)vector_ref(v,1);return (void*)array_init(4, 2, size);}
-void *p_array_inv(Vector *v) {return (void*)array_inv((array*)vector_ref(v,0));}
-void *p_make_eye(Vector *v) {return (void*)array_eye((int)(long)vector_ref(v,0));}
-void *p_eigen(Vector *v) {
-    Vector *r = eigen((array*)vector_ref(v,0));
+void p_a2v(void **sp, int n) {int array_index=0;*sp = (void *)array2vector((array*)*sp, &array_index, 0);}
+void p_v2a(void **sp, int n) {*sp = (void *)vector2array((Vector*)*sp);}
+void p_solv_liner(void **sp, int n) {*(sp) = (void *)solv_liner((array*)*sp, (array*)*(sp+1));}
+void p_make_zero(void **sp, int n) {int size[2];size[0]=(int)(long)*sp;size[1]=(int)(long)*(sp+1);*(sp) = (void*)array_init(4, 2, size);}
+void p_array_inv(void **sp, int n) {*sp = (void*)array_inv((array*)*sp);}
+void p_make_eye(void **sp, int n) {*sp = (void*)array_eye((int)(long)*sp);}
+void p_eigen(void **sp, int n) {
+    Vector *r = eigen((array*)*sp);
     vector_set(r,0,(void*)newOBJ(OBJ_ARRAY, vector_ref(r,0)));  // eigen value
     printf("eigenval OK!\n");
     Vector *l_ev = (Vector*)vector_ref(r,1);  // l eigen_vector
@@ -391,11 +409,11 @@ void *p_eigen(Vector *v) {
     for(int i=0; i<r_ev->_sp; i++) {vector_set(r_ev, i, (void*)newOBJ(OBJ_ARRAY, vector_ref(r_ev, i)));}
     vector_set(r,2,(void*)newOBJ(OBJ_VECT, r_ev));  
     printf("eigenvect r OK!\n");
-    return (void*)r;
+    *sp = (void*)r;
     }
-void * p_array_type_change(Vector *v){array*a=(array*)vector_ref(v,0);change_array_type(a,(int)(long)vector_ref(v,1));return (void*)a;}
-void * p_sym2escsym(Vector *v) { return (void*)symbol2escsymbol((Symbol *)vector_ref(v,0));}
-Funcpointer primitive_func[]  = {p_exit,
+void p_array_type_change(void **sp, int n){array*a=(array*)*sp;change_array_type(a,(int)(long)*(sp+1));*(sp) = (void*)a;}
+void p_sym2escsym(void **sp, int n) { *sp = (void*)symbol2escsymbol((Symbol *)*sp);}
+Pfuncpointer primitive_func[]  = {p_exit,
 #ifndef VMTEST 
                                  p_forget, 
 #endif
@@ -449,7 +467,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_SYM,OBJ_SYM},                              // open
                                 {OBJ_IO},                                       // close
                                 {OBJ_IO},                                       // gets
-                                {OBJ_SYM,OBJ_SYM},                              // puts               
+                                {OBJ_SYM,OBJ_IO},                              // puts               
                                 {OBJ_IO},                                       // getc
                                 {OBJ_NONE},                                     // get_time
                                 {OBJ_FLT},                                      // sin
@@ -661,7 +679,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_GEN,  1, FALSE},   // ogamma 
                                 {OBJ_GEN,  1, FALSE},   // olgamma
                                 {OBJ_GEN,  1, TRUE} ,   // sum
-                                {OBJ_GEN,  1, FALSE} ,  // vsum
+                                {OBJ_GEN,  1, TRUE} ,   // vsum
                                 {OBJ_VECT, 1, FALSE},   // irange
                                 {OBJ_NONE, 3, FALSE},   // vswap
                                 {OBJ_NONE, 1, FALSE},   // sort

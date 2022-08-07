@@ -29,7 +29,8 @@ void vector_resize(Vector * s);
 void vector_print(Vector * s) ;
 void vector_delete(Vector * v, int index); 
 void vector_insert(Vector * v, int index, void * value); 
- 
+void vector_upsize(Vector *s, int up); 
+Vector * vector_rev_copy_nm(Vector *v, int n, int m); 
 #ifndef INLINE
 #define INLINE
 inline int is_stac_empty(Vector * s) { return s ->_sp == 0; }

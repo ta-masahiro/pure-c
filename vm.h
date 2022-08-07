@@ -6,7 +6,7 @@ mpz_ptr new_long_valued(long val);
 mpz_ptr new_long_str(char* s);
 
 typedef void*(*Funcpointer)(Vector*);
-
+typedef void (*Pfuncpointer)(void**,int);
 enum CODE { STOP,  LDC,  LD,   ADD,  CALL, RTN,  SEL,  JOIN, LDF,  SET,  LEQ,  LDG,  GSET, SUB,  \
             DEC,   TCALL,TSEL, DROP, EQ,   INC,  MUL,  DIV,  VEC,  REF,  VSET, HASH, LDH,  HSET, \
             VPUSH, VPOP, LADD, LSUB, LMUL, ITOL, LPR,  PCALL,LDM,  DUP,  SWAP, ROT, _2ROT, CALLS,\

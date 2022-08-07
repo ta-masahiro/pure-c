@@ -80,10 +80,11 @@ Vector *tosqs(Vector*code, const void** table, Hash *G) {
 
 void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash * G) {
     Symbol * sym,*sym1;
-    long inst, ff, i, j, n, p, *ip, SSP=S->_sp;
+    //long inst, ff, i, j, n, p, *ip, SSP=S->_sp;
+    long inst, ff, i, j, n, p, *ip, SSP=0;
     Vector * fn, * keys, * t_exp, * f_exp, * code, * args, * cl, * ref, * Es, * l, *ll, *lll;
     void ** g, * v;
-    Funcpointer func;
+    Funcpointer func; Pfuncpointer pfunc;
     Hash * h;
     mpz_ptr x, y, z, w;
     mpq_ptr qx,qy,qz;
@@ -210,9 +211,9 @@ _GSET:
     v = vector_ref(S, S ->_sp - 1);
     sym = (Symbol *)dequeue(C);
     Hash_put(G, sym, v);
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("%s defined!\n",sym->_table);
-#endif
+//#endif
     goto * dequeue(C);
 _OADD:
     push(S, (void * )objadd((object*)pop(S),(object*)pop(S)));
@@ -634,10 +635,10 @@ _OBNOT:
 _CALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
+    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     l = vector_init(n);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , n * (sizeof(void * )) );
     l ->_sp = n; S ->_sp = S ->_sp - n;  // vector_print(l);
-    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     push(R, (void * )C);
     push(EE, (void * )E);
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
@@ -647,10 +648,10 @@ _CALL:
 _TCALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
+    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     l = vector_init(n);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , n * (sizeof(void * )) );
     l ->_sp = n; S ->_sp = S ->_sp - n;  // vector_print(l);
-    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);
@@ -658,12 +659,16 @@ _APL:
     n = (long)dequeue(C);//printf("%ld\n",n);
     fn = (Vector * )vector_ref(S, S->_sp-n);
     ll=(Vector*)vector_ref(S,S->_sp-1);
+    if ((long)vector_ref(fn,0)==FUNC_PRIM) {
+        vector_upsize(S, (n += ll->_sp -2));//printf("apl size=%ld",n);
+        memcpy(S->_table + S->_sp-1, ll->_table, (ll->_sp)*sizeof(void *)); S->_sp+=ll->_sp -1;
+        goto __PCALL_S;
+    }
     l = vector_init(n+ll->_sp-1);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n+1) , (n-2) * (sizeof(void * )) );
     memcpy(l->_table+n-2,ll->_table,(ll->_sp)*(sizeof(void*)));
     //l ->_sp = n+(ll->_sp)-1; S ->_sp = S ->_sp - n; //vector_print(l);
     l ->_sp = n+(ll->_sp)-2; S ->_sp = S ->_sp - n; //vector_print(l);
-    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     push(R, (void * )C);
     push(EE, (void * )E);
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
@@ -673,11 +678,16 @@ _TAPL:
     n = (long)dequeue(C);//printf("%ld\n",n);
     fn = (Vector * )vector_ref(S, S->_sp-n);
     ll=(Vector*)vector_ref(S,S->_sp-1);
+    if ((long)vector_ref(fn,0)==FUNC_PRIM) {
+        vector_upsize(S, n += ll->_sp-2);
+        memcpy(S->_table + S->_sp-1, ll->_table, (ll->_sp)*sizeof(void *)); S->_sp+=ll->_sp -1;
+        n+=ll->_sp-1;
+        goto __PCALL_S;
+    }
     l = vector_init(n+ll->_sp-1);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n+1) , (n-2) * (sizeof(void * )) );
     memcpy(l->_table+n-2,ll->_table,(ll->_sp)*(sizeof(void*)));
     l ->_sp = n+(ll->_sp)-1; S ->_sp = S ->_sp - n; //vector_print(l);
-    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
     //push(R, (void * )C);
     //push(EE, (void * )E);
     E = vector_copy0((Vector * )vector_ref(fn, 2)); push(E,l);
@@ -686,12 +696,13 @@ _TAPL:
 _PCALL: // primitive function call
     n = (long)dequeue(C);
     fn = (Vector*)pop(S);
-    l = vector_init(n);
-    memcpy(l->_table, (S->_table) + (S->_sp - n) , n * (sizeof(void * )));
-    l->_sp = n; S->_sp = S->_sp - n;  // vector_print(l);
+    //l = vector_init(n);
+    //memcpy(l->_table, (S->_table) + (S->_sp - n) , n * (sizeof(void * )));
+    //l->_sp = n; S->_sp = S->_sp - n;  // vector_print(l);
 __PCALL_S:   
-    func=(Funcpointer)vector_ref(fn,1); 
-    push(S, func(l));
+    pfunc=(Pfuncpointer)vector_ref(fn,1); 
+    pfunc(S->_table + (S->_sp-n), n);
+    S->_sp -= n-1;
     goto * dequeue(C);
 _RTN:
     E = (Vector * )pop(EE);
@@ -850,14 +861,17 @@ _CALLS: // small call : Eレジスタを使用せず、スタックのみをロ�
     push(R, (void * )C);
     C = (Vector * )pop(S); C -> _cp = 0;
     push(ssp,(void*)SSP);
-    push(ssp,(void*)(long)S->_sp-n);
-    SSP = S->_sp;
+    //push(ssp,(void*)(long)S->_sp-n);
+    push(ssp,(void*)(long)S->_sp);
+    //SSP = S->_sp;
+    SSP = S->_sp-n;
     goto * dequeue(C);
 _TCALLS:// tail small call
     n=(long)dequeue(C);
     C = (Vector * )pop(S); C -> _cp = 0;
     //SSP=S->_sp;
-    memcpy((S->_table)+(SSP-n),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
+    //memcpy((S->_table)+(SSP-n),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
+    memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
     S->_sp -= n;                                                              //　スタックを増やさないので結局早い
     goto * dequeue(C);
 _RTNS: //small call用のRTN
@@ -872,22 +886,28 @@ _LDP://small call用の関数をロードする
     goto * dequeue(C);
 _LDL://small call 内のローカル変数ロード
     n=(long)dequeue(C);
-    push(S, S->_table[SSP-n-1]);//nがマイナスの場合の処置は？？？
+    //push(S, S->_table[SSP-n-1]);//nがマイナスの場合の処置は？？？
+    push(S, S->_table[SSP+n]);//nがマイナスの場合の処置は？？？
     goto * dequeue(C);
 _LDL0:
-    push(S, S->_table[SSP-1]);
+    //push(S, S->_table[SSP-1]);
+    push(S, S->_table[SSP]);
     goto * dequeue(C);
 _LDL1:
-    push(S, S->_table[SSP-2]);
+    //push(S, S->_table[SSP-2]);
+    push(S, S->_table[SSP+1]);
     goto * dequeue(C);
 _LDL2:
-    push(S, S->_table[SSP-3]);
+    //push(S, S->_table[SSP-3]);
+    push(S, S->_table[SSP+2]);
     goto * dequeue(C);
 _LDL3:
-    push(S, S->_table[SSP-4]);
+    //push(S, S->_table[SSP-4]);
+    push(S, S->_table[SSP+3]);
     goto * dequeue(C);
 _LDL4:
-    push(S, S->_table[SSP-5]);
+    //push(S, S->_table[SSP-5]);
+    push(S, S->_table[SSP+4]);
     goto * dequeue(C);
 _VTOO:
     push(S,(void*)newVECT((Vector*)pop(S)));

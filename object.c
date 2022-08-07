@@ -1021,10 +1021,12 @@ object * objadd(object * x, object * y) {
             if (type_y == OBJ_SYM) {
                 return newSTR(symbol_append((Symbol*)x->data.ptr,(Symbol*)y->data.ptr));
             }
+            break;
         case OBJ_GEN: return objadd((object *)x->data.ptr, y);
         default:printf("runtime error illegal add op\n");Throw(3);
     }
     if (type_y == OBJ_GEN)      return objadd(x, (object *)y->data.ptr);
+    printf("runtime error illegal add op\n");Throw(3);
 }
 
 object * objsub(object * x, object * y) {
@@ -1092,8 +1094,11 @@ object * objsub(object * x, object * y) {
                 case OBJ_CMPLX: return objCSUB((complex*)x -> data.ptr, (complex*)y->data.ptr);
                 default:break;
             }
-        default:printf("runtime error illegal add op\n");Throw(3);
+        case OBJ_GEN: return objadd((object *)x->data.ptr, y);
+        default:printf("runtime error illegal sub op\n");Throw(3);
     }
+    if (type_y == OBJ_GEN)      return objsub(x, (object *)y->data.ptr);
+    printf("runtime error illegal sub op\n");Throw(3);
 }
 object * objmul(object * x, object * y) {
     if (x==NULL || y==NULL) none_error();
@@ -1779,7 +1784,7 @@ char * set_lf_format(mpfr_ptr x) {
     //sprintf(buff,"%d",i);
     //strcat(form,buff);
     //strcat(form,"Rg");
-    sprintf(form,"%s%d%s","%.",i,"Rg");
+    sprintf(form,"%s%d%s","%.",i,"RNg");
     return form;
 }
 //#define NONE "" 
