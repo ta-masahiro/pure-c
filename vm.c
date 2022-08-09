@@ -894,7 +894,8 @@ _LDL://small call 内のローカル変数ロード
         push(S, S->_table[SSP+n]);//nがマイナスの場合の処置は？？？
         goto * dequeue(C);
     } else {
-        push(S, (void*)vector_copy_n(S, -(SSP-n-1)+(long)(ssp->_table[ssp->_sp - 1])+1));   //copyでなくスライスのが良い？
+        //push(S, (void*)vector_copy_n(S, -(SSP-n-1)+(long)(ssp->_table[ssp->_sp - 1])+1));   //copyでなくスライスのが良い？
+        push(S, (void*)vector_slice_nm(S, 0, -(SSP-n-1)+(long)(ssp->_table[ssp->_sp - 1])+1));   //copyでなくスライスのが良い？
         goto * dequeue(C);
     }
 _LDL0:

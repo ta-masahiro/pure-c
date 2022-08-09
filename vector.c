@@ -55,6 +55,14 @@ Vector *vector_copy_n(Vector *v, int n) {
     return r;
 }
 
+Vector *vector_slice_nm(Vector *v, int n, int m) {
+    Vector *r = (Vector *)malloc(sizeof(Vector));
+    r->_table = v->_table + n;
+    r->_size  = (r->_sp = m - n + 1);
+    r->_cp    = 0;
+    return r;
+}
+
 void vector_resize(Vector * s) {
     int oldN = s ->_size; 
     int maxN = 3 * oldN / 2 + 1;     /* 1.5倍に拡大  */   
