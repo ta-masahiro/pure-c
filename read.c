@@ -23,8 +23,10 @@ int search_operand(char * s, char * code_name[]) {
     }
 }
 
-long token_source_to_object(token *t) {
-    char *str = t->source->_table;
+long token_source_to_object(token *t, int mflag) {
+    //char *str = t->source->_table;
+    char *str = (char*)malloc(t->source->_sp + 1);
+    if (mflag) {*str = '-';strcpy(str+1, t->source->_table);} else strcpy(str, t->source->_table);
     void * v;
     double d;
     switch(t->type) {
@@ -90,9 +92,10 @@ long token_source_to_object(token *t) {
 Vector * get_code(TokenBuff *S, Hash * G) {
     enum CODE op;char * c;
     token * tk;
-    int *type, i;   
+    int *type, i, mflag ;   
     Vector * t = vector_init(64),*ref; 
     Symbol * sym; 
+    long ll;
 
     while (TRUE) {
         tk = get_token(S);
@@ -103,7 +106,8 @@ Vector * get_code(TokenBuff *S, Hash * G) {
         push(t, (void * )op); 
         switch (op) {
             case LDC:
-                push(t, (void*)token_source_to_object(tk = get_token(S)));
+                tk = get_token(S); if (tk->type == '-') mflag = TRUE; else {mflag = FALSE;unget_token(S);}
+                push(t, (void*)token_source_to_object(tk = get_token(S), mflag));
                 break;
             case LD:
                 if ((tk = get_token(S))->type != '[' && tk->type != '(') {printf("Error! [がない\n");break;}
@@ -138,8 +142,10 @@ Vector * get_code(TokenBuff *S, Hash * G) {
             default:
                 if (op == -1) {printf("illegal OPcode! %s\n",tk->source->_table);exit(-1);}
                 if (op_size[op] == 1) {
-                    if ((tk = get_token(S))->type != TOKEN_INT) {printf("Error!数値が必要(一般) %s\n", code_name[op]);}
-                    push(t, (void*)strtol(tk->source->_table, NULL, 10));
+                    if ((tk = get_token(S))->type != TOKEN_INT && tk->type != '-') {printf("Error!数値が必要(一般) %s\n", code_name[op]);}
+                    if (tk->type == '-') mflag = TRUE; else {mflag = FALSE;unget_token(S);}
+                    ll = strtol((get_token(S))->source->_table, NULL, 10);
+                    push(t, (void*)(mflag ? ll * (-1) : ll));
                 }
         }
     }
@@ -205,12 +211,12 @@ void*iprint(Vector*v) {
     printf("\n");
     return (void*)v;
 }
-void*vprint(Vector*v) {
-    Vector*vv=(Vector*)(v->_table[0]);
+void vprint(void **sp, int n) {
+    Vector*vv=(Vector*)*(sp);
     printf("[ "); 
     for(long i=0;i<(long)(vv->_sp);i++) printf("%ld ",(long)(vv->_table[i]));
     printf("]\n");
-    return (void*)v;
+    *sp = NULL;
 }
 void * lprint(Vector * v) {
     for(long i=0;i<(long)(v->_sp);i++) gmp_printf("%Zd ",(mpz_ptr)(v->_table[i]));
@@ -237,9 +243,10 @@ int main(int argc, char * argv[]) {
     FILE * fp; 
     TokenBuff * s;
     token * tk;
+#ifndef DEBUG
     // mp_set_memory_functions((void * )GC_malloc, (void * )GC_realloc,(void * )GC_free);
     mp_set_memory_functions((void *)GC_malloc, (void * )_realloc, (void * ) GC_free);
-
+#endif
     Vector  * code,  * t; 
     //Vector * S = vector_init(500000); 
     Vector * S = vector_init(400000); 
@@ -255,7 +262,7 @@ int main(int argc, char * argv[]) {
     Hash_put(G, new_symbol("sum", 4), (void*)sum);
     Hash_put(G, new_symbol("list", 5), (void*)list);
     Hash_put(G, new_symbol("iprint", 7), (void*)iprint);
-    Hash_put(G, new_symbol("vprint", 7), (void*)vprint);
+    Hash_put(G, new_symbol("vprint", 6), (void*)vprint);
     Hash_put(G, new_symbol("lprint", 7), (void*)lprint);
      // Hash_put(G, "hash_delete", (void * )hash_delete); 
     // print_hashTable(G); 

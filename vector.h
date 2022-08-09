@@ -24,6 +24,7 @@ Vector *  vector_init( int maxN);
 Vector * vector_copy1(Vector * v);
 Vector * vector_copy0(Vector * v) ;
 Vector * vector_copy(Vector * v) ;
+Vector *vector_copy_n(Vector *, int);
 Vector * vector_append(Vector*v1,Vector*v2);
 void vector_resize(Vector * s);
 void vector_print(Vector * s) ;

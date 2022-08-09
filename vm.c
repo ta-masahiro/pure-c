@@ -25,7 +25,8 @@ char * code_name[] =
      "CNEG",  "LFTOS","ITOC", "LTOC", "RTOC", "FTOC", "LFTOC","CTOO", "OTOC", "CTOS", "CEQ",  "CNEQ", "WHILE","LOOP_SET",
      "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","VSLS_","V_SLS","SSLS_","S_SLS",
      "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD", "SPUSH","OTOA", "ATOO",
-     "ATOS",  "ALEN", "LTOK", "RTOK", "LFTOK","CTOK", "OTOK", "DTOK", "ATOK", "$$$" };
+     "ATOS",  "ALEN", "LTOK", "RTOK", "LFTOK","CTOK", "OTOK", "DTOK", "ATOK", "STL",  "STL0", "STL1", "STL2", "stl3",
+     "STL4",  "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -48,7 +49,8 @@ int op_size[] = \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    2,    1,    \
         1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,};
+        0,    0,     0,    0,    0,    0,   0,   0,    0,   1,   0,    0,    0,    0,    \
+        0      };
 
 Vector *tosqs(Vector*code, const void** table, Hash *G) {
     enum CODE op;
@@ -118,7 +120,8 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_CNEG,  &&_LFTOS,&&_ITOC, &&_LTOC, &&_RTOC, &&_FTOC, &&_LFTOC,&&_CTOO, &&_OTOC, &&_CTOS, &&_CEQ,  &&_CNEQ, &&_WHILE,&&_LOOP_SET,\
             &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR,&&_VSLS_,&&_V_SLS,&&_SSLS_,&&_S_SLS,\
             &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH,&&_OTOA, &&_ATOO, \
-            &&_ATOS,  &&_ALEN, &&_LTOK, &&_RTOK, &&_LFTOK,&&_CTOK, &&_OTOK, &&_DTOK, &&_ATOK};
+            &&_ATOS,  &&_ALEN, &&_LTOK, &&_RTOK, &&_LFTOK,&&_CTOK, &&_OTOK, &&_DTOK, &&_ATOK, &&_STL,  &&_STL0, &&_STL1 ,&&_STL2, &&_STL3, \
+            &&_STL4   };
  
     C = tosqs(Code,table, G);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -887,8 +890,13 @@ _LDP://small call用の関数をロードする
 _LDL://small call 内のローカル変数ロード
     n=(long)dequeue(C);
     //push(S, S->_table[SSP-n-1]);//nがマイナスの場合の処置は？？？
-    push(S, S->_table[SSP+n]);//nがマイナスの場合の処置は？？？
-    goto * dequeue(C);
+    if ( n>= 0) {
+        push(S, S->_table[SSP+n]);//nがマイナスの場合の処置は？？？
+        goto * dequeue(C);
+    } else {
+        push(S, (void*)vector_copy_n(S, -(SSP-n-1)+(long)(ssp->_table[ssp->_sp - 1])+1));   //copyでなくスライスのが良い？
+        goto * dequeue(C);
+    }
 _LDL0:
     //push(S, S->_table[SSP-1]);
     push(S, S->_table[SSP]);
@@ -908,6 +916,29 @@ _LDL3:
 _LDL4:
     //push(S, S->_table[SSP-5]);
     push(S, S->_table[SSP+4]);
+    goto * dequeue(C);
+_STL://small call 内のローカル変数ロード
+    n = (long)dequeue(C);
+    v = S->_table[S->_sp - 1];
+    if ( n>= 0) {
+        S->_table[SSP+n] = v;
+        goto * dequeue(C);
+    }
+    printf("IndexError:\n");Throw(3);
+_STL0:
+    S->_table[SSP] = S->_table[S->_sp -1];
+    goto * dequeue(C);
+_STL1:
+    S->_table[SSP+1] = S->_table[S->_sp -1];
+    goto * dequeue(C);
+_STL2:
+    S->_table[SSP+2] = S->_table[S->_sp -1];
+    goto * dequeue(C);
+_STL3:
+    S->_table[SSP+3] = S->_table[S->_sp -1];
+    goto * dequeue(C);
+_STL4:
+    S->_table[SSP+4] = S->_table[S->_sp -1];
     goto * dequeue(C);
 _VTOO:
     push(S,(void*)newVECT((Vector*)pop(S)));
