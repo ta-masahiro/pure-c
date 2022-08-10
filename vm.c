@@ -155,7 +155,8 @@ _LD:
             push(S, S->_table[SSP+j]);
             goto * dequeue(C);
         } else {
-            push(S, (void*)vector_slice_nm(S, SSP - j + 1, (long)(ssp->_table[ssp->_sp - 1])));
+            //push(S, (void*)vector_slice_nm(S, SSP - j - 1, (long)(ssp->_table[ssp->_sp - 1])));
+            push(S, (void*)vector_slice_nm(S, SSP - j - 1, (long)(S->_sp-1)));
             goto * dequeue(C);
         }
     } else {
@@ -165,7 +166,7 @@ _LD:
             push(S, (void * )vector_ref(S, Sssp + j));
             goto * dequeue(C);
         }
-        push(S, (void * )vector_slice_nm(S, Sssp -j + 1, Essp));
+        push(S, (void * )vector_slice_nm(S, Sssp -j - 1, Essp));
         goto * dequeue(C);
     }
 /*_LD00:
@@ -750,8 +751,8 @@ _CALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
     if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
-    push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp);    // 現在の引数posをsspに保存
-    push(E, (void*)SSP); push(E, (void*)(long)S->_sp ); push(EE, (void * )E);    // 現在の引数posをEに保存し、そのEをEEに保存
+    push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp - n);    // 現在の引数posをsspに保存
+    push(E, (void*)SSP); push(E, (void*)(long)S->_sp - n ); push(EE, (void * )E);    // 現在の引数posをEに保存し、そのEをEEに保存
     push(R, (void * )C);                                    // 現在のコードをRに保存
     SSP=S->_sp-n;                                           // 呼び出される関数の引数posをSSPにセット
     E = vector_copy0((Vector * )vector_ref(fn, 2));
@@ -771,9 +772,10 @@ _TCALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
     if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
-    push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp);
-    push(E, (void*)SSP); push(E, (void*)(long)S->_sp );                          // 現在の引数posをEに保存する
-    SSP=S->_sp-n;
+    //push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp - n);
+    //push(E, (void*)SSP); push(E, (void*)(long)S->_sp - n);                          // 現在の引数posをEに保存する
+    memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));             //　上記１行の変わり copyする時間はかかるが
+    S->_sp -= n;
     E = vector_copy0((Vector * )vector_ref(fn, 2));
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);
@@ -801,14 +803,14 @@ _APL:
     fn = (Vector * )vector_ref(S, S->_sp-n);
     ll=(Vector*)vector_ref(S,S->_sp-1);
     vector_upsize(S, ll->_sp - 2);                                                      // 正味増えるのはllのサイズ-2
-    memcpy(S->_table + S->_sp -n, S->_table + S->_sp -n +1, (n - 2)*(sizeof(void*)));   // 関数部、vector部以外の引数をcopy
-    memcpy(S->_table + S->_sp -2, ll->_table, (ll->_sp)*(sizeof(void*)));               // vector部をcopy
+    memcpy(S->_table + S->_sp -n, S->_table + S->_sp -n + 1, (n - 2)*(sizeof(void*)));  // 関数部、vector部以外の引数をcopy
+    memcpy(S->_table + S->_sp - 2, ll->_table, (ll->_sp)*(sizeof(void*)));              // vector部をcopy
     S->_sp += ll->_sp -2;                                                               // 増えた分だけspをずらす
-
+    n += ll->_sp -2;                                                                    // nを正味のサイズに更新
     if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
 
-    push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp);
-    push(E, (void*)SSP); push(E, (void*)(long)S->_sp ); push(EE, (void * )E);    // 現在の引数posをEに保存し、そのEをEEに保存
+    push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp - n);
+    push(E, (void*)SSP); push(E, (void*)(long)S->_sp - n); push(EE, (void * )E);        // 現在の引数posをEに保存し、そのEをEEに保存
     push(R, (void * )C);
 
     SSP=S->_sp-n;
@@ -845,11 +847,12 @@ _TAPL:
 
     if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
 
-    push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp);
+    //push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp - n);
     //push(E, SSP); push(E,S->_sp ); push(EE, (Vyvoid * )E);    // 現在の引数posをEに保存し、そのEをEEに保存
     //push(R, (void * )C);
 
-    SSP=S->_sp-n;
+    memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),(ll->_sp + n -2)*(sizeof(void*)));             //　上記１行の変わり copyする時間はかかるが
+    S->_sp = SSP + ll->_sp - 2;
     E = vector_copy0((Vector * )vector_ref(fn, 2));
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);
