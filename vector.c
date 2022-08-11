@@ -51,14 +51,24 @@ Vector *vector_copy_n(Vector *v, int n) {
     // 先頭からn個copyする
     Vector * r = vector_init(n );
     memcpy(r ->_table, v ->_table, n*sizeof(void*));
-    r->_sp = n; r ->_cp = v ->_cp; 
+    r->_sp = n; r ->_cp = v ->_cp;
     return r;
 }
 
+Vector *vector_copy_nm(Vector *v, int n, int m) {
+    // v[n]からv[m-1]までm-n個copyする
+    Vector * r = vector_init(m - n );
+    memcpy(r ->_table, v ->_table + n, (m - n)*sizeof(void*));
+    r->_size = (r->_sp = m - n);  
+    return r;
+
+}
+
 Vector *vector_slice_nm(Vector *v, int n, int m) {
+    // v[n]からv[m-1]までm-n個のスライスを作る
     Vector *r = (Vector *)malloc(sizeof(Vector));
     r->_table = v->_table + n;
-    r->_size  = (r->_sp = m - n + 1);
+    r->_size  = (r->_sp = m - n );
     r->_cp    = 0;
     return r;
 }

@@ -94,6 +94,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
     complex *cx,*cy,*cz;
     enum CODE op;
     Vector *C = vector_copy0(Code),*ssp=vector_init(200);
+    //Vector *C = vector_copy0(Code),*ssp=vector_init(200000);
     double* fx,*fy,*fz;
     double xx,yy,zz;
     object*o;array *ary;
@@ -155,8 +156,8 @@ _LD:
             push(S, S->_table[SSP+j]);
             goto * dequeue(C);
         } else {
-            //push(S, (void*)vector_slice_nm(S, SSP - j - 1, (long)(ssp->_table[ssp->_sp - 1])));
-            push(S, (void*)vector_slice_nm(S, SSP - j - 1, (long)(S->_sp-1)));
+            //push(S, (void*)vector_copy_nm(S, SSP - j - 1, (long)(ssp->_table[ssp->_sp-1])));
+            push(S, (void*)vector_copy_nm(S, SSP - j - 1, (long)(S->_sp)));
             goto * dequeue(C);
         }
     } else {
@@ -751,12 +752,16 @@ _CALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
     if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
-    push(ssp, (void*)SSP);push(ssp,(void*)(long)S->_sp - n);    // 現在の引数posをsspに保存
-    push(E, (void*)SSP); push(E, (void*)(long)S->_sp - n ); push(EE, (void * )E);    // 現在の引数posをEに保存し、そのEをEEに保存
-    push(R, (void * )C);                                    // 現在のコードをRに保存
+    push(ssp, (void*)SSP);push(E, (void*)SSP);    // 現在の引数posをsspに保存
     SSP=S->_sp-n;                                           // 呼び出される関数の引数posをSSPにセット
-    E = vector_copy0((Vector * )vector_ref(fn, 2));
-    C = vector_copy1((Vector * )vector_ref(fn, 1));
+    push(ssp,(void*)SSP); push(E, (void*)SSP ); 
+    push(EE, (void * )E);    // 現在の引数posをEに保存し、そのEをEEに保存
+    push(R, (void * )C);                                    // 現在のコードをRに保存
+    //E = vector_copy0((Vector * )vector_ref(fn, 2));
+    E = vector_copy1((Vector * )vector_ref(fn, 2));
+    //E = (Vector * )vector_ref(fn, 2);
+    //C = vector_copy1((Vector * )vector_ref(fn, 1));
+    C = (Vector * )vector_ref(fn, 1);C->_cp=0;
     goto * dequeue(C);
 /*_TCALL:
     n = (long)dequeue(C);
@@ -777,7 +782,9 @@ _TCALL:
     memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));             //　上記１行の変わり copyする時間はかかるが
     S->_sp -= n;
     E = vector_copy0((Vector * )vector_ref(fn, 2));
+    //E = vector_copy1((Vector * )vector_ref(fn, 2));
     C = vector_copy1((Vector * )vector_ref(fn, 1));
+    //C = (Vector * )vector_ref(fn, 1);C->_cp = 0;
     goto * dequeue(C);
 /*_APL:
     n = (long)dequeue(C);//printf("%ld\n",n);
@@ -1032,10 +1039,10 @@ _CALLS: // small call : Eレジスタを使用せず、スタックのみをロ�
     push(R, (void * )C);
     C = (Vector * )pop(S); C -> _cp = 0;
     push(ssp,(void*)SSP);
-    //push(ssp,(void*)(long)S->_sp-n);
-    push(ssp,(void*)(long)S->_sp);
-    //SSP = S->_sp;
     SSP = S->_sp-n;
+    push(ssp,(void*)SSP);
+    //push(ssp,(void*)(long)S->_sp);
+    //SSP = S->_sp;
     goto * dequeue(C);
 _TCALLS:// tail small call
     n=(long)dequeue(C);
