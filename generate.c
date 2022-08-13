@@ -1822,8 +1822,8 @@ int main(int argc, char*argv[]) {
     //DEBUG=TRUE;
     //
 #ifndef DEBUG
-    //code_load(fopen("lib.pur","r"));
-    //if (fp == stdin) printf("Library version %s loaded\n", ((Symbol*)*Hash_get(G, new_symbol("Library_ver",11)))->_table);
+    code_load(fopen("lib.pur","r"));
+    if (fp == stdin) printf("Library version %s loaded\n", ((Symbol*)*Hash_get(G, new_symbol("Library_ver",11)))->_table);
 #endif
     //
     if (str_mode) S = new_str_tokenbuff(script);
