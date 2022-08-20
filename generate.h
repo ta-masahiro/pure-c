@@ -30,6 +30,7 @@ typedef struct {
     //obj_type    function_r_type;    // if type is function, function return type
     //int         dotted;             // 0: normal function 1: dotted fctunction
     code_type * ct;
+    //int     * small_flg;
 } code_ret;
 
 code_type * new_ct(obj_type type, code_type * frt, Vector*at,int dot );

@@ -1362,6 +1362,8 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
     int i , j, _2op, max_arg;
     obj_type ct1_f_ret, ct2_f_ret;
     enum CODE t_code;
+    // special case
+
     // 演算代入の場合は2項演算命令と代入命令のastを作る
     if ((long)vector_ref(set_ast->table,0) != '=') {        // set_typeが'='以外の場合は演算代入である
         _2op=(((long)vector_ref(set_ast->table,0)) >> 8);   // 演算子は上位8bit
