@@ -22,7 +22,8 @@ ast * new_ast(ast_type type, obj_type o_type,Vector * table) {
 char* ast_type_str[] = {"None","MultiFunction","If","Set","Lambda","While","Class","Operator2",
                         "Opraor1","VectorRef","VectorSlice","Literal","Variable","Vector",
                         "Dictionary","ApplyFunction","FunctionCall","Exprlist","CallC/C","Propaeity",
-                        "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","for","FunctionDeclear","FunctionType","\0"};
+                        "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","for","FunctionDeclear","FunctionType",
+                        "c_macro", "F_macro", "S_macro", "\0"};
 
 void ast_print(ast*a, int tablevel) {
     if (a == NULL) {printf("ASTがNULLです!!!\n");Throw(1);}
@@ -45,7 +46,7 @@ void ast_print(ast*a, int tablevel) {
         // ast list type
         case AST_WHILE: case AST_IF: case AST_CLASS: case AST_VREF: case AST_SLS: case AST_VECT: case AST_DICT:
         case AST_DCL:case AST_APPLY: case AST_LAMBDA:case AST_EXP_LIST: case AST_EXP_LIST_DOTS: case AST_ARG_LIST: 
-        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR: case AST_DCL_F: case AST_FTYPE:
+        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR: case AST_DCL_F: case AST_FTYPE: case AST_MAC_S:
             printf("type:%s\t", ast_type_str[t]);
             printf("objecttype: %d\n",a->o_type);
             if (a->table==NULL) break;
@@ -693,8 +694,42 @@ ast * is_lambda_expr(TokenBuff *S) {
     return NULL;
 }
 
-char      *sp_exp_string[]  = {"if",  "while",   "for",   "loop",   NULL};
-ast_type sp_exp_ast_type[]  = {AST_IF, AST_WHILE, AST_FOR, AST_LOOP     };
+char      *sp_exp1_string[]  = {"lambda",  "macro",     NULL};
+ast_type sp_exp1_ast_type[]  = {AST_LAMBDA, AST_MAC_F,      };
+
+ast * is_spcial1_expr(TokenBuff *S) {
+    // spi1_exp   = <key_word>  [ expr_list_br ] expr
+    //            =>
+    // AST_<key_word>, [expr_list, expr]
+    ast * a1, * a2;
+    ast_type a_type;
+    token*t,*t1 ;
+    Vector * v;
+    int i;
+    int token_p = S->buff->_cp;
+
+    if ((t =get_token(S))->type == TOKEN_SYM) {
+        if ((i = string_isin(t->source->_table, sp_exp1_string)) != -1) {
+            a_type = sp_exp1_ast_type[i];
+            if (a1=is_arg_list_br(S)) {                    // check arg_list
+                if (a2=is_expr(S)) {
+                    v=vector_init(2);
+                    push(v,(void*)a1);push(v,(void*)a2);
+                    return new_ast(a_type, a2->o_type, v);
+                }//「関数本体がない」というerrorにすること
+                printf("SynraxError:式が必要です\n"); Throw(1);
+            } else if (a1 = is_expr(S))
+
+        
+            printf("SyntaxError:'arg list'が必要です\n"); Throw(1);
+        }
+    }
+    S->buff->_cp=token_p;
+    return NULL;
+}
+
+char      *sp_exp_string[]  = {"if",  "while",   "for",   "loop",    "macro",  NULL};
+ast_type sp_exp_ast_type[]  = {AST_IF, AST_WHILE, AST_FOR, AST_LOOP, AST_MAC_S};
 
 ast * is_special_expr(TokenBuff *S, char delm) {
     // sp_exp   = <key_word> expr {':' expr}

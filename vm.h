@@ -30,7 +30,7 @@ enum CODE { STOP,  LDC,  LD,   ADD,  CALL, RTN,  SEL,  JOIN, LDF,  SET,  LEQ,  L
             ATOS,  ALEN ,LTOK, RTOK, LFTOK,CTOK, OTOK, DTOK, ATOK, STL,  STL0, STL1, STL2, STL3, \
             STL4 };
 
-enum FUNCTION_ID { FUNC_SYS,FUNC_PRIM,FUNC_USER};
+enum FUNCTION_ID { FUNC_SYS,FUNC_PRIM,FUNC_USER,MACRO_C,MACRO_F,MACRO_S};
 
 extern int op_size[];
 extern char*code_name[];
