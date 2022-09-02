@@ -157,6 +157,7 @@ ast * is_factor(TokenBuff *S) {
     //              | '{' pair_list '}'
     //              | '[' expr_list ']'
     ast*a;
+    token *tkn;
     tokentype t;
     Vector *v;
     int token_p = S->buff->_cp;
@@ -170,6 +171,13 @@ ast * is_factor(TokenBuff *S) {
             //error()
         }
     } else if (t=='[') {
+        if (get_token(S)->type == ';') {
+            if (get_token(S)->type == '@') {
+                if ((tkn = get_token(S))->type == TOKEN_INT) {
+
+                }
+            }
+        }
         if (get_token(S)->type==']') {   //[]の場合
             v=vector_init(1);
             push(v,(void*)new_ast(AST_LIT,OBJ_NONE,(void*)0));

@@ -711,16 +711,21 @@ code_ret*codegen_sls(ast*sls_ast, Vector*env, int tail) {   // AST_SLS [AST_vect
     }
 }
 
-void * aa_mul(Vector * v) {return (void*)array_array_mul((array*)vector_ref(v,0), (array*)vector_ref(v,1));}
-void * as_mul(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,0), vector_ref(v,1));}
+//void * aa_mul(Vector * v) {return (void*)array_array_mul((array*)vector_ref(v,0), (array*)vector_ref(v,1));}
+//void * as_mul(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,0), vector_ref(v,1));}
+////void * as_div(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,0), vector_ref(v,1));}
+//void * sa_mul(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,1), vector_ref(v,0));}
+//void * aa_add(Vector * v) {return (void*)array_array_add((array*)vector_ref(v, 0), (array*)vector_ref(v, 1));}
+void aa_mul(void **cp, int n) {*cp = (void*)array_array_mul((array*)*cp, (array*)*(cp + 1));}
+void as_mul(void **cp, int n) {*cp = (void*)array_scler_mull((array*)*cp, *(cp + 1));}
 //void * as_div(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,0), vector_ref(v,1));}
-void * sa_mul(Vector * v) {return (void*)array_scler_mull((array*)vector_ref(v,1), vector_ref(v,0));}
-void * aa_add(Vector * v) {return (void*)array_array_add((array*)vector_ref(v, 0), (array*)vector_ref(v, 1));}
+void sa_mul(void **cp, int n) {*cp = (void*)array_scler_mull((array*)*(cp + 1), *cp);}
+void aa_add(void **cp, int n) {*cp = (void*)array_array_add((array*)*cp, (array*)*(cp + 1));}
 
 code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_type,AST_L_EXPR,AST_R_EXPR]
     obj_type r_type;
     int i,op_code;
-    Funcpointer fp; Vector * func_vect ;                        // for array operator
+    Pfuncpointer fp; Vector * func_vect ;                        // for array operator
 
     Vector *code = vector_init(3);
     code_ret *code_r_left = codegen((ast*)vector_ref(_2op_ast->table,1),env,FALSE);   //左辺式をコンパイルする
@@ -1657,6 +1662,12 @@ code_ret * codegen_class_var(ast *class_var_ast, Vector *env, int tail) {
 
 }
 
+code_ret * codegen_macro_c(ast *o, Vector *env, int tail) {
+    // constant macro
+    Vector * code = vector_init(3);
+    push(code, (void*)LDM) ;   
+
+}
 code_ret * codegen_class(ast *a, Vector * env, int tail) {
 
 }
