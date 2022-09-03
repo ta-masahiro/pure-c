@@ -156,11 +156,11 @@ ast * is_factor(TokenBuff *S) {
     //              | '{' ml_expr_list '}'
     //              | '{' pair_list '}'
     //              | '[' expr_list ']'
-    ast*a;
+    ast*a,*na;
     token *tkn;
     tokentype t;
     Vector *v;
-    int token_p = S->buff->_cp;
+    int token_p = S->buff->_cp; long size;
 
     if (a=is_nomad(S)) return a;
     if ((t=get_token(S)->type)=='(') {
@@ -174,18 +174,18 @@ ast * is_factor(TokenBuff *S) {
         if (get_token(S)->type == ';') {
             if (get_token(S)->type == '@') {
                 if ((tkn = get_token(S))->type == TOKEN_INT) {
-
-                }
+                    size = strtol(tkn->source->_table, NULL, 10);
+                } else 
                 unget_token(S);
-            }
+            } else 
             unget_token(S);
-        }
+        } else 
         unget_token(S);
 
         if (get_token(S)->type==']') {   //[]の場合
             v=vector_init(1);
             push(v,(void*)new_ast(AST_LIT,OBJ_NONE,(void*)0));
-            return new_ast(AST_VECT,OBJ_VECT,v);
+            na = new_ast(AST_VECT,OBJ_VECT,v);na->size = size; return na;
         } else {
             unget_token(S);
             if (a=is_expr_list(S)) {

@@ -111,6 +111,7 @@ typedef enum {
 
 typedef struct ast{
     ast_type type;
+    long     size;
     obj_type o_type; 
     Vector * table; 
 } ast; 
