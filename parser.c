@@ -176,8 +176,12 @@ ast * is_factor(TokenBuff *S) {
                 if ((tkn = get_token(S))->type == TOKEN_INT) {
 
                 }
+                unget_token(S);
             }
+            unget_token(S);
         }
+        unget_token(S);
+
         if (get_token(S)->type==']') {   //[]の場合
             v=vector_init(1);
             push(v,(void*)new_ast(AST_LIT,OBJ_NONE,(void*)0));
