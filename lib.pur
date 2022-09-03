@@ -23,8 +23,9 @@ vector vtabulate(int n,var f(x))={vector s=[];var i=-1;while (i+=1)<n:s<-f(i);s}
 
 int irandn(int n)=irand()%n;
 vector virand(int n)={vector r=[];while (n-=1)>=0:r<-irand();r};
-vector virandn(int n,int m)={vector r=[];while (n-=1)>=0:r<-irandn(m);r};
-vector vfrand(int n)={vector r=[];RANDMAX=2**63-1;while (n-=1)>=0:r<-(1.0*irand()/RANDMAX);r};
+vector virandn(int n,int m)={vector r=make_vector(n);while (n-=1)>=0:r<-irandn(m);r};
+//vector vfrand(int n)={vector r=make_vector(n);RANDMAX=2**63-1;while (n-=1)>=0:r<-(1.0*irand()/RANDMAX);r};
+vector vfrand(int n)={vector r=make_vector(n);RANDMAX=2**63-1;while (n-=1)>=0:r<-(1.0*irand()/RANDMAX);r};
 
 // vector marge(vector v1,vector v2)={int i=0,j=0,M1=@v1,M2=@v2;var d1,d2;vector r=[];while (i<M1)&&(j<M2):{if (d1=v1[i])>=(d2=v2[j]):{r<-d1;i+=1}:{r<-d2;j+=1}};if i==M1 :while j<M2:{r<-v2[j];j+=1}:while i<M1:{r<-v1[i];i+=1}; r};
 // vector sort(vector v)={int n=@v,n2;n2=n/2;if n<=1:[v[0]]:if n==2:if v[0]>v[1]:v:[v[1],v[0]]:marge(sort(v[0:n2]),sort(v[n2:0]))};
@@ -229,7 +230,7 @@ vector ppm1(long n)={vector r=[];long p,old_n=-1;while ((p=pollard_pm1(n,197,300
 vector prh(long n)={vector r=[];long p,old_n=-1;while ((p=pollard_rho(n,213L,1L,2000,600)) !=0) && (old_n != n):{old_n=n;n/=p;r<-p};[r,n]};	// pollard_rho
 vector frm(long n)={vector r=[];long p,old_n=-1;while ((p=fermat(n)) !=0) && (old_n != n):{old_n=n;n/=p;r<-p};[r,n]};						// fermat
 
-array make_array(vector v,int m,int n)={int i,j,k=-1;vector vv=[],vvv=[];for i=-1:(i+=1)<n:{vvv=[];for j=-1:(j+=1)<m:vvv<-v[k+=1];vv<-vvv};v2a(vv)};
+array make_array(vector v,int m,int n)={int i,j,k=-1;vector vv=make_vector(m*n),vvv;for i=-1:(i+=1)<n:{vvv=make_vector(m);for j=-1:(j+=1)<m:vvv<-v[k+=1];vv<-vvv};v2a(vv)};
 array arraytype2int(array a)=array_type_change(a,1);
 array arraytype2lint(array a)=array_type_change(a,2);
 array arraytype2rat(array a)=array_type_change(a,3);

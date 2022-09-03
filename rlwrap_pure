@@ -132,6 +132,7 @@ make_zero
 eigen
 array_type_change
 sym2escsym
+make_vector
 
 __PRIMITIVE__
 __GLOBAL__

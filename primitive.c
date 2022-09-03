@@ -413,6 +413,9 @@ void p_eigen(void **sp, int n) {
     }
 void p_array_type_change(void **sp, int n){array*a=(array*)*sp;change_array_type(a,(int)(long)*(sp+1));*(sp) = (void*)a;}
 void p_sym2escsym(void **sp, int n) { *sp = (void*)symbol2escsymbol((Symbol *)*sp);}
+
+void p_make_vector(void **sp, int n) {*sp = vector_init((long)*sp);}
+
 Pfuncpointer primitive_func[]  = {p_exit,
 #ifndef VMTEST 
                                  p_forget, 
@@ -434,7 +437,7 @@ Pfuncpointer primitive_func[]  = {p_exit,
                                  p_compile, p_dis_assy, p_eval, p_load,
 #endif 
                                  p_keys, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_array_inv, p_make_eye, p_make_zero,
-                                 p_eigen, p_array_type_change, p_sym2escsym, NULL };
+                                 p_eigen, p_array_type_change, p_sym2escsym, p_make_vector, NULL };
 char*primitive_function_name[]={"exit",
 #ifndef VMTEST 
                                 "forget",
@@ -456,7 +459,7 @@ char*primitive_function_name[]={"exit",
                                 "compile", "dis_assy", "eval", "load", 
 #endif
                                 "keys", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "array_inv", "make_eye", "make_zero", 
-                                "eigen", "array_type_change", "sym2escsym", NULL};
+                                "eigen", "array_type_change", "sym2escsym", "make_vector", NULL};
 int primitive_function_arglisti[][6] = {//{OBJ_GEN},                                      // print
                                 {OBJ_NONE},                                     // exit
                                 {OBJ_SYM},                                      // forget
@@ -591,6 +594,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_ARRAY},                                    // eigen
                                 {OBJ_ARRAY, OBJ_INT},                           // array_type_change
                                 {OBJ_SYM},
+                                {OBJ_INT}                                       // make_vector
                                 };
 
 int primitive_function_ct[][3]  ={//{ return CT, # of parameters, 
@@ -727,6 +731,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_VECT, 1, FALSE},   // eigen
                                 {OBJ_ARRAY,2, FALSE},   // array_type_change
                                 {OBJ_SYM,  1, FALSE},
+                                {OBJ_VECT, 1, FALSE}    // make_vector
                                  };
 
 void * make_primitive() {

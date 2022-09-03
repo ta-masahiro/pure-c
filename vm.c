@@ -221,15 +221,24 @@ _LD13:
     Es = (Vector *)vector_ref(E, E ->_sp - 2 );
     push(S, (void * )vector_ref(Es, 3));  
     goto * dequeue(C);*/
+_LDMEM:
+    push(S, *(void**)dequeue(C));
+    goto *dequeue(C);
 _LDG:
     sym = (Symbol *)dequeue(C);
     if ((g = Hash_get(G, sym)) == NULL) printf("Unknown Key: %s\n", sym -> _table);
     else push(S, (void * )( * g));
-    C->_table[C->_cp-2]=&&_LDC;         // eval実行中はGの内容は変わらないと仮定すれば、
-    C->_table[C->_cp-1]=(void*)(*g);    // ldg命令はldc命令に置き換え可能
+    //C->_table[C->_cp-2]=&&_LDC;         // eval実行中はGの内容は変わらないと仮定すれば、
+    //C->_table[C->_cp-1]=(void*)(*g);    // ldg命令はldc命令に置き換え可能
+    C->_table[C->_cp-2]=&&_LDMEM;         // eval実行中はGの内容は変わらないと仮定すれば、
+    C->_table[C->_cp-1]=(void*)(g);       // ldg命令はldmem命令に置き換え可能
     goto * dequeue(C);
 _LDM:
-    i = * (long * )pop(S); push(S, (void * )i);
+    //i = * (long * )pop(S); push(S, (void * )i);
+    //goto * dequeue(C);
+    cl = vector_init(2);
+    push(cl, (void*)MACRO_C); push(cl, pop(C));
+    push(S, (void*)cl);
     goto * dequeue(C);
 _SET:
     v = vector_ref(S, S ->_sp - 1);
