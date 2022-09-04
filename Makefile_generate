@@ -1,7 +1,7 @@
 PROGRAM := pure
 OBJS := hash.o vector.o symbol.o vm.o object.o lexer.o  parser.o generate.o primitive.o CException.o array.o
 
-#CC := gcc
+CC := gcc
 #FLAGS := -g -O0  -DDEBUG
 FLAGS := -O3
 #LDLIBS :=  -lgc -lgmp -lmpfr -lm  -lecm

@@ -580,18 +580,18 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
 
 }
 
-void * p_array_ref(Vector * v) {
-    array * a = (array*)vector_ref(v,0);
-    int dim = v->_sp - 1;
-    int index = (int)(long)vector_ref(v, 1); 
-    if (index > a->sizes[0]) {printf("IndexError!\n");Throw(3);}
+void p_array_ref(void **cp, int n) {
+    array * a = (array*)*cp;
+    int dim = n -1;
+    int index = (int)(long)*(cp + 1); 
+    if (index >= a->sizes[0]) {printf("IndexError!\n");Throw(3);}
     int j;complex *c;
     for (int i = 1; i < dim; i++) {
-        if ((j = (int)(long)vector_ref(v, i + 1)) > a->sizes[i]) {printf("IndexError!\n");Throw(3);}
+        if ((j = (int)(long)*(cp + i + 1)) >= a->sizes[i]) {printf("IndexError!\n");Throw(3);}
         index = (index * a -> sizes[i]) + j; 
     }
-    if (a->type == OBJ_CMPLX) return  &a->table._cmplx;
-    return (void *)a->table._ptr[index];
+    if (a->type == OBJ_CMPLX) *cp = &a->table._cmplx;
+    *cp = (void *)a->table._ptr[index];
 }
 
 code_ret *codegen_vref(ast *vref_ast, Vector*env, int tail) {  // AST_VREF [AST_vect, AST_expr_list[i1,i2,...]]

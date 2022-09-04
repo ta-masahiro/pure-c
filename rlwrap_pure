@@ -127,6 +127,7 @@ arg
 a2v
 v2a
 solv_liner
+array_inv
 make_eye
 make_zero
 eigen
