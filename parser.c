@@ -46,7 +46,8 @@ void ast_print(ast*a, int tablevel) {
         // ast list type
         case AST_WHILE: case AST_IF: case AST_CLASS: case AST_VREF: case AST_SLS: case AST_VECT: case AST_DICT:
         case AST_DCL:case AST_APPLY: case AST_LAMBDA:case AST_EXP_LIST: case AST_EXP_LIST_DOTS: case AST_ARG_LIST: 
-        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR: case AST_DCL_F: case AST_FTYPE: case AST_MAC_S:
+        case AST_ARG_LIST_DOTS: case AST_PAIR: case AST_PAIR_LIST: case AST_CLASS_VAR: case AST_FOR: case AST_DCL_F: 
+        case AST_FTYPE: case AST_MAC_S: case AST_MAC_F:
             printf("type:%s\t", ast_type_str[t]);
             printf("objecttype: %d\n",a->o_type);
             if (a->table==NULL) break;
@@ -185,7 +186,8 @@ ast * is_factor(TokenBuff *S) {
         if (get_token(S)->type==']') {   //[]の場合
             v=vector_init(1);
             push(v,(void*)new_ast(AST_LIT,OBJ_NONE,(void*)0));
-            na = new_ast(AST_VECT,OBJ_VECT,v);na->size = size; return na;
+            //na = new_ast(AST_VECT,OBJ_VECT,v);na->size = size; return na;
+            return new_ast(AST_VECT,OBJ_VECT,v);//na->size = size; return na;
         } else {
             unget_token(S);
             if (a=is_expr_list(S)) {
@@ -566,8 +568,8 @@ char*dcl_string[]=     {"none",     "int",      "long",     "rational", "float",
     //                  OBJ_SYSFUNC,    OBJ_PFUNC,      OBJ_UFUNC,  OBJ_CNT
                         "vector",   "dict",   "pair",   "string",   "array",    \
     //                   OBJ_VECT,  OBJ_DICT,  OBJ_PAIR,OBJ_SYM,    OBJ_ARRAY
-                        "file",(void*)0};
-    //                  OBJ_IO
+                        "file", "key",  "class",    "ast", (void*)0};
+    //                  OBJ_IO, OBJ_KEY,OBJ_CLS_DEF,OBJ_AST
 
 int string_isin(char* s,char* table[]) {
     // if is s in table,return table position else -1
@@ -680,7 +682,7 @@ ast * is_arg_list_br(TokenBuff *S) {
     unget_token(S);
     return NULL;
 }
-
+/*
 ast * is_lambda_expr(TokenBuff *S) {
     // lambda_expr  : lambda ( expr_list ..) expr
     //                      | lambda ( expr_list ) expr
@@ -705,11 +707,11 @@ ast * is_lambda_expr(TokenBuff *S) {
     S->buff->_cp=token_p;
     return NULL;
 }
+*/
+char      *sp_exp0_string[]  = {"lambda",  "macro",     NULL};
+ast_type sp_exp0_ast_type[]  = {AST_LAMBDA, AST_MAC_F,      };
 
-char      *sp_exp1_string[]  = {"lambda",  "macro",     NULL};
-ast_type sp_exp1_ast_type[]  = {AST_LAMBDA, AST_MAC_F,      };
-
-ast * is_spcial1_expr(TokenBuff *S) {
+ast * is_special_expr0(TokenBuff *S) {
     // spi1_exp   = <key_word>  [ expr_list_br ] expr
     //            =>
     // AST_<key_word>, [expr_list, expr]
@@ -721,29 +723,29 @@ ast * is_spcial1_expr(TokenBuff *S) {
     int token_p = S->buff->_cp;
 
     if ((t =get_token(S))->type == TOKEN_SYM) {
-        if ((i = string_isin(t->source->_table, sp_exp1_string)) != -1) {
-            a_type = sp_exp1_ast_type[i];
+        if ((i = string_isin(t->source->_table, sp_exp0_string)) != -1) {//printf("%s\n", t->source->_table);
+            a_type = sp_exp0_ast_type[i];
             if (a1=is_arg_list_br(S)) {                    // check arg_list
                 if (a2=is_expr(S)) {
                     v=vector_init(2);
                     push(v,(void*)a1);push(v,(void*)a2);
                     return new_ast(a_type, a2->o_type, v);
                 }//「関数本体がない」というerrorにすること
-                printf("SynraxError:式が必要です\n"); Throw(1);
-            } else if (a1 = is_expr(S))
+            //    printf("SynraxError:式が必要です\n"); Throw(1);
+            } //else if (a1 = is_expr(S))
 
         
-            printf("SyntaxError:'arg list'が必要です\n"); Throw(1);
+            //printf("SyntaxError:'arg list'が必要です\n"); Throw(1);
         }
     }
     S->buff->_cp=token_p;
     return NULL;
 }
 
-char      *sp_exp_string[]  = {"if",  "while",   "for",   "loop",    "macro",  NULL};
-ast_type sp_exp_ast_type[]  = {AST_IF, AST_WHILE, AST_FOR, AST_LOOP, AST_MAC_S};
+char      *sp_exp1_string[]  = {"if",  "while",   "for",   "loop",   "macro",  NULL};
+ast_type sp_exp1_ast_type[]  = {AST_IF, AST_WHILE, AST_FOR, AST_LOOP, AST_MAC_S};
 
-ast * is_special_expr(TokenBuff *S, char delm) {
+ast * is_special_expr1(TokenBuff *S, char delm) {
     // sp_exp   = <key_word> expr {':' expr}
     //          =>
     // AST_<key_word>, none, [expr_ast, ..., expr_ast]
@@ -755,8 +757,8 @@ ast * is_special_expr(TokenBuff *S, char delm) {
     int token_p = S->buff -> _cp;
 
     if ((t =get_token(S))->type == TOKEN_SYM) {
-        if ((i = string_isin(t->source->_table, sp_exp_string)) != -1) {
-            a_type = sp_exp_ast_type[i];
+        if ((i = string_isin(t->source->_table, sp_exp1_string)) != -1) {
+            a_type = sp_exp1_ast_type[i];
             if (a = is_expr(S)) {
                 push(v, (void*)a);
                 while (TRUE) {
@@ -854,11 +856,12 @@ ast * is_expr(TokenBuff *S) {
     //if (a = is_dcl_expr(S)) return a;
     if (a = is_set_expr(S)) return a;
     //if (a = is_if_expr(S)) return a;
-    if (a = is_lambda_expr(S)) return a;
+    //if (a = is_lambda_expr(S)) return a;
+    if (a = is_special_expr0(S)) return a;
     //if (a = is_while_expr(S)) return a;
     //if (a = is_for_expr(S)) return a;
     //if (a = is_loop_expr(S)) return a;
-    if (a = is_special_expr(S, ':')) return a;
+    if (a = is_special_expr1(S, ':')) return a;
     if (a = is_class_def_expr(S)) return a;
     //if (a = is_expr_6(S)) return a;
     if (a = is_expr_2n(S,14)) return a;

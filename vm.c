@@ -31,7 +31,7 @@ char * code_name[] =
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
         0,    1,     2,    0,    0,    0,   0,   0,    1,   0,   0,    0,    0,    0,    \
-        0,    0,     0,    0,    0,    0,   0,   1,    0,   0,   0,    0,    0,    1,    \
+        0,    0,     0,    0,    0,    0,   0,   1,    1,   0,   0,    0,    0,    1,    \
         1,    0,     1,    1,    0,    0,   0,   0,    0,   0,   0 ,   0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0 ,  0,   0,    0,   0,   0,    0,    0,    0,    \
@@ -222,6 +222,7 @@ _LD13:
     push(S, (void * )vector_ref(Es, 3));  
     goto * dequeue(C);*/
 _LDMEM:
+    // パラメータをアドレスとみなして、そのアドレスの内容64bitをスタックtopに入れる
     push(S, *(void**)dequeue(C));
     goto *dequeue(C);
 _LDG:
@@ -237,7 +238,7 @@ _LDM:
     //i = * (long * )pop(S); push(S, (void * )i);
     //goto * dequeue(C);
     cl = vector_init(2);
-    push(cl, (void*)MACRO_C); push(cl, pop(C));
+    push(cl, (void*)MACRO_C); push(cl, dequeue(C));
     push(S, (void*)cl);
     goto * dequeue(C);
 _SET:

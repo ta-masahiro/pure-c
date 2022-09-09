@@ -533,6 +533,7 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
     Vector*code=vector_init(3);
     Symbol*s=(Symbol*)vector_ref(var_ast->table,0);  // s:var name
     code_type*ct;
+    code_ret *r;
     s =(Symbol*)vector_ref(var_ast->table, 0);
     void **d;
     // macroにあるか…後で
@@ -572,6 +573,15 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
         s=(Symbol*)vector_ref(var_ast->table,0);
         if (get_gv(s) == NULL) {printf("SyntaxError :Global value <%s> not defined!\n",s->_table);Throw(0);}
         ct=get_gv(s);
+        if (ct->type == OBJ_AST) {  // macro!
+            if (d = Hash_get(G, s)) {
+                r = codegen((ast*)(((Vector*)*d)->_table[1]), env,tail);
+                return r;
+                //push(r->code, (void*)STOP);
+                //push(code, (void*)LDC);push(code, eval(vector_init(2),vector_init(2),r->code,vector_init(2),vector_init(2),G));
+                //return new_code(code, r->ct);
+            }
+        }
         /* if (d = Hash_get(G, s)) {push(code, (void *)LDC);push(code, *d);}               // ※※実効直前にLDG->LDC変換をすべき
         else */ { push(code,(void*)LDG);push(code,(void*)vector_ref(var_ast->table,0));}
     } //disassy(code,0,stdout);//PR(6);
@@ -724,7 +734,7 @@ void aa_add(void **cp, int n) {*cp = (void*)array_array_add((array*)*cp, (array*
 
 code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_type,AST_L_EXPR,AST_R_EXPR]
     obj_type r_type;
-    int i,op_code;
+    int i,op_code,macro_conv_flg=FALSE;object *o;
     Pfuncpointer fp; Vector * func_vect ;                        // for array operator
 
     Vector *code = vector_init(3);
@@ -737,6 +747,8 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     Vector *code_right = code_r_right->code;                    // 右辺式のコード
     code_type *ct_right = code_r_right->ct;                     // 右辺式のコードタイプ
     obj_type type_right = ct_right->type;                       // 右辺式の型
+    //
+    if (code_left->_sp ==2 && (long)code_left->_table[0] == LDC && code_right->_sp ==2 && (long)code_right->_table[0] == LDC) macro_conv_flg = TRUE;
     //
     tokentype lit_type=(int)(long)vector_ref(_2op_ast->table,0);       //2項演算子
     //特別な場合を先に処理
@@ -833,12 +845,17 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     //
     if (op2_3[i] != 0) r_type=op2_3[i];
     // printf("ret_type:%d\n",ret_obj);
+
+    if (macro_conv_flg) {
+        push(code, (void*)STOP);o = code_eval(new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE)));
+        code = vector_init(2);push(code,(void*)LDC);push(code,o->data.ptr);
+    }
     return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
 }
 
 code_ret *codegen_1op(ast *_1op_ast, Vector * env, int tail) { // AST_1OP [op_type,AST_EXPR]
-    enum CODE opcode;
-    int i;
+    enum CODE opcode;object *o;
+    int i, macro_conv_flg=FALSE;
     code_ret *code_s = codegen((ast*)vector_ref(_1op_ast->table,1),env,FALSE);
     Vector *code = code_s->code; obj_type r_type=code_s->ct->type;
     tokentype litpyte = (int)(long)vector_ref(_1op_ast->table,0);
@@ -847,10 +864,18 @@ code_ret *codegen_1op(ast *_1op_ast, Vector * env, int tail) { // AST_1OP [op_ty
     }
     if (i>=6){printf("illegal 1oprand\n");return NULL;}
     if ((opcode=op1_2[r_type][i])==0) {printf("syntax Error:operator is not supported\n");Throw(0);}
+
+    if (code->_sp ==2 && (long)code->_table[0] == LDC) macro_conv_flg = TRUE; 
+
     push(code,(void*)(long)opcode);
     if ((op1_1[i]=='-'*256+'>') && (r_type==OBJ_SYM)) r_type=OBJ_SYM;
     else if ((op1_1[i] == '@') && (r_type == OBJ_ARRAY)) r_type = OBJ_VECT;
     else if (op1_3[i] != 0) r_type=op1_3[i];
+
+    if (macro_conv_flg) {
+        push(code, (void*)STOP);o = code_eval(new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE)));
+        code = vector_init(2);push(code,(void*)LDC);push(code,o->data.ptr);
+    } 
     return new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE));
 }
 
@@ -1662,11 +1687,15 @@ code_ret * codegen_class_var(ast *class_var_ast, Vector *env, int tail) {
 
 }
 
-code_ret * codegen_macro_c(ast *o, Vector *env, int tail) {
-    // constant macro
-    Vector * code = vector_init(3);
-    push(code, (void*)LDM) ;   
-
+code_ret * codegen_macro_s(ast *o, Vector *env, int tail) {
+    if (o->table->_sp == 1) {               // 1個以下ならconstant macro
+        Vector * code = vector_init(3);
+        push(code, (void*)LDM) ;   
+        push(code, (void*)(o->table->_table[0]));
+        return new_code(code, new_ct(OBJ_AST, NULL, NULL, FALSE));
+    } else {                                  // 2個以上ならsyntax macro
+        printf("syntaxマクロは未対応中です\n");Throw(0);
+    }
 }
 code_ret * codegen_class(ast *a, Vector * env, int tail) {
 
@@ -1694,6 +1723,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
         case AST_FOR:       return  codegen_for     (a, env, tail);
 //        case AST_CLASS_VAR: return  codegen_cl_var  (a, env, tail);
 //        case AST_CLASS:     return  codegen_class   (a, env, tail);
+        case AST_MAC_S:     return codegen_macro_s  (a, env, tail);
         default: printf("syntaxError:Unknown AST!\n");Throw(0);
     } 
 }
@@ -1732,6 +1762,9 @@ void disassy(Vector * code, int indent, FILE*fp) {
                 fprintf(fp,"%s\t%ld\n", code_name[c], (long)dequeue(code));
                 disassy((Vector*)dequeue(code), indent, fp);
                 break;
+            case LDM:
+                //fprintf(fp,"%s\t", code_name[c]);ast_print((ast*)dequeue(code), 0);break;
+                fprintf(fp,"%s\t%s\n", code_name[c],objtype2str(OBJ_AST,dequeue(code)));break;
             default:
                 if (op_size[c] == 0) fprintf(fp, "%s\n", code_name[c]);
                 else if (op_size[c] == 1) fprintf(fp, "%s\t%ld\n", code_name[c], (long)dequeue(code)); 

@@ -54,4 +54,7 @@ code_ret* codegen_vect(ast*a,Vector*v,int tail);
 code_ret* codegen_while(ast*a,Vector*v,int tail);
 
 void disassy(Vector *code, int indent, FILE *fp);
+code_ret *str_compile(Symbol *s);
+object *code_eval(code_ret *code);
+
 #endif

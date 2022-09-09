@@ -1931,6 +1931,7 @@ Symbol * objtype2symbol(obj_type type, void* value) {
                         //return buf;
                         //str = array2sym((array*)value, &i, 0); return new_symbol(str, strlen(str));
                         return array2sym((array*)value, &i, 0);
+        case OBJ_AST:sprintf(buf,"<Macro AST: %lx>",(long)value);return new_symbol(buf, strlen(buf));
         default:printf("RntimeError:Illegal print args!\n");Throw(3);
     }
 }
