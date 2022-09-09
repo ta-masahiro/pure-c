@@ -1273,6 +1273,7 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
     Vector *code = code_s1->code;                                             // make cond_code 
     Vector *code1, *code2,* v;
     code_type *ct1, *ct2;
+    object *o;
     int n;
 
     if ((n = a->table->_sp) < 2 ) {printf("SyntaxError:IF式中の式個数が正しくありません\n"); Throw(0);}
@@ -1281,6 +1282,13 @@ code_ret *codegen_if(ast *a, Vector *env, int tail) {               // AST_IF,[c
         //push(a->table, (void*)new_ast(AST_VAR, OBJ_NONE, v));
         v = vector_init(1); push(v, (void *)TOKEN_NONE);
         push(a->table, (void *)new_ast(AST_LIT, OBJ_NONE, v));
+    }
+    // cond codeの定数畳み込み
+    if (code->_sp == 2 && (long)code->_table[0] == LDC) {
+        push(code_s1->code, (void*)STOP);
+        o = code_eval(code_s1);
+        if (o->data.intg == 0) return codegen(vector_ref(a->table,2),env,tail);
+        else return codegen(vector_ref(a->table,1),env,tail);
     }
 
     if (tail) {
