@@ -26,7 +26,7 @@ char * code_name[] =
      "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","VSLS_","V_SLS","SSLS_","S_SLS",
      "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD", "SPUSH","OTOA", "ATOO",
      "ATOS",  "ALEN", "LTOK", "RTOK", "LFTOK","CTOK", "OTOK", "DTOK", "ATOK", "STL",  "STL0", "STL1", "STL2", "stl3",
-     "STL4",  "$$$" };
+     "STL4",  "LDMF", "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -50,7 +50,7 @@ int op_size[] = \
         1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   1,   0,    0,    0,    0,    \
-        0      };
+        0,    1  };
 
 Vector *tosqs(Vector*code, const void** table, Hash *G) {
     enum CODE op;
@@ -122,7 +122,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR,&&_VSLS_,&&_V_SLS,&&_SSLS_,&&_S_SLS,\
             &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH,&&_OTOA, &&_ATOO, \
             &&_ATOS,  &&_ALEN, &&_LTOK, &&_RTOK, &&_LFTOK,&&_CTOK, &&_OTOK, &&_DTOK, &&_ATOK, &&_STL,  &&_STL0, &&_STL1 ,&&_STL2, &&_STL3, \
-            &&_STL4   };
+            &&_STL4,  &&_LDMF   };
  
     C = tosqs(Code,table, G);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -234,11 +234,16 @@ _LDG:
     C->_table[C->_cp-2]=&&_LDMEM;         // eval実行中はGの内容は変わらないと仮定すれば、
     C->_table[C->_cp-1]=(void*)(g);       // ldg命令はldmem命令に置き換え可能
     goto * dequeue(C);
-_LDM:
+_LDM:   // 定数マクロ
     //i = * (long * )pop(S); push(S, (void * )i);
     //goto * dequeue(C);
     cl = vector_init(2);
     push(cl, (void*)MACRO_C); push(cl, dequeue(C));
+    push(S, (void*)cl);
+    goto * dequeue(C);
+_LDMF:  // 関数マクロ
+    cl = vector_init(2);
+    push(cl, (void*)MACRO_F); push(cl, dequeue(C));
     push(S, (void*)cl);
     goto * dequeue(C);
 _SET:

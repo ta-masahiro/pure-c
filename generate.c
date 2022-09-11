@@ -575,8 +575,8 @@ code_ret* codegen_var(ast* var_ast,Vector*env,int tail) {
         ct=get_gv(s);
         if (ct->type == OBJ_AST) {  // macro!
             if (d = Hash_get(G, s)) {
-                r = codegen((ast*)(((Vector*)*d)->_table[1]), env,tail);
-                return r;
+                if ((long)((Vector *)*d)->_table[0] == MACRO_C) return codegen((ast*)(((Vector*)*d)->_table[1]), env,tail);
+               // else if (((Vector *)*d)->_table[0] == MACRO_F) 
                 //push(r->code, (void*)STOP);
                 //push(code, (void*)LDC);push(code, eval(vector_init(2),vector_init(2),r->code,vector_init(2),vector_init(2),G));
                 //return new_code(code, r->ct);
@@ -734,7 +734,7 @@ void aa_add(void **cp, int n) {*cp = (void*)array_array_add((array*)*cp, (array*
 
 code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_type,AST_L_EXPR,AST_R_EXPR]
     obj_type r_type;
-    int i,op_code,macro_conv_flg=FALSE;object *o;
+    int i,op_code,const_conv_flg=FALSE;object *o;
     Pfuncpointer fp; Vector * func_vect ;                        // for array operator
 
     Vector *code = vector_init(3);
@@ -748,7 +748,7 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     code_type *ct_right = code_r_right->ct;                     // 右辺式のコードタイプ
     obj_type type_right = ct_right->type;                       // 右辺式の型
     //
-    if (code_left->_sp ==2 && (long)code_left->_table[0] == LDC && code_right->_sp ==2 && (long)code_right->_table[0] == LDC) macro_conv_flg = TRUE;
+    if (code_left->_sp ==2 && (long)code_left->_table[0] == LDC && code_right->_sp ==2 && (long)code_right->_table[0] == LDC) const_conv_flg = TRUE;
     //
     tokentype lit_type=(int)(long)vector_ref(_2op_ast->table,0);       //2項演算子
     //特別な場合を先に処理
@@ -846,7 +846,7 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     if (op2_3[i] != 0) r_type=op2_3[i];
     // printf("ret_type:%d\n",ret_obj);
 
-    if (macro_conv_flg) {
+    if (const_conv_flg) {
         push(code, (void*)STOP);o = code_eval(new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE)));
         code = vector_init(2);push(code,(void*)LDC);push(code,o->data.ptr);
     }
@@ -855,7 +855,7 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
 
 code_ret *codegen_1op(ast *_1op_ast, Vector * env, int tail) { // AST_1OP [op_type,AST_EXPR]
     enum CODE opcode;object *o;
-    int i, macro_conv_flg=FALSE;
+    int i, const_conv_flg=FALSE;
     code_ret *code_s = codegen((ast*)vector_ref(_1op_ast->table,1),env,FALSE);
     Vector *code = code_s->code; obj_type r_type=code_s->ct->type;
     tokentype litpyte = (int)(long)vector_ref(_1op_ast->table,0);
@@ -865,14 +865,14 @@ code_ret *codegen_1op(ast *_1op_ast, Vector * env, int tail) { // AST_1OP [op_ty
     if (i>=6){printf("illegal 1oprand\n");return NULL;}
     if ((opcode=op1_2[r_type][i])==0) {printf("syntax Error:operator is not supported\n");Throw(0);}
 
-    if (code->_sp ==2 && (long)code->_table[0] == LDC) macro_conv_flg = TRUE; 
+    if (code->_sp ==2 && (long)code->_table[0] == LDC) const_conv_flg = TRUE; 
 
     push(code,(void*)(long)opcode);
     if ((op1_1[i]=='-'*256+'>') && (r_type==OBJ_SYM)) r_type=OBJ_SYM;
     else if ((op1_1[i] == '@') && (r_type == OBJ_ARRAY)) r_type = OBJ_VECT;
     else if (op1_3[i] != 0) r_type=op1_3[i];
 
-    if (macro_conv_flg) {
+    if (const_conv_flg) {
         push(code, (void*)STOP);o = code_eval(new_code(code,new_ct(r_type,OBJ_NONE,(void*)0,FALSE)));
         code = vector_init(2);push(code,(void*)LDC);push(code,o->data.ptr);
     } 
@@ -932,7 +932,9 @@ int sys_func_code[][10] = {//int    long    rat     float   lfloat  complex
 code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL [AST_NAME,[AST_EXP_LIST [AST,AST,...]]]
                                                                     //            <0>                     <1,0>,<1,1>...
     // ... macro function ...
-    Vector *v1,*v2; int macro_conv_flg=TRUE;
+    Vector *v1,*v2; 
+    int const_conv_flg=TRUE;    // 定数畳み込みが可能かどうかを示すフラグ　
+                                // ※例えばfunc(1,2,3)はfuncがprimitiveならコンパイル段階で計算され定数にする
     ast *param_ast = (ast*)vector_ref(fcall_ast->table,1);          // parameter ast
     int i, n = param_ast->table->_sp, m, t_op;                                  // number of actual parameters
     ast *function_ast = (ast*)vector_ref(fcall_ast->table,0);       // function ast
@@ -952,7 +954,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
     // function astのコード生成
     Vector *code=vector_init(3);
     code_ret *code_s_function = codegen(function_ast,env,FALSE);                        // 関数名部分をコンパイル
-    Vector *code_function = code_s_function->code;//PR(0);            
+    Vector *code_function = code_s_function->code;//PR(0);             
     if (code_s_function->ct->type != OBJ_UFUNC && code_s_function->ct->type != OBJ_PFUNC) { printf("SyntaxError:Must be Function!\n");Throw(0);}
     code_type * r_type = code_s_function->ct->functon_ret_type;//PR(1);                    // 関数の戻り型
     Vector *v = code_s_function->ct->arg_type;//vector_print(v);PR(2);                  // 引数の型のリスト
@@ -972,7 +974,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
             code_s_param = codegen((ast*)vector_ref(param_ast->table, i),env,FALSE);
             code_param = code_s_param->code; ct_param = code_s_param->ct; type_param = ct_param->type; // ct1/type1:actual parameter type
             //
-            if (macro_conv_flg && code_param->_sp == 2 && (long)code_param->_table[0] == LDC) macro_conv_flg = TRUE; else macro_conv_flg = FALSE;
+            if (const_conv_flg && code_param->_sp == 2 && (long)code_param->_table[0] == LDC) const_conv_flg = TRUE; else const_conv_flg = FALSE;
             //
             if (doted && i >= m-1) type_dummy=OBJ_GEN ; 
             else {ct_dummy=(code_type *)vector_ref(v,i); type_dummy =ct_dummy->type;}// ct2/type2:dummy parameter type
@@ -1005,7 +1007,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
             push(code, (void*)PCALL);
             push(code, (void*)(long)n);
             //
-            if (macro_conv_flg) {
+            if (const_conv_flg) {
                 push(code, (void*)STOP);object *o = code_eval(new_code(code,r_type));//printf("%s\n", objtostr(o));
                 code = vector_init(2);push(code,(void*)LDC);push(code,o->data.ptr);r_type=new_ct(o->type, NULL, NULL, FALSE);
             }
@@ -1714,6 +1716,14 @@ code_ret * codegen_macro_s(ast *o, Vector *env, int tail) {
     }
 }
 
+code_ret * codegen_macro_f(ast *o, Vector *env, int tail) {         // AST_MACRO_F [AST_ARG_LIST [expr,   exp,   ...]], body_expr]
+                                                                    //              <0>           <0,0>,  <0,1>,...   , <1>
+    Vector *code = vector_init(2);
+    push(code, (void *)LDMF);
+    push(code, (void *)(o->table->_table[0]));
+    return new_code(code, new_ct(OBJ_AST, NULL, NULL, FALSE));
+}
+
 code_ret * codegen_class(ast *a, Vector * env, int tail) {
 
 }
@@ -1741,6 +1751,7 @@ code_ret * codegen(ast * a, Vector * env, int tail) {
 //        case AST_CLASS_VAR: return  codegen_cl_var  (a, env, tail);
 //        case AST_CLASS:     return  codegen_class   (a, env, tail);
         case AST_MAC_S:     return codegen_macro_s  (a, env, tail);
+        case AST_MAC_F:     return codegen_macro_f  (a, env, tail);
         default: printf("syntaxError:Unknown AST!\n");Throw(0);
     } 
 }
@@ -1779,7 +1790,7 @@ void disassy(Vector * code, int indent, FILE*fp) {
                 fprintf(fp,"%s\t%ld\n", code_name[c], (long)dequeue(code));
                 disassy((Vector*)dequeue(code), indent, fp);
                 break;
-            case LDM:
+            case LDM: case LDMF: 
                 //fprintf(fp,"%s\t", code_name[c]);ast_print((ast*)dequeue(code), 0);break;
                 fprintf(fp,"%s\t%s\n", code_name[c],objtype2str(OBJ_AST,dequeue(code)));break;
             default:
