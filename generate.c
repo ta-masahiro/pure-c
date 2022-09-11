@@ -932,7 +932,7 @@ int sys_func_code[][10] = {//int    long    rat     float   lfloat  complex
 code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL [AST_NAME,[AST_EXP_LIST [AST,AST,...]]]
                                                                     //            <0>                     <1,0>,<1,1>...
     // ... macro function ...
-    Vector *v1,*v2;
+    Vector *v1,*v2; int macro_conv_flg=TRUE;
     ast *param_ast = (ast*)vector_ref(fcall_ast->table,1);          // parameter ast
     int i, n = param_ast->table->_sp, m, t_op;                                  // number of actual parameters
     ast *function_ast = (ast*)vector_ref(fcall_ast->table,0);       // function ast
@@ -971,6 +971,9 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
         for(i = 0; i < n; i ++ ) {//PR(i);
             code_s_param = codegen((ast*)vector_ref(param_ast->table, i),env,FALSE);
             code_param = code_s_param->code; ct_param = code_s_param->ct; type_param = ct_param->type; // ct1/type1:actual parameter type
+            //
+            if (macro_conv_flg && code_param->_sp == 2 && (long)code_param->_table[0] == LDC) macro_conv_flg = TRUE; else macro_conv_flg = FALSE;
+            //
             if (doted && i >= m-1) type_dummy=OBJ_GEN ; 
             else {ct_dummy=(code_type *)vector_ref(v,i); type_dummy =ct_dummy->type;}// ct2/type2:dummy parameter type
 
@@ -1001,6 +1004,11 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
         } else if (code_s_function->ct->type == OBJ_PFUNC) {
             push(code, (void*)PCALL);
             push(code, (void*)(long)n);
+            //
+            if (macro_conv_flg) {
+                push(code, (void*)STOP);object *o = code_eval(new_code(code,r_type));//printf("%s\n", objtostr(o));
+                code = vector_init(2);push(code,(void*)LDC);push(code,o->data.ptr);r_type=new_ct(o->type, NULL, NULL, FALSE);
+            }
         } else {
             push(code, tail ? (void*)TCALL : (void*)CALL);
             push(code, (void*)(long)n);
@@ -1705,6 +1713,7 @@ code_ret * codegen_macro_s(ast *o, Vector *env, int tail) {
         printf("syntaxマクロは未対応中です\n");Throw(0);
     }
 }
+
 code_ret * codegen_class(ast *a, Vector * env, int tail) {
 
 }
