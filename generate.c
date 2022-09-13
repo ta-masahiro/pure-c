@@ -1744,7 +1744,7 @@ code_ret * codegen_macro_f(ast *o, Vector *env, int tail) {         // AST_MACRO
     ast * ast_arg_list = o->table->_table[0];
     int n = ast_arg_list ->table->_sp,t;  // size of parameter
     for(int i=0;i<n;i++) {
-       if (((ast*)ast_arg_list->table->_table[i])->type != AST_VAR) printf("SyntaxError:関数マクロの引数は単純変数でなければなりません %d\n",i);Throw(3);
+       if (((ast*)ast_arg_list->table->_table[i])->type != AST_VAR) {printf("SyntaxError:関数マクロの引数は単純変数でなければなりません %d\n",i);Throw(3);}
     }
     push(code, (void *)LDMF);
     //push(code, (void *)(o->table->_table[0]));printf("\n<test>\n");ast_print(o->table->_table[0],0);
