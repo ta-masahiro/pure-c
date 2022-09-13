@@ -907,6 +907,12 @@ code_ret *codegen_apply(ast *apply_ast, Vector *env, int tail) {    // AST_APPLY
     return new_code(code, r_type);
 }
 
+code_ret * codegen_macro_fcall(ast *ast_macro_body, ast * ast_a_param, Vector *env, int tail) {
+    printf("macro body:\n");ast_print(ast_macro_body,0);
+    printf("actual param:\n");ast_print(ast_a_param, 0);
+    printf("関数マクロは現在インプリメントされていません(対応中)\n");Throw(0);
+}
+
 char *sys_func_name[] =     {"toint","tolong","torat","tofloat","tolfloat","tocmplex","tostr","togeneral",  // 変換関数
                              "abs","sqrt","cbrt","num","den","imag","real","conj",                          // 数値処理
                              "copy",NULL};
@@ -935,9 +941,23 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
     Vector *v1,*v2; 
     int const_conv_flg=TRUE;    // 定数畳み込みが可能かどうかを示すフラグ　
                                 // ※例えばfunc(1,2,3)はfuncがprimitiveならコンパイル段階で計算され定数にする
+    code_type *ct;
     ast *param_ast = (ast*)vector_ref(fcall_ast->table,1);          // parameter ast
     int i, n = param_ast->table->_sp, m, t_op;                                  // number of actual parameters
-    ast *function_ast = (ast*)vector_ref(fcall_ast->table,0);       // function ast
+    void **d;
+    ast *function_ast = (ast*)vector_ref(fcall_ast->table,0); 
+          // function ast
+    // 関数名呼び出しで、その名前がGにあって、内容がMACRO_Fであれば、内容と実引数からマクロを展開する
+    if (function_ast->type == AST_VAR) {
+        Symbol *s = (Symbol*)(function_ast->table->_table[0]);
+        if ((ct=get_gv(s)) != NULL){
+            if (ct->type == OBJ_AST) {
+                if (d = Hash_get(G, s)) {
+                    if ((long)((Vector *)*d)->_table[0] == MACRO_F) return codegen_macro_fcall((ast *)(((Vector *)*d)->_table[1]), param_ast, env, tail);
+                }
+            }
+        }
+    }
     // 「..」だったら即APPLYに変換する
     if (param_ast->type==AST_EXP_LIST_DOTS || param_ast->type==AST_ARG_LIST_DOTS) {                      // if expr_list_dots -> apply
         v1=vector_init(1 + param_ast->table->_sp);
@@ -954,7 +974,8 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
     // function astのコード生成
     Vector *code=vector_init(3);
     code_ret *code_s_function = codegen(function_ast,env,FALSE);                        // 関数名部分をコンパイル
-    Vector *code_function = code_s_function->code;//PR(0);             
+    Vector *code_function = code_s_function->code;//PR(0); 
+    //if (code_s_function->ct->type == OBJ_AST) return codegen_macro_fcall(fcall_ast, env, tail); // マクロ関数処理は別ルーチンで            
     if (code_s_function->ct->type != OBJ_UFUNC && code_s_function->ct->type != OBJ_PFUNC) { printf("SyntaxError:Must be Function!\n");Throw(0);}
     code_type * r_type = code_s_function->ct->functon_ret_type;//PR(1);                    // 関数の戻り型
     Vector *v = code_s_function->ct->arg_type;//vector_print(v);PR(2);                  // 引数の型のリスト
@@ -1720,7 +1741,8 @@ code_ret * codegen_macro_f(ast *o, Vector *env, int tail) {         // AST_MACRO
                                                                     //              <0>           <0,0>,  <0,1>,...   , <1>
     Vector *code = vector_init(2);
     push(code, (void *)LDMF);
-    push(code, (void *)(o->table->_table[0]));
+    //push(code, (void *)(o->table->_table[0]));printf("\n<test>\n");ast_print(o->table->_table[0],0);
+    push(code, (void *)o);printf("\n<test>\n");//ast_print(o,0);
     return new_code(code, new_ct(OBJ_AST, NULL, NULL, FALSE));
 }
 
