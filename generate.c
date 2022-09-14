@@ -950,15 +950,22 @@ code_ret * codegen_macro_fcall(ast *ast_macro_func, ast * ast_a_param, Vector *e
     if (n != m) {printf("SyntaxError:マクロ関数の仮引数の個数と実引数の個数が異なります\n");Throw(0);}
     //
     code_ret * code_s_body = codegen(ast_macro_body, env, tail); // 現在の環境でbodyのコードを作り
-    Vector * code_body = code_s_body->code;
+    Vector * code_body = code_s_body->code, *a_code;
     code_pos *pos;
     for(int i = 0;i < n; i++) {
-        if ((pos = search_code(code_body, LDG, 0)) && 
-            symbol_eq((Symbol*)(pos->code->_table[pos->pos + 1]), 
-                      (Symbol *)(((ast *)(ast_macro_param->table->_table[i]))->table->_table[0]))) {
-
+        while (TRUE) {
+            a_code = codegen((ast *)(ast_a_param->table->_table[i]), env, tail)->code;
+            if ((pos = search_code(code_body, LDG, 0)) && 
+                (symbol_eq((Symbol*)(pos->code->_table[pos->pos + 1]), 
+                          (Symbol *)(((ast *)(ast_macro_param->table->_table[i]))->table->_table[0])))) {
+                vector_delete_n(pos->code, pos->pos, 2);
+                vector_insert_vector(pos->code, pos->pos, a_code );
+                continue;
+            }
+            break;
         }  
     }
+    return new_code(pos->code, code_s_body->ct);
 }
 
 char *sys_func_name[] =     {"toint","tolong","torat","tofloat","tolfloat","tocmplex","tostr","togeneral",  // 変換関数
