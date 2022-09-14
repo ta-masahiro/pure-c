@@ -137,6 +137,7 @@ token * get_token(TokenBuff *t) ;
 void  unget_token(TokenBuff *t); 
 void  token_print(TokenBuff*buff); 
 ast * new_ast(ast_type type, obj_type o_type,Vector * table) ;
+int ast_eq(ast*,ast*);
 void  ast_print(ast*a, int tablevel) ; 
 ast * is_lit(TokenBuff*S) ; 
 ast * is_var(TokenBuff *S) ; 

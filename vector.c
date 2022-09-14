@@ -116,11 +116,28 @@ void vector_delete(Vector * v, int index) {
     v->_sp--;
 }
 
+void vector_delete_n(Vector *v, int index, int size) {
+    memmove(v->_table + index, v->_table + index + size, sizeof(void*)*(v->_sp - index - size + 1));
+    v->_sp -= size;
+}
+
 void vector_insert(Vector * v, int index, void * value) {
     if (v->_size <= v->_sp) vector_resize(v);
     memmove(v->_table + index + 1, v->_table + index, sizeof(void*)*(v->_sp - index));
     v->_table[index]=value;
     v->_sp++;
+}
+
+void vector_insert_vector(Vector *v, int index, Vector *c) {
+    // v[i-1]からv[i]の間にc[:]を挿入する
+    // 1.vをcのサイズ(nとする)ぶん拡張する
+    // 2.v[i:]をcのサイズ分移動する
+    // 3.v+iの位置からcをcopy
+    int n = c->_sp;             // cのサイズ
+    vector_upsize(v, n);        // vをnだけ拡張する
+    memmove(v->_table + index + n, v->_table + index, (v->_sp - index)*sizeof(void*) );
+    memmove(v->_table + index, c->_table, n*sizeof(void*));
+    v->_sp += n;
 }
 
 void vector_print(Vector * s) {

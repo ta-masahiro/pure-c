@@ -247,8 +247,9 @@ void p_sort(void **sp, int n) {
 }
 void p_ddel(void **sp, int n) {Hash_del((Hash*)*sp, (Symbol*)*(sp +1)); *(sp) = NULL;}
 void p_vdel(void **sp, int n) {Vector*vv=(Vector*)*(sp) ;long index=(long)*(sp+1); if (index<0) index=vv->_sp+index;vector_delete(vv, index); *(sp) = NULL;}
+void p_vdeln(void **sp, int n) {Vector*vv=(Vector*)*(sp) ;long index=(long)*(sp+1); long size =(long)*(sp+2); if (index<0) index=vv->_sp+index;vector_delete_n(vv, index, size); *(sp) = NULL;}
 void p_vins(void **sp, int n) {vector_insert((Vector*)*sp, (long)*(sp + 1), (void*)*(sp + 2)); *(sp) = NULL;}
-
+void p_vinsv(void **sp, int n) {vector_insert_vector((Vector*)*sp, (int)(long)*(sp+1), (Vector *)*(sp+2)); *(sp) = NULL;}
 void p_cmp(void **sp, int n) {*(sp) = (void*)(long)objcmp((object*)*sp, (object*)*(sp+1));}
 void p_fact(void **sp, int n) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(r); mpz_fac_ui(r, (long)*sp); *(sp) = (void*)r;}
 void p_fib(void **sp, int n) {mpz_ptr r = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(r); mpz_fib_ui(r, (long)*sp); *(sp) = (void*)r;}
@@ -430,7 +431,7 @@ Pfuncpointer primitive_func[]  = {p_exit,
                                  p_lflog10, p_lflogE, p_lflog, p_lflog1p, p_lfexp, p_oabs, p_osqrt,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, 
                                  p_olog10, p_ologE, p_olog1p, p_olog, p_oexp, p_ofloor,
-                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vins, p_fact, p_fib, p_lis_prime, p_lnext_prime,
+                                 p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vdeln, p_vins, p_vinsv, p_fact, p_fib, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_trial_div, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
 #ifndef VMTEST
@@ -452,7 +453,7 @@ char*primitive_function_name[]={"exit",
                                 "lflog10", "lflogE", "lflog", "lflog1p", "lfexp", "abs", "sqrt", 
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", 
                                 "log10", "logE", "log1p", "log", "exp", "floor",
-                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vins", "fact", "fib", "lis_prime", "lnext_prime", 
+                                "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vdeln", "vins", "vinsv", "fact", "fib", "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "trial_div", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
 #ifndef VMTEST
@@ -553,7 +554,9 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_GEN, OBJ_GEN},                             // cmp
                                 {OBJ_DICT,OBJ_KEY},                             // ddel
                                 {OBJ_VECT,OBJ_INT},                             // vdel
+                                {OBJ_VECT,OBJ_INT,OBJ_INT},                     // vdeln
                                 {OBJ_VECT,OBJ_INT,OBJ_GEN},                     // vins
+                                {OBJ_VECT,OBJ_INT,OBJ_VECT},                    // vinsv
                                 {OBJ_INT},                                      // fact
                                 {OBJ_INT},                                      // fib
                                 {OBJ_LINT, OBJ_INT},                            // is_prime
@@ -690,7 +693,9 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_INT,  2, FALSE},   // cmp
                                 {OBJ_NONE, 2, FALSE},   // ddel
                                 {OBJ_NONE, 2, FALSE},   // vdel
+                                {OBJ_NONE, 3, FALSE},   // vdeln
                                 {OBJ_NONE, 3, FALSE},   // vins
+                                {OBJ_NONE, 3, FALSE},   // vinsv
                                 {OBJ_LINT, 1, FALSE},   // fact
                                 {OBJ_LINT, 1, FALSE},   // fib 
                                 {OBJ_INT,  2, TRUE},    // is_prime

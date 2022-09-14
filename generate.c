@@ -906,11 +906,59 @@ code_ret *codegen_apply(ast *apply_ast, Vector *env, int tail) {    // AST_APPLY
     
     return new_code(code, r_type);
 }
+typedef struct {
+    Vector *code;
+    int     pos;
+} code_pos;
 
-code_ret * codegen_macro_fcall(ast *ast_macro_body, ast * ast_a_param, Vector *env, int tail) {
-    printf("macro body:\n");ast_print(ast_macro_body,0);
-    printf("actual param:\n");ast_print(ast_a_param, 0);
-    printf("関数マクロは現在インプリメントされていません(対応中)\n");Throw(0);
+code_pos *new_code_pos(Vector *code, int pos) {
+    code_pos *r = (code_pos*)malloc(sizeof(code_pos));
+    r->code = code;
+    r->pos = pos;
+    return r;
+}
+
+code_pos *search_code(Vector * code, int search_inst, int start) {
+    int inst;
+    code_pos *pos;
+    for(int i = start; i < code->_sp; i++) {
+        inst = (int)(long)code->_table[i];
+        if (search_inst == inst) return new_code_pos(code, i);
+        switch(inst) {
+            case SEL: case TSEL:
+                if (pos = search_code(code->_table[i+1], search_inst, 0)) return pos;
+                else if (pos = search_code(code->_table[i+2], search_inst, 0)) return pos;
+                continue;
+            case LDF: case LDP: case LOOP:
+                if (pos = search_code(code->_table[i+1], search_inst, 0)) return pos;
+                continue;
+            case WHILE:
+                if (pos = search_code(code->_table[i+2], search_inst, 0)) return pos;
+        }
+    }
+    return NULL;
+}
+
+code_ret * codegen_macro_fcall(ast *ast_macro_func, ast * ast_a_param, Vector *env, int tail) {
+    //printf("macro body:\n");ast_print(ast_macro_func,0);
+    //printf("actual param:\n");ast_print(ast_a_param, 0);
+    // printf("関数マクロは現在インプリメントされていません(対応中)\n");Throw(0);
+    ast * ast_macro_param = ast_macro_func->table->_table[0];
+    ast * ast_macro_body  = ast_macro_func->table->_table[1];
+    int n = ast_macro_param->table->_sp;
+    int m = ast_a_param->table->_sp;
+    if (n != m) {printf("SyntaxError:マクロ関数の仮引数の個数と実引数の個数が異なります\n");Throw(0);}
+    //
+    code_ret * code_s_body = codegen(ast_macro_body, env, tail); // 現在の環境でbodyのコードを作り
+    Vector * code_body = code_s_body->code;
+    code_pos *pos;
+    for(int i = 0;i < n; i++) {
+        if ((pos = search_code(code_body, LDG, 0)) && 
+            symbol_eq((Symbol*)(pos->code->_table[pos->pos + 1]), 
+                      (Symbol *)(((ast *)(ast_macro_param->table->_table[i]))->table->_table[0]))) {
+
+        }  
+    }
 }
 
 char *sys_func_name[] =     {"toint","tolong","torat","tofloat","tolfloat","tocmplex","tostr","togeneral",  // 変換関数

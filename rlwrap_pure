@@ -95,7 +95,9 @@ qsort
 cmp
 ddel
 vdel
+vdeln
 vins
+vinsv
 lis_prime
 lnext_prime
 init_irand

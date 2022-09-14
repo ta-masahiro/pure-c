@@ -31,7 +31,9 @@ Vector * vector_append(Vector*v1,Vector*v2);
 void vector_resize(Vector * s);
 void vector_print(Vector * s) ;
 void vector_delete(Vector * v, int index); 
-void vector_insert(Vector * v, int index, void * value); 
+void vector_delete_n(Vector * v, int index, int size); 
+void vector_insert(Vector * v, int index, void * value);
+void vector_insert_vector(Vector *v, int index, Vector *c);
 void vector_upsize(Vector *s, int up); 
 Vector * vector_rev_copy_nm(Vector *v, int n, int m); 
 #ifndef INLINE

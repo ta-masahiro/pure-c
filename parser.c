@@ -19,6 +19,18 @@ ast * new_ast(ast_type type, obj_type o_type,Vector * table) {
     return a;
 }
 
+int ast_eq(ast * ast1, ast *ast2) {
+    if ((void*)ast1 == (void*)ast2) return TRUE;
+    if (ast1->type != ast2->type) return FALSE;
+    if (ast1->o_type != ast2->o_type) return FALSE;
+    if (ast1->table == ast2->table) return TRUE;
+    if (ast1->table->_sp != ast2->table->_sp) return FALSE;
+    for(int i = 0;i < ast1->table->_sp; i++) {
+        if (~ast_eq(ast1->table->_table[i], ast2->table->_table[i])) return FALSE;
+    }
+    return TRUE;
+}
+
 char* ast_type_str[] = {"None","MultiFunction","If","Set","Lambda","While","Class","Operator2",
                         "Opraor1","VectorRef","VectorSlice","Literal","Variable","Vector",
                         "Dictionary","ApplyFunction","FunctionCall","Exprlist","CallC/C","Propaeity",
