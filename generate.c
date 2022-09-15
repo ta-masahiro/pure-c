@@ -1052,6 +1052,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
         m = v->_sp;//PR(2);                             // 仮引数の個数　number of dummy parameters
         //n = a1->table->_sp;//PR(3);                   // 実引数の個数　number of actual parameters
         if (!(doted=code_s_function->ct->dotted) && n != m) { printf("SyntaxError: 仮引数と実引数の個数が異なります! 仮:%d 実: %d\n",m,n);Throw(0);}
+        if (n==0) const_conv_flg = FALSE;
         for(i = 0; i < n; i ++ ) {//PR(i);
             code_s_param = codegen((ast*)vector_ref(param_ast->table, i),env,FALSE);
             code_param = code_s_param->code; ct_param = code_s_param->ct; type_param = ct_param->type; // ct1/type1:actual parameter type
