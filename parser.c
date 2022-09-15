@@ -19,23 +19,63 @@ ast * new_ast(ast_type type, obj_type o_type,Vector * table) {
     return a;
 }
 
-int ast_eq(ast * ast1, ast *ast2) {
-    if ((void*)ast1 == (void*)ast2) return TRUE;
-    if (ast1->type != ast2->type) return FALSE;
-    if (ast1->o_type != ast2->o_type) return FALSE;
-    if (ast1->table == ast2->table) return TRUE;
-    if (ast1->table->_sp != ast2->table->_sp) return FALSE;
-    for(int i = 0;i < ast1->table->_sp; i++) {
-        if (~ast_eq(ast1->table->_table[i], ast2->table->_table[i])) return FALSE;
-    }
-    return TRUE;
-}
-
 char* ast_type_str[] = {"None","MultiFunction","If","Set","Lambda","While","Class","Operator2",
                         "Opraor1","VectorRef","VectorSlice","Literal","Variable","Vector",
                         "Dictionary","ApplyFunction","FunctionCall","Exprlist","CallC/C","Propaeity",
                         "Declear","ExprListDotted","ArgmentList","argmentListDotted","Pair","PairList","loop","class_var","for","FunctionDeclear","FunctionType",
                         "c_macro", "F_macro", "S_macro", "\0"};
+
+int ast_eq(ast * ast1, ast *ast2) {
+    // ast1 とast2が等しいかチェックする
+    //printf("%s:%s\n", ast_type_str[ast1->type], ast_type_str[ast2->type]);
+    //printf("以下を比較します\n");ast_print(ast1,0);ast_print(ast2,0);
+    if ((void*)ast1 == (void*)ast2) return TRUE;
+    if (ast1->type != ast2->type) return FALSE;
+    //if (ast1->o_type != ast2->o_type) return FALSE;
+    if (ast1->table == ast2->table) return TRUE;
+    if (ast1->table->_sp != ast2->table->_sp) return FALSE;
+    //
+    switch(ast1->type) {
+        case AST_LIT: case AST_VAR:
+            if (symbol_eq((Symbol*)(ast1->table->_table[0]), (Symbol *)(ast2->table->_table[0]))) return TRUE ; else return FALSE;
+        case AST_1OP:
+            if (ast_eq(ast1->table->_table[1],ast2->table->_table[1])) return TRUE; else return FALSE;
+        case AST_2OP: case AST_SET:
+            if (ast_eq(ast1->table->_table[1],ast2->table->_table[1]) && ast_eq(ast1->table->_table[2],ast2->table->_table[2])) return TRUE; else return FALSE;
+        default:  
+            for(int i = 0;i < ast1->table->_sp; i++) {
+                if (~ast_eq(ast1->table->_table[i], ast2->table->_table[i])) return FALSE;
+            }
+            return TRUE;
+    }
+}
+
+ast *ast_copy(ast *a) {
+    ast * r = (ast*)malloc(sizeof(ast));
+    r->type =a->type;r->o_type = a->o_type;
+    r->table = vector_copy(a->table);
+    return r;
+}
+
+ast **ast_search_ast(ast ** ast1, ast ** ast2) {
+    // ast1 にast2に一致するastが含まれればそれ(astのポインター)を返す。そうでなければnullを返す
+    ast **a;
+    if (ast_eq(*ast1, *ast2)) return ast1;
+    if ((*ast1)->type == AST_LIT || (*ast1)->type == AST_VAR) return NULL;
+    if ((*ast1)->type == AST_1OP){
+        if (a=ast_search_ast((ast**)&((*ast1)->table->_table[1]), ast2)) return a;
+        else return NULL;
+    } 
+    if ((*ast1)->type == AST_2OP || (*ast1)->type == AST_SET){
+        if (a=ast_search_ast((ast **)&((*ast1)->table->_table[1]), ast2)) return a;
+        else if (a=ast_search_ast((ast **)&((*ast1)->table->_table[2]), ast2)) return a;
+        else return NULL;
+    } 
+    for(int i=0; i < (*ast1)->table->_sp; i++) {
+        if (a = ast_search_ast((ast **)&((*ast1)->table->_table[i]), ast2)) return a; 
+    }
+    return NULL;
+}
 
 void ast_print(ast*a, int tablevel) {
     if (a == NULL) {printf("ASTがNULLです!!!\n");Throw(1);}

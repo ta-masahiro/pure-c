@@ -944,16 +944,18 @@ code_ret * codegen_macro_fcall(ast *ast_macro_func, ast * ast_a_param, Vector *e
     //printf("actual param:\n");ast_print(ast_a_param, 0);
     // printf("関数マクロは現在インプリメントされていません(対応中)\n");Throw(0);
     ast * ast_macro_param = ast_macro_func->table->_table[0];
-    ast * ast_macro_body  = ast_macro_func->table->_table[1];
+    ast * ast_macro_body  = ast_copy(ast_macro_func->table->_table[1]);
+    ast **a;
     int n = ast_macro_param->table->_sp;
     int m = ast_a_param->table->_sp;
     if (n != m) {printf("SyntaxError:マクロ関数の仮引数の個数と実引数の個数が異なります\n");Throw(0);}
     //
-    code_ret * code_s_body = codegen(ast_macro_body, env, tail); // 現在の環境でbodyのコードを作り
-    Vector * code_body = code_s_body->code, *a_code;
-    code_pos *pos;
+    //code_ret * code_s_body = codegen(ast_macro_body, env, tail); // 現在の環境でbodyのコードを作り
+    //Vector * code_body = code_s_body->code, *a_code;
+    //code_pos *pos;
     for(int i = 0;i < n; i++) {
         while (TRUE) {
+            /*
             a_code = codegen((ast *)(ast_a_param->table->_table[i]), env, tail)->code;
             if ((pos = search_code(code_body, LDG, 0)) && 
                 (symbol_eq((Symbol*)(pos->code->_table[pos->pos + 1]), 
@@ -963,9 +965,13 @@ code_ret * codegen_macro_fcall(ast *ast_macro_func, ast * ast_a_param, Vector *e
                 continue;
             }
             break;
+            */
+           if ((a=ast_search_ast(&ast_macro_body, (ast**)&(ast_macro_param->table->_table[i]))) == NULL) break;
+           //printf("\n一致したので以下に以下を書き込みます\n");ast_print(*a,0);ast_print(ast_a_param->table->_table[i],0);
+           *a = ast_a_param->table->_table[i];
         }  
     }
-    return new_code(pos->code, code_s_body->ct);
+    return codegen(ast_macro_body, env, tail);
 }
 
 char *sys_func_name[] =     {"toint","tolong","torat","tofloat","tolfloat","tocmplex","tostr","togeneral",  // 変換関数
