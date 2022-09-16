@@ -51,10 +51,27 @@ int ast_eq(ast * ast1, ast *ast2) {
 }
 
 ast *ast_copy(ast *a) {
-    ast * r = (ast*)malloc(sizeof(ast));
-    r->type =a->type;r->o_type = a->o_type;
-    r->table = vector_copy(a->table);
-    return r;
+    ast *r = new_ast(a->type,a->o_type,vector_init(a->table->_sp));
+    //r->table = vector_copy(a->table);
+    //r->table = vector_deep_copy(a->table);
+    switch(r->type) {
+        case AST_LIT: case AST_VAR:
+           r->table->_table[0] = (void*)symbol_cpy((Symbol *)(a->table->_table[0]));return r;
+        case AST_1OP:
+            r->table->_table[0] = a->table->_table[0];
+            r->table->_table[1] = (void*)ast_copy((ast*)a->table->_table[1]);
+            return r;
+        case AST_2OP: case AST_SET:
+            r->table->_table[0] = a->table->_table[0];
+            r->table->_table[1] = (void*)ast_copy((ast*)a->table->_table[1]);
+            r->table->_table[2] = (void*)ast_copy((ast*)a->table->_table[2]);
+            return r;
+        default:
+            for(int i = 0; i < r->table->_sp; i++) {
+                r->table->_table[i] = (void*)ast_copy((ast*)a->table->_table[i]);
+            }
+            return r;
+    }
 }
 
 ast **ast_search_ast(ast ** ast1, ast ** ast2) {

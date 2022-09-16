@@ -144,6 +144,8 @@ char *   objtype2str(obj_type t,void* v);
 Symbol * objtype2symbol(obj_type t,void*value); 
 Symbol * obj2symbol(object * o); 
 object * objcpy(object * s);
+object * obj_deep_copy(object *o) ;
+Vector * vector_deep_copy(Vector *v);
 object * objpop(object * s);
 long     objlen(object*o);
 object * objref(object*o,long pos);

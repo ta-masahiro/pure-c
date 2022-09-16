@@ -2162,6 +2162,7 @@ void*symbol2objtype(Symbol*s,obj_type t){
     }
 
 }
+extern void *ast_copy(void *);
 
 object * objcpy(object * s) {
     if (s==NULL) none_error();
@@ -2178,9 +2179,27 @@ object * objcpy(object * s) {
         case OBJ_VECT:t->data.ptr=(void*)vector_copy0((Vector*)s->data.ptr);t->type=OBJ_VECT;return t;
         case OBJ_SYM: t->data.ptr=(void*)symbol_cpy((Symbol*)s->data.ptr);t->type=OBJ_SYM;return t;
         case OBJ_ARRAY:t->data.ptr=(void*)array_copy((array*)s->data.ptr);t->type=OBJ_ARRAY;return t;
+        case OBJ_AST:t->data.ptr = (void*)ast_copy(s->data.ptr);t->type=OBJ_AST;return t;
         default:printf("RntimeError:Illegal copy Method!\n");Throw(3);
     }
     return NULL;
+}
+
+Vector *vector_deep_copy(Vector *v) {
+    Vector *r = vector_init(v->_sp);
+    object *o;
+    for(int i = 0; i < v->_sp; i++) {
+        o = (object*)(v->_table[i]);
+        if (o->type == OBJ_VECT)    r->_table[i] = newVECT(vector_deep_copy((Vector*)o->data.ptr)); 
+        else                        r->_table[i] = objcpy(o);
+    }
+    r->_sp = v->_sp;
+    return r;
+}
+
+object *obj_deep_copy(object *o) {
+    if (o->type == OBJ_VECT) return newVECT(vector_deep_copy((Vector*)o->data.ptr));
+    return objcpy(o);
 }
 
 long objlen(object* o) {

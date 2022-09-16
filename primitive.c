@@ -342,6 +342,8 @@ void p_as_int(void **sp, int n) {;}
 void p_type(void **sp, int n) {*sp = (void*)(long)((object *)*sp)->type;}
 void p_str_search(void **sp, int n) {*(sp) = (void*)(long)symbol_search((Symbol*)*sp, (Symbol*)*(sp+1));}
 void p_copy(void **sp, int n) {*sp = (void*)objcpy((object*)*sp);}
+void p_vector_deep_copy(void **sp, int n) {*sp = (void*)vector_deep_copy(*sp);}
+void p_deep_copy(void **sp, int n) {*sp = (void*)obj_deep_copy((object*)*sp);}
 void p_system(void **sp, int n) { if (system(((Symbol*)*sp)->_table) != 0 ) perror("canot exec command"); *sp = NULL;}
 void p_popen(void **sp, int n) {
     FILE * fp;
@@ -433,7 +435,7 @@ Pfuncpointer primitive_func[]  = {p_exit,
                                  p_olog10, p_ologE, p_olog1p, p_olog, p_oexp, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vdeln, p_vins, p_vinsv, p_fact, p_fib, p_lis_prime, p_lnext_prime,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_trial_div, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
-                                 p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_system, p_popen,
+                                 p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_vector_deep_copy, p_deep_copy, p_system, p_popen,
 #ifndef VMTEST
                                  p_compile, p_dis_assy, p_eval, p_load,
 #endif 
@@ -455,7 +457,7 @@ char*primitive_function_name[]={"exit",
                                 "log10", "logE", "log1p", "log", "exp", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vdeln", "vins", "vinsv", "fact", "fib", "lis_prime", "lnext_prime", 
                                 "init_irand", "init_lrand", "irand", "lrand", "trial_div", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
-                                "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy", "system", "popen",
+                                "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy","vector_deep_copy","deep_copy", "system", "popen",
 #ifndef VMTEST
                                 "compile", "dis_assy", "eval", "load", 
 #endif
@@ -578,6 +580,8 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_SYM, OBJ_SYM},                             // str_search
                                 {OBJ_GEN},                                      // type
                                 {OBJ_GEN},                                      // copy
+                                {OBJ_VECT},                                     // vector_deep_copy
+                                {OBJ_GEN},                                      // deep_copy
                                 {OBJ_SYM},                                      // system
                                 {OBJ_SYM},                                      // popen
 #ifndef VMTEST
@@ -717,6 +721,8 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_INT,  2, FALSE},   // str_search
                                 {OBJ_INT,  1, FALSE},   // type
                                 {OBJ_GEN,  1, FALSE},   // copy
+                                {OBJ_VECT, 1, FALSE},   // vector_deep_copy
+                                {OBJ_GEN,  1, FALSE},   // deep_copy
                                 {OBJ_NONE, 1, FALSE},   // system
                                 {OBJ_SYM,  1, FALSE},   // popen
 #ifndef VMTEST                                
