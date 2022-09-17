@@ -248,5 +248,6 @@ none cprint(var x, string ccc)={
 //print("Library ver 0.02 loded.");
 var (x..) memois(var fn(x..))={dic={};var d;lambda(x..)if (d=dic[x]):d:dic[x]=fn(x..)};//var tak(x,y,z)=if x<=y:z:tak(tak(x--,y,z),tak(y--,z,x),tak(z--,x,y));tak=memois(tak);
 //float timeit(non func()) = {float st=get_time();func();get_time()-st};
-float timeit(none func())={float st=get_time();func();get_time()-st};
+//float timeit(none func())={float st=get_time();func();get_time()-st};
+timeit = macro(exp) {float __t=get_time();exp;get_time()-__t};
 Library_ver="0.04";

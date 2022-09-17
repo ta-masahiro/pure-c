@@ -36,12 +36,14 @@ int ast_eq(ast * ast1, ast *ast2) {
     if (ast1->table->_sp != ast2->table->_sp) return FALSE;
     //
     switch(ast1->type) {
-        case AST_LIT: case AST_VAR:
+        case AST_VAR:
             if (symbol_eq((Symbol*)(ast1->table->_table[0]), (Symbol *)(ast2->table->_table[0]))) return TRUE ; else return FALSE;
+        case AST_LIT: 
+            if (ast1->table->_table[0] == ast2->table->_table[0] && symbol_eq((Symbol*)(ast1->table->_table[1]), (Symbol *)(ast2->table->_table[1]))) return TRUE ; else return FALSE;
         case AST_1OP:
-            if (ast_eq(ast1->table->_table[1],ast2->table->_table[1])) return TRUE; else return FALSE;
+            if (ast1->table->_table[0] == ast2->table->_table[0] && ast_eq(ast1->table->_table[1],ast2->table->_table[1])) return TRUE; else return FALSE;
         case AST_2OP: case AST_SET:
-            if (ast_eq(ast1->table->_table[1],ast2->table->_table[1]) && ast_eq(ast1->table->_table[2],ast2->table->_table[2])) return TRUE; else return FALSE;
+            if (ast1->table->_table[0] == ast2->table->_table[0] && ast_eq(ast1->table->_table[1],ast2->table->_table[1]) && ast_eq(ast1->table->_table[2],ast2->table->_table[2])) return TRUE; else return FALSE;
         default:  
             for(int i = 0;i < ast1->table->_sp; i++) {
                 if (~ast_eq(ast1->table->_table[i], ast2->table->_table[i])) return FALSE;
@@ -52,23 +54,36 @@ int ast_eq(ast * ast1, ast *ast2) {
 
 ast *ast_copy(ast *a) {
     ast *r = new_ast(a->type,a->o_type,vector_init(a->table->_sp));
-    //r->table = vector_copy(a->table);
+    //r->table = vector_copy0(a->table);
     //r->table = vector_deep_copy(a->table);
+    //return r; 
     switch(r->type) {
-        case AST_LIT: case AST_VAR:
-           r->table->_table[0] = (void*)symbol_cpy((Symbol *)(a->table->_table[0]));return r;
+        case AST_VAR:
+            push((Vector*)r->table, (void*)symbol_cpy((Symbol *)(a->table->_table[0])));
+            //printf("VARcopyed:%s\n",((Symbol*)(r->table->_table[0]))->_table);
+            return r;
+        case AST_LIT:
+            push((Vector *)r->table, a->table->_table[0]);
+            push((Vector *)r->table, (void*)symbol_cpy((Symbol *)(a->table->_table[1])));
+            //printf("LIT copyed:%s\n",((Symbol*)(r->table->_table[1]))->_table);
+            return r;
         case AST_1OP:
-            r->table->_table[0] = a->table->_table[0];
-            r->table->_table[1] = (void*)ast_copy((ast*)a->table->_table[1]);
+            push((Vector *)r->table, a->table->_table[0]);
+            push((Vector *)r->table, (void*)ast_copy((ast*)a->table->_table[1]));
             return r;
         case AST_2OP: case AST_SET:
-            r->table->_table[0] = a->table->_table[0];
-            r->table->_table[1] = (void*)ast_copy((ast*)a->table->_table[1]);
-            r->table->_table[2] = (void*)ast_copy((ast*)a->table->_table[2]);
+            push((Vector *)r->table, a->table->_table[0]);
+            push((Vector *)r->table, (void*)ast_copy((ast*)a->table->_table[1]));
+            push((Vector *)r->table, (void*)ast_copy((ast*)a->table->_table[2]));
+            //printf("2OP copyed:\n");ast_print(r,0);
             return r;
+        //case AST_ML:
+        //    push((Vector *)r->table, (void *)ast_copy((ast *)a->table->_table[0]));
+        //    printf("ML copyed.\n");
+        //    return r;
         default:
-            for(int i = 0; i < r->table->_sp; i++) {
-                r->table->_table[i] = (void*)ast_copy((ast*)a->table->_table[i]);
+            for(int i = 0; i < a->table->_sp; i++) {
+                push((Vector *)r->table, (void*)ast_copy((ast*)a->table->_table[i]));
             }
             return r;
     }

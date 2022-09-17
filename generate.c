@@ -944,6 +944,7 @@ code_ret * codegen_macro_fcall(ast *ast_macro_func, ast * ast_a_param, Vector *e
     //printf("actual param:\n");ast_print(ast_a_param, 0);
     // printf("関数マクロは現在インプリメントされていません(対応中)\n");Throw(0);
     ast * ast_macro_param = ast_macro_func->table->_table[0];
+    //ast_print(ast_copy(ast_macro_func->table->_table[1]),0);    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ast * ast_macro_body  = ast_copy(ast_macro_func->table->_table[1]);
     ast **a;
     int n = ast_macro_param->table->_sp;
@@ -966,6 +967,7 @@ code_ret * codegen_macro_fcall(ast *ast_macro_func, ast * ast_a_param, Vector *e
             }
             break;
             */
+           //printf("以下に以下が含まれるかチェックします\n");ast_print(ast_macro_body,0);ast_print((ast*)(ast_macro_param->table->_table[i]),0);
            if ((a=ast_search_ast(&ast_macro_body, (ast**)&(ast_macro_param->table->_table[i]))) == NULL) break;
            //printf("\n一致したので以下に以下を書き込みます\n");ast_print(*a,0);ast_print(ast_a_param->table->_table[i],0);
            *a = ast_a_param->table->_table[i];
