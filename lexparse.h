@@ -139,6 +139,7 @@ void  token_print(TokenBuff*buff);
 ast * new_ast(ast_type type, obj_type o_type,Vector * table) ;
 int ast_eq(ast*,ast*);
 ast ** ast_search_ast(ast ** ast1, ast ** ast2); 
+void ast_replace_ast(ast ** ast1, ast ** ast2, ast *ast3); 
 ast *ast_copy(ast *);
 void  ast_print(ast*a, int tablevel) ; 
 ast * is_lit(TokenBuff*S) ; 

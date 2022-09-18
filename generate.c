@@ -955,24 +955,19 @@ code_ret * codegen_macro_fcall(ast *ast_macro_func, ast * ast_a_param, Vector *e
     //Vector * code_body = code_s_body->code, *a_code;
     //code_pos *pos;
     for(int i = 0;i < n; i++) {
-        while (TRUE) {
+        //while (TRUE) {
             /*
-            a_code = codegen((ast *)(ast_a_param->table->_table[i]), env, tail)->code;
-            if ((pos = search_code(code_body, LDG, 0)) && 
-                (symbol_eq((Symbol*)(pos->code->_table[pos->pos + 1]), 
-                          (Symbol *)(((ast *)(ast_macro_param->table->_table[i]))->table->_table[0])))) {
-                vector_delete_n(pos->code, pos->pos, 2);
-                vector_insert_vector(pos->code, pos->pos, a_code );
-                continue;
-            }
-            break;
+            //printf("以下に以下が含まれるかチェックします\n");ast_print(ast_macro_body,0);ast_print((ast*)(ast_macro_param->table->_table[i]),0);
+            if ((a=ast_search_ast(&ast_macro_body, (ast**)&(ast_macro_param->table->_table[i]))) == NULL) break;
+            //printf("\n一致したので以下に以下を書き込みます\n");ast_print(*a,0);ast_print(ast_a_param->table->_table[i],0);
+            *a = ast_a_param->table->_table[i];
             */
-           //printf("以下に以下が含まれるかチェックします\n");ast_print(ast_macro_body,0);ast_print((ast*)(ast_macro_param->table->_table[i]),0);
-           if ((a=ast_search_ast(&ast_macro_body, (ast**)&(ast_macro_param->table->_table[i]))) == NULL) break;
-           //printf("\n一致したので以下に以下を書き込みます\n");ast_print(*a,0);ast_print(ast_a_param->table->_table[i],0);
-           *a = ast_a_param->table->_table[i];
-        }  
+        //}  
+        ast_replace_ast(&ast_macro_body, (ast**)&(ast_macro_param->table->_table[i]), ast_a_param->table->_table[i]); 
     }
+#ifdef DEBUG
+    printf("macro tranfered:\n");ast_print(ast_macro_body,0);
+#endif 
     return codegen(ast_macro_body, env, tail);
 }
 
@@ -1805,11 +1800,25 @@ code_ret * codegen_macro_f(ast *o, Vector *env, int tail) {         // AST_MACRO
                                                                     //              <0>           <0,0>,  <0,1>,...   , <1>
     Vector *code = vector_init(2);
     // check parameter
-    ast * ast_arg_list = o->table->_table[0];
-    int n = ast_arg_list ->table->_sp,t;  // size of parameter
+    ast *ast_arg_list = o->table->_table[0];                        // マクロの引数リスト
+    ast *ast_body = o->table->_table[1];
+    ast *ast_arg_i, *ast_arg_i_cpy;                                 // マクロ本体
+
+    int n = ast_arg_list ->table->_sp,t;                            // size of parameter
     for(int i=0;i<n;i++) {
        if (((ast*)ast_arg_list->table->_table[i])->type != AST_VAR) {printf("SyntaxError:関数マクロの引数は単純変数でなければなりません %d\n",i);Throw(3);}
+        //
+        // マクロ変数の付け替えを行う;変数名の後端に'_%'を付けておけばユーザ変数とかぶることはない
+        //
+        ast_arg_i_cpy = ast_copy(ast_arg_i=ast_arg_list->table->_table[i]);
+        symbol_cat_s((Symbol*)ast_arg_i_cpy->table->_table[0], "_$");
+        ast_replace_ast(&ast_body, &ast_arg_i, ast_arg_i_cpy);
+        symbol_cat_s((Symbol*)ast_arg_i->table->_table[0], "_$");
+        //*(&ast_arg_i) = ast_arg_i_cpy;// !!なぜうまくいかない???
     }
+#ifdef DEBUG
+    printf("変数付け替えを行いました\n");ast_print(o, 0);
+#endif
     push(code, (void *)LDMF);
     //push(code, (void *)(o->table->_table[0]));printf("\n<test>\n");ast_print(o->table->_table[0],0);
     push(code, (void *)o);//printf("\n<test>\n");ast_print(o,0);

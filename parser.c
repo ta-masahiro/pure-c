@@ -109,6 +109,26 @@ ast **ast_search_ast(ast ** ast1, ast ** ast2) {
     return NULL;
 }
 
+void ast_replace_ast(ast **ast1, ast **ast2, ast *ast3) {
+    //ast1にast2に一致するastが含まれているなら、それをast3で置き換える
+    if (ast_eq(*ast1, *ast2)) *ast1 = ast3;
+    if ((*ast1)->type == AST_LIT || (*ast1)->type == AST_VAR) return ;
+    if ((*ast1)->type == AST_1OP){
+        ast_replace_ast((ast**)&((*ast1)->table->_table[1]), ast2, ast3); 
+        return ;
+    } 
+    if ((*ast1)->type == AST_2OP || (*ast1)->type == AST_SET){
+        ast_replace_ast((ast **)&((*ast1)->table->_table[1]), ast2, ast3);
+        ast_replace_ast((ast **)&((*ast1)->table->_table[2]), ast2, ast3);
+        return;
+    } 
+    for(int i=0; i < (*ast1)->table->_sp; i++) {
+        ast_replace_ast((ast **)&((*ast1)->table->_table[i]), ast2, ast3); 
+    }
+    return;
+
+}
+
 void ast_print(ast*a, int tablevel) {
     if (a == NULL) {printf("ASTがNULLです!!!\n");Throw(1);}
     int i;
