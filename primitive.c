@@ -366,15 +366,22 @@ void p_popen(void **sp, int n) {
     pclose(fp);
     *sp = (void*)s;
 }
+#ifndef VMTEST
 extern code_ret * str_compile(Symbol *s);
 extern object * code_eval(code_ret *s);
 extern void disassy(Vector * code, int indent, FILE*fp);
-#ifndef VMTEST
+extern ast *str_parse(Symbol *);
+extern Symbol *dis_parse(ast *);
 extern void code_load(FILE *f);
+extern code_ret *codegen(ast *, Vector *, int);
+
 void p_compile(void **sp, int n) {void * vv = str_compile((Symbol*)*sp);if (vv) {*sp = vv;return;} else {printf("Canot Compile!\n");Throw(3);}}
 void p_dis_assy(void **sp, int n) {disassy(((code_ret *)*sp)->code, 0, stdout);*sp = NULL;}
 void p_eval(void **sp, int n) {*sp = (void*)code_eval((code_ret *)*sp);}
 void p_load(void **sp, int n) {FILE * f = fopen(((Symbol*)*sp)->_table,"r");code_load(f);fclose(f);*sp = NULL;}
+void p_str_parse(void **sp, int n) {*sp = (void *)str_parse((Symbol *)*sp);}
+void p_dis_parse(void **sp, int n) {*sp = (void *)dis_parse((ast *)*sp);}
+void p_codegen(void **sp, int n) {*sp = (void*)codegen((ast*)*sp, vector_init(3), FALSE);}
 #endif
 void p_keys(void **sp, int n) {
     Hash *h = (Hash*)*sp;
@@ -437,7 +444,7 @@ Pfuncpointer primitive_func[]  = {p_exit,
                                  p_init_irand, p_init_lrand, p_irand, p_lrand, p_trial_div, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_vector_deep_copy, p_deep_copy, p_system, p_popen,
 #ifndef VMTEST
-                                 p_compile, p_dis_assy, p_eval, p_load,
+                                 p_compile, p_dis_assy, p_eval, p_load, p_str_parse, p_dis_parse, p_codegen,
 #endif 
                                  p_keys, p_num, p_den, p_real, p_imag, p_arg, p_a2v, p_v2a, p_solv_liner, p_array_inv, p_make_eye, p_make_zero,
                                  p_eigen, p_array_type_change, p_sym2escsym, p_make_vector, NULL };
@@ -459,7 +466,7 @@ char*primitive_function_name[]={"exit",
                                 "init_irand", "init_lrand", "irand", "lrand", "trial_div", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy","vector_deep_copy","deep_copy", "system", "popen",
 #ifndef VMTEST
-                                "compile", "dis_assy", "eval", "load", 
+                                "compile", "dis_assy", "eval", "load", "str_parse","dis_parse", "codegen",
 #endif
                                 "keys", "num", "den", "real", "imag", "arg", "a2v", "v2a", "solv_liner", "array_inv", "make_eye", "make_zero", 
                                 "eigen", "array_type_change", "sym2escsym", "make_vector", NULL};
@@ -589,6 +596,9 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_CNT},                                      // dis_assy
                                 {OBJ_CNT},                                      // eval
                                 {OBJ_SYM},                                      // load
+                                {OBJ_SYM},                                      // str_parse
+                                {OBJ_AST},                                      // dis_parse
+                                {OBJ_AST},                                      // codegen
 #endif                                
                                 {OBJ_DICT},                                     // keys
                                 {OBJ_RAT},{OBJ_RAT},{OBJ_CMPLX},{OBJ_CMPLX},{OBJ_CMPLX},    // num,den,real,imag,arg
@@ -730,6 +740,9 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_NONE, 1, FALSE},   // dis_assy
                                 {OBJ_GEN,  1, FALSE},   // eval
                                 {OBJ_NONE, 1, FALSE},   // load
+                                {OBJ_AST,  1, FALSE},   // srr_parse
+                                {OBJ_SYM,  1, FALSE},   // dis_parse
+                                {OBJ_CNT,  1, FALSE},   // codegen
 #endif
                                 {OBJ_VECT, 1, FALSE},   // keys
                                 {OBJ_LINT,1,FALSE},{OBJ_LINT,1,FALSE},{OBJ_FLT,1,FALSE},{OBJ_FLT,1,FALSE},{OBJ_FLT,1,FALSE},    // num,den,real,imag,arg
@@ -757,7 +770,7 @@ void * make_primitive() {
     gmp_randinit_default(RAND_STATE);
 
 
-    PRIMITIVE_FUNC = Hash_init(256);
+    PRIMITIVE_FUNC = Hash_init(512);    // 256以下だとライブラリロード時にクラッシュする...理由不明
     Symbol *char_I=new_symbol("I",1);
     Symbol *char_NONE = new_symbol("None",4);
     Symbol *char_stdin = new_symbol("stdin",5);

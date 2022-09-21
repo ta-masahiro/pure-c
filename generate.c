@@ -1911,6 +1911,162 @@ extern void make_primitive();
 void * _realloc(void * ptr, size_t old_size, size_t new_size) {
     return GC_realloc(ptr, new_size); 
 }
+
+// Symbolを式(1つ)とみなして、persしてast返す
+// ※2つ以上の式があった場合どうするか？今は無視
+ast *str_parse(Symbol *s) {
+    TokenBuff * SS = new_str_tokenbuff(s);
+    ast * a ;
+    //Vector * env = vector_init(10);
+    //if ((a = is_expr(SS)) && get_token(SS)->type == ';') return codegen(a,env,FALSE);
+    if ((a = is_expr_ex(SS)) && get_token(SS)->type == ';') return a;
+    else return NULL;
+}
+
+// astをtoken列に戻し、それを連結してSymbolに戻す
+Symbol *dis_parse(ast *a) {
+    Symbol *token_sym = new_symbol("",0);
+    union {
+         char s[8];
+         long l;
+    } p_data;
+    char buff[4];
+    switch(a->type) {
+        case AST_ML:
+            symbol_cat_s(token_sym, "{ ");
+            for(int i = 0; i < ((ast*)a->table->_table[0])->table->_sp; i++) {
+                symbol_cat(token_sym, dis_parse(((ast*)a->table->_table[0])->table->_table[i]));
+                symbol_cat_s(token_sym, "; ");
+            }
+            symbol_pop_c(token_sym);
+            symbol_cat_s(token_sym, "} ");
+            return token_sym;
+        case AST_IF:
+            symbol_cat_s(token_sym, "IF ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            symbol_cat_s(token_sym, ": ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[1]));
+            symbol_cat_s(token_sym, ":");
+            symbol_cat(token_sym, dis_parse(a->table->_table[2]));
+            symbol_cat_s(token_sym, ";");
+            return token_sym;
+
+        case AST_SET:
+            symbol_cat(token_sym, dis_parse(a->table->_table[1]));
+            p_data.l = (long)a->table->_table[0];
+            if (p_data.l >= 256) {
+                buff[0] = p_data.s[1];
+                buff[1] = p_data.s[0];
+                buff[2] = ' ';
+                buff[3] = '\0';
+            } else {
+                buff[0] = p_data.s[0];
+                buff[1] = ' ';
+                buff[2] = '\0';
+            }
+            symbol_cat_s(token_sym, buff);
+            symbol_cat(token_sym, dis_parse(a->table->_table[2]));
+            return token_sym;
+        case AST_LAMBDA:
+            symbol_cat_s(token_sym, "lambda( ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            symbol_cat_s(token_sym, ") ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[1]));             // arg_listのdis_parse
+            return token_sym;
+        case AST_DCL:
+            return token_sym;
+        case AST_FCALL:
+            symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            symbol_cat_s(token_sym, "( ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[1]));
+            symbol_cat_s(token_sym, ") ");
+            return token_sym;
+        case AST_APPLY:     
+            return token_sym;
+        case AST_2OP:
+            symbol_cat_s(token_sym, "( ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[1]));
+            p_data.l = (long)a->table->_table[0];
+            if (p_data.l >= 256) {
+                buff[0] = p_data.s[1];
+                buff[1] = p_data.s[0];
+                buff[2] = ' ';
+                buff[3] = '\0';
+            } else {
+                buff[0] = p_data.s[0];
+                buff[1] = ' ';
+                buff[2] = '\0';
+            }
+            symbol_cat_s(token_sym, buff);
+            symbol_cat(token_sym, dis_parse(a->table->_table[2]));
+            symbol_cat_s(token_sym, ") ");
+            return token_sym;
+        case AST_1OP:        
+            p_data.l = (long)a->table->_table[0];
+            if (p_data.l >= 256) {
+                buff[0] = p_data.s[1];
+                buff[1] = p_data.s[0];
+                buff[2] = ' ';
+                buff[3] = '\0';
+            } else {
+                buff[0] = p_data.s[0];
+                buff[1] = ' ';
+                buff[2] = '\0';
+            }
+            if (p_data.l == '+'*256+'+' || p_data.l == '-'*256+'-' || p_data.l == '-'*256+'>') {
+                symbol_cat(token_sym, dis_parse(a->table->_table[1]));
+                symbol_cat_s(token_sym, buff);
+            }else {
+                symbol_cat_s(token_sym, buff);
+                symbol_cat(token_sym, dis_parse(a->table->_table[1]));
+            }
+            return token_sym;
+        case AST_VREF:      
+            symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            symbol_cat_s(token_sym, "[");
+            for(int i = 0; i < ((ast *)(a->table->_table[1]))->table->_sp; i++) {
+                symbol_cat(token_sym, dis_parse(((ast *)(a->table->_table[1]))->table->_table[i]));
+                symbol_cat_s(token_sym, ",");
+            }
+            symbol_pop(token_sym);
+            symbol_cat_s(token_sym, "]");
+            return token_sym;
+        case AST_SLS:       
+            return token_sym;
+        case AST_VAR:
+            symbol_cat(token_sym, (Symbol *)a->table->_table[0]);
+            symbol_cat_s(token_sym, " ");
+            return token_sym;
+        case AST_LIT:       
+            symbol_cat(token_sym, (Symbol *)a->table->_table[1]);
+            symbol_cat_s(token_sym, " ");
+            return token_sym;
+        case AST_VECT:      
+            return token_sym;
+        case AST_PAIR_LIST: 
+            return token_sym;
+        case AST_WHILE:     
+            return token_sym;
+        case AST_FOR:       
+            return token_sym;
+//        case AST_CLASS_VAR: return  codegen_cl_var  (a, env, tail);
+//        case AST_CLASS:     return  codegen_class   (a, env, tail);
+        case AST_MAC_S:     
+            return token_sym;
+        case AST_MAC_F:     
+            return token_sym;
+        case AST_ARG_LIST: case AST_ARG_LIST_DOTS: case AST_EXP_LIST: case AST_EXP_LIST_DOTS:
+            for(int i = 0; i < a->table->_sp; i++) {
+                symbol_cat(token_sym, dis_parse(a->table->_table[i]));
+                symbol_cat_s(token_sym, ",");
+            }
+            symbol_pop_c(token_sym);
+            return token_sym;
+        default: printf("syntaxError:Unknown AST!\n");Throw(0);
+    }
+
+}
+
 // 式1つをコンパイルしてコードと型を返す
 // ※2つ以上の式があった場合どうするか？今は無視
 code_ret * str_compile(Symbol * s) {
@@ -1922,7 +2078,7 @@ code_ret * str_compile(Symbol * s) {
     else return NULL;
 }
 
-// 式一つを評価して結果をobjectにして返す
+// コード(型付き)を評価して結果をobjectにして返す
 object * code_eval(code_ret * code_s) {
     Vector * code   = code_s->code; push(code,(void*)STOP);
     Vector * Ret    = vector_init(500); 
@@ -1933,7 +2089,8 @@ object * code_eval(code_ret * code_s) {
     void * value = eval(Stack,Env,code,Ret,EEnv,G);
     return newOBJ(code_s->ct->type, value); 
 }
-
+// fileから式を一つ読み込んでcompile、評価する
+// 値は返さない!
 void code_load(FILE *f) {
     ast *a;Vector * env = vector_init(10);
     TokenBuff * SS = new_tokenbuff(f);

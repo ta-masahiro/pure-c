@@ -25,7 +25,7 @@ void Hash_resize(Hash * h, unsigned int newSize) {
     h ->hashTable = newTable;
     h ->size = newSize; 
     h ->initval = initval; 
-  
+    h->entries = 0;             // !!!!
     int n;
     for (n = 0; n < oldSize; n++) {
         if (oldTable[n].key != NULL)
