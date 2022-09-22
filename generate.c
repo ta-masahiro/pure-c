@@ -2037,13 +2037,32 @@ Symbol *dis_parse(ast *a) {
             symbol_cat(token_sym, (Symbol *)a->table->_table[0]);
             symbol_cat_s(token_sym, " ");
             return token_sym;
-        case AST_LIT:       
-            symbol_cat(token_sym, (Symbol *)a->table->_table[1]);
-            symbol_cat_s(token_sym, " ");
+        case AST_LIT:
+            if (a->o_type == OBJ_SYM) {
+                symbol_cat_s(token_sym, "\"");
+                symbol_cat(token_sym, (Symbol *)a->table->_table[1]);
+                symbol_cat_s(token_sym, "\"");
+                symbol2escsymbol(token_sym);
+            } else {
+                symbol_cat(token_sym, (Symbol *)a->table->_table[1]);
+                symbol_cat_s(token_sym, " ");
+            }
             return token_sym;
         case AST_VECT:      
             return token_sym;
+        case AST_PAIR:
+            symbol_cat(token_sym, symbol2escsymbol( dis_parse(a->table->_table[0])));
+            symbol_cat_s(token_sym, "; ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[1]));
+            return token_sym;
         case AST_PAIR_LIST: 
+            symbol_cat_s(token_sym, "{ ");
+            //symbol_cat(token_sym, dis_parse(a->));
+            for(int i = 0; i < a->table->_sp; i++) {
+                symbol_cat(token_sym, dis_parse(a->table->_table[i]));
+                symbol_cat_s(token_sym, ",");
+            }
+            symbol_cat_s(token_sym, " }");
             return token_sym;
         case AST_WHILE:     
             return token_sym;
@@ -2062,6 +2081,7 @@ Symbol *dis_parse(ast *a) {
             }
             symbol_pop_c(token_sym);
             return token_sym;
+
         default: printf("syntaxError:Unknown AST!\n");Throw(0);
     }
 

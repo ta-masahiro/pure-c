@@ -812,8 +812,8 @@ ast * is_lambda_expr(TokenBuff *S) {
     return NULL;
 }
 */
-char      *sp_exp0_string[]  = {"lambda",  "macro",     NULL};
-ast_type sp_exp0_ast_type[]  = {AST_LAMBDA, AST_MAC_F,      };
+char      *sp_exp0_string[]  = {"lambda",  "macro",    "class",  NULL};
+ast_type sp_exp0_ast_type[]  = {AST_LAMBDA, AST_MAC_F, AST_CLASS    };
 
 ast * is_special_expr0(TokenBuff *S) {
     // spi1_exp   = <key_word>  [ expr_list_br ] expr
