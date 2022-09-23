@@ -249,5 +249,14 @@ none cprint(var x, string ccc)={
 var (x..) memois(var fn(x..))={dic={};var d;lambda(x..)if (d=dic[x]):d:dic[x]=fn(x..)};//var tak(x,y,z)=if x<=y:z:tak(tak(x--,y,z),tak(y--,z,x),tak(z--,x,y));tak=memois(tak);
 //float timeit(non func()) = {float st=get_time();func();get_time()-st};
 //float timeit(none func())={float st=get_time();func();get_time()-st};
+pi=macro 3.1415926535897932385;
+pi2=macro 3.1415926535897932385/2;
+TRUE=macro (-1);
+FALSE=macro 0;
+neipia=macro exp(1);
+LOG2=macro log10(2);
+LOGE=macro log10(neipia);
+LN2=macro logE(2);
+LN10=macro logE(10);
 timeit = macro(exp) {float __t=get_time();exp;get_time()-__t};
 Library_ver="0.04";

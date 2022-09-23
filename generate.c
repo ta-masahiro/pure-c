@@ -2042,7 +2042,7 @@ Symbol *dis_parse(ast *a) {
                 symbol_cat_s(token_sym, "\"");
                 symbol_cat(token_sym, (Symbol *)a->table->_table[1]);
                 symbol_cat_s(token_sym, "\"");
-                symbol2escsymbol(token_sym);
+                //symbol2escsymbol(token_sym);
             } else {
                 symbol_cat(token_sym, (Symbol *)a->table->_table[1]);
                 symbol_cat_s(token_sym, " ");
@@ -2051,8 +2051,9 @@ Symbol *dis_parse(ast *a) {
         case AST_VECT:      
             return token_sym;
         case AST_PAIR:
-            symbol_cat(token_sym, symbol2escsymbol( dis_parse(a->table->_table[0])));
-            symbol_cat_s(token_sym, "; ");
+            //symbol_cat(token_sym, symbol2escsymbol( dis_parse(a->table->_table[0])));
+            symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            symbol_cat_s(token_sym, ": ");
             symbol_cat(token_sym, dis_parse(a->table->_table[1]));
             return token_sym;
         case AST_PAIR_LIST: 
@@ -2062,7 +2063,8 @@ Symbol *dis_parse(ast *a) {
                 symbol_cat(token_sym, dis_parse(a->table->_table[i]));
                 symbol_cat_s(token_sym, ",");
             }
-            symbol_cat_s(token_sym, " }");
+            symbol_pop_c(token_sym);
+            symbol_cat_s(token_sym, "}");
             return token_sym;
         case AST_WHILE:     
             return token_sym;
