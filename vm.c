@@ -751,6 +751,9 @@ _LBNOT:
 _OBNOT:
     push(S,(void*)objneg((object*)pop(S)));
     goto*dequeue(C);
+//_OCALL:
+//    if (S->_table[S->_cp] ==OBJ_UFUNC) goto _CALL;
+//    goto _PCALL; 
 _CALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);

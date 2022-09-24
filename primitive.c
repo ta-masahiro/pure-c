@@ -380,7 +380,7 @@ void p_dis_assy(void **sp, int n) {disassy(((code_ret *)*sp)->code, 0, stdout);*
 void p_eval(void **sp, int n) {*sp = (void*)code_eval((code_ret *)*sp);}
 void p_load(void **sp, int n) {FILE * f = fopen(((Symbol*)*sp)->_table,"r");code_load(f);fclose(f);*sp = NULL;}
 void p_str_parse(void **sp, int n) {*sp = (void *)str_parse((Symbol *)*sp);}
-void p_dis_parse(void **sp, int n) {*sp = (void *)dis_parse((ast *)*sp);}
+void p_dis_parse(void **sp, int n) {*sp = (void *)symbol_cat_s(dis_parse((ast *)*sp), ";");}
 void p_codegen(void **sp, int n) {*sp = (void*)codegen((ast*)*sp, vector_init(3), FALSE);}
 #endif
 void p_keys(void **sp, int n) {

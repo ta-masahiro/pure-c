@@ -1940,7 +1940,7 @@ Symbol *dis_parse(ast *a) {
             }
             symbol_pop_c(token_sym);
             symbol_cat_s(token_sym, "} ");
-            return token_sym;
+            break;
         case AST_IF:
             symbol_cat_s(token_sym, "IF ");
             symbol_cat(token_sym, dis_parse(a->table->_table[0]));
@@ -1949,7 +1949,7 @@ Symbol *dis_parse(ast *a) {
             symbol_cat_s(token_sym, ":");
             symbol_cat(token_sym, dis_parse(a->table->_table[2]));
             symbol_cat_s(token_sym, ";");
-            return token_sym;
+            break;
 
         case AST_SET:
             symbol_cat(token_sym, dis_parse(a->table->_table[1]));
@@ -1966,23 +1966,28 @@ Symbol *dis_parse(ast *a) {
             }
             symbol_cat_s(token_sym, buff);
             symbol_cat(token_sym, dis_parse(a->table->_table[2]));
-            return token_sym;
+            break;
         case AST_LAMBDA:
             symbol_cat_s(token_sym, "lambda( ");
             symbol_cat(token_sym, dis_parse(a->table->_table[0]));
             symbol_cat_s(token_sym, ") ");
             symbol_cat(token_sym, dis_parse(a->table->_table[1]));             // arg_listのdis_parse
-            return token_sym;
+            break;
         case AST_DCL:
-            return token_sym;
+            break;
         case AST_FCALL:
-            symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            if (((ast*)(a->table->_table[0]))->type != AST_VAR) {
+                symbol_cat_s(token_sym, "( ");
+                symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+                symbol_cat_s(token_sym, ")");
+            } else  symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            //
             symbol_cat_s(token_sym, "( ");
             symbol_cat(token_sym, dis_parse(a->table->_table[1]));
             symbol_cat_s(token_sym, ") ");
-            return token_sym;
+            break;
         case AST_APPLY:     
-            return token_sym;
+            break;
         case AST_2OP:
             symbol_cat_s(token_sym, "( ");
             symbol_cat(token_sym, dis_parse(a->table->_table[1]));
@@ -2000,7 +2005,7 @@ Symbol *dis_parse(ast *a) {
             symbol_cat_s(token_sym, buff);
             symbol_cat(token_sym, dis_parse(a->table->_table[2]));
             symbol_cat_s(token_sym, ") ");
-            return token_sym;
+            break;
         case AST_1OP:        
             p_data.l = (long)a->table->_table[0];
             if (p_data.l >= 256) {
@@ -2020,7 +2025,7 @@ Symbol *dis_parse(ast *a) {
                 symbol_cat_s(token_sym, buff);
                 symbol_cat(token_sym, dis_parse(a->table->_table[1]));
             }
-            return token_sym;
+            break;
         case AST_VREF:      
             symbol_cat(token_sym, dis_parse(a->table->_table[0]));
             symbol_cat_s(token_sym, "[");
@@ -2030,13 +2035,13 @@ Symbol *dis_parse(ast *a) {
             }
             symbol_pop(token_sym);
             symbol_cat_s(token_sym, "]");
-            return token_sym;
+            break;
         case AST_SLS:       
-            return token_sym;
+            break;
         case AST_VAR:
             symbol_cat(token_sym, (Symbol *)a->table->_table[0]);
             symbol_cat_s(token_sym, " ");
-            return token_sym;
+            break;
         case AST_LIT:
             if (a->o_type == OBJ_SYM) {
                 symbol_cat_s(token_sym, "\"");
@@ -2047,15 +2052,15 @@ Symbol *dis_parse(ast *a) {
                 symbol_cat(token_sym, (Symbol *)a->table->_table[1]);
                 symbol_cat_s(token_sym, " ");
             }
-            return token_sym;
+            break;
         case AST_VECT:      
-            return token_sym;
+            break;
         case AST_PAIR:
             //symbol_cat(token_sym, symbol2escsymbol( dis_parse(a->table->_table[0])));
             symbol_cat(token_sym, dis_parse(a->table->_table[0]));
             symbol_cat_s(token_sym, ": ");
             symbol_cat(token_sym, dis_parse(a->table->_table[1]));
-            return token_sym;
+            break;
         case AST_PAIR_LIST: 
             symbol_cat_s(token_sym, "{ ");
             //symbol_cat(token_sym, dis_parse(a->));
@@ -2065,27 +2070,29 @@ Symbol *dis_parse(ast *a) {
             }
             symbol_pop_c(token_sym);
             symbol_cat_s(token_sym, "}");
-            return token_sym;
+            break;
         case AST_WHILE:     
-            return token_sym;
+            break;
         case AST_FOR:       
-            return token_sym;
+            break;
 //        case AST_CLASS_VAR: return  codegen_cl_var  (a, env, tail);
 //        case AST_CLASS:     return  codegen_class   (a, env, tail);
         case AST_MAC_S:     
-            return token_sym;
+            break;
         case AST_MAC_F:     
-            return token_sym;
+            break;
         case AST_ARG_LIST: case AST_ARG_LIST_DOTS: case AST_EXP_LIST: case AST_EXP_LIST_DOTS:
             for(int i = 0; i < a->table->_sp; i++) {
                 symbol_cat(token_sym, dis_parse(a->table->_table[i]));
                 symbol_cat_s(token_sym, ",");
             }
             symbol_pop_c(token_sym);
-            return token_sym;
+            break;
 
         default: printf("syntaxError:Unknown AST!\n");Throw(0);
     }
+    //symbol_cat_s(token_sym, "; ");
+    return token_sym;
 
 }
 
