@@ -143,3 +143,29 @@ void symbol_push_c(Symbol * s, unsigned char t) {
 }
 
 void symbol_print(Symbol *s) {puts(s->_table);}
+
+void symbol_delete(Symbol *s, int n, int m) {
+    // symbolのn文字目からm個除去する
+    // nが負の時は最終文字+ni-1文字目から逆向きにm個除去する
+    if (n < 0) n = s->_sp + n - m + 1;
+    // s->table[n+m+1]~s->table[sp]までをs->table[n]にsp-n-m-1個移動
+    memmove(s->_table + n, s->_table + n + m, (s->_sp - n - m )*sizeof(char));
+    s->_sp -=m;
+}
+
+void symbol_insert(Symbol *s, int i, Symbol *t) {
+    // symbol のi文字目に別symbolを挿入する
+    int m = t->_sp;
+    char * n_table;
+    if (s->_sp+m+1 > s->_size) {
+        n_table = (char*)malloc(((s->_size) + m + 1)*sizeof(char));
+        memmove(n_table, s->_table, i*sizeof(char));
+        memmove(n_table + i, t->_table, m*sizeof(char));
+        memmove(n_table + i + m, s->_table + i , (s->_sp - i + 1)*sizeof(char));
+        s->_table = n_table; s->_sp += m; s->_size += m;
+    } else {
+        memmove(s->_table+i+m, s->_table + i,(s->_sp - i + 1)*sizeof(char));
+        memmove(s->_table + i, t->_table, m*sizeof(char));
+        s->_sp+=m;
+    }
+}

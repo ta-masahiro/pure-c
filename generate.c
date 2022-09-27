@@ -1938,7 +1938,7 @@ Symbol *dis_parse(ast *a) {
                 symbol_cat(token_sym, dis_parse(((ast*)a->table->_table[0])->table->_table[i]));
                 symbol_cat_s(token_sym, "; ");
             }
-            symbol_pop_c(token_sym);
+            symbol_delete(token_sym,-1,2);
             symbol_cat_s(token_sym, "} ");
             break;
         case AST_IF:
@@ -2054,6 +2054,13 @@ Symbol *dis_parse(ast *a) {
             }
             break;
         case AST_VECT:      
+            symbol_cat_s(token_sym, "[ ");
+            for(int i = 0; i < a->table->_sp; i++) {
+                symbol_cat(token_sym, dis_parse(a->table->_table[i]));
+                symbol_cat_s(token_sym, ",");
+            }
+            symbol_pop_c(token_sym);
+            symbol_cat_s(token_sym, "] ");
             break;
         case AST_PAIR:
             //symbol_cat(token_sym, symbol2escsymbol( dis_parse(a->table->_table[0])));
@@ -2072,8 +2079,18 @@ Symbol *dis_parse(ast *a) {
             symbol_cat_s(token_sym, "}");
             break;
         case AST_WHILE:     
+            symbol_cat_s(token_sym, "while ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            symbol_cat_s(token_sym, ": ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[1]));
             break;
         case AST_FOR:       
+            symbol_cat_s(token_sym, "for ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[0]));
+            symbol_cat_s(token_sym, ": ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[1]));
+            symbol_cat_s(token_sym, ": ");
+            symbol_cat(token_sym, dis_parse(a->table->_table[2]));
             break;
 //        case AST_CLASS_VAR: return  codegen_cl_var  (a, env, tail);
 //        case AST_CLASS:     return  codegen_class   (a, env, tail);
