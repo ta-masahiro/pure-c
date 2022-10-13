@@ -12,7 +12,9 @@ vector vmapreg(vector L)={vector s=[];int i=-1,M=@L;while (i+=1)<M:s<-(L[i][1:0]
 vector vmap1(var f(x),vector v)={vector s=[];int i=-1,M=@v;while (i+=1)<M:s<-f(v[i]);s}; 
 var map1(var f(x),v)={var s=[];int i=-1,M=@v;while (i+=1)<M:s<-f(v[i]);s}; 
 vector vmap(var f(x..),vector v..)={vector s=[];int i=-1,M=@v[0];while (i+=1)<M:s<-(apply(f,vmapref(v,i)));s};
+//vector vmap(var f(x..),vector v..)={vector s=[];var x;int i=-1,M=@v[0];while (i+=1)<M:{x=(apply(f,vmapref(v,i)));s<-x};s};
 var map(var f(x..), v..)={var s=[];int i=-1,M=@v[0];while (i+=1)<M:s<-(apply(f,vmapref(v,i)));s};
+//var map(var f(x..), v..)={var s=[],x;int i=-1,M=@v[0];while (i+=1)<M:{x=(apply(f,vmapref(v,i)));s<-x};s};
 
 none vfor_each(var f(x..),vector v..)={int i=-1,M=@v[0];while (i+=1)<M:apply(f,vmapref(v,i));None};
 none for_each(var f(x..), v..)={int i=-1,M=@v[0];while (i+=1)<M:apply(f,vmapref(v,i));None};
@@ -39,7 +41,7 @@ vector marge(vector v1,vector v2)={
             {r<-d1;i+=1}
         :
             {r<-d2;j+=1}
-    };
+    };//print(i,j);
     if i==M1 :
         while j<M2:{
             r<-v2[j];

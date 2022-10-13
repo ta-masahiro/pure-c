@@ -847,6 +847,7 @@ ast * is_special_expr0(TokenBuff *S) {
 }
 
 char      *sp_exp1_string[]  = {"if",  "while",   "for",   "loop",   "macro",  NULL};
+int     sp_exp1_n[]          = {3,      2,          3,      2,          2};
 ast_type sp_exp1_ast_type[]  = {AST_IF, AST_WHILE, AST_FOR, AST_LOOP, AST_MAC_S};
 
 ast * is_special_expr1(TokenBuff *S, char delm) {
@@ -854,7 +855,7 @@ ast * is_special_expr1(TokenBuff *S, char delm) {
     //          =>
     // AST_<key_word>, none, [expr_ast, ..., expr_ast]
     token * t;
-    int i;
+    int i, n, c = 1;
     ast * a, * a1;
     ast_type a_type;
     Vector * v = vector_init(1);
@@ -863,6 +864,7 @@ ast * is_special_expr1(TokenBuff *S, char delm) {
     if ((t =get_token(S))->type == TOKEN_SYM) {
         if ((i = string_isin(t->source->_table, sp_exp1_string)) != -1) {
             a_type = sp_exp1_ast_type[i];
+            n = sp_exp1_n[i];
             if (a = is_expr(S)) {
                 push(v, (void*)a);
                 while (TRUE) {
@@ -872,7 +874,9 @@ ast * is_special_expr1(TokenBuff *S, char delm) {
                         return new_ast(a_type, OBJ_NONE, v);
                     }
                     if (a = is_expr(S)) {
+                        c++;
                         push(v, (void*)a);
+                        if (c>=n) return new_ast(a_type, OBJ_NONE,v);
                         continue;
                     }
                 }

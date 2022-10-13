@@ -883,8 +883,9 @@ code_ret *codegen_apply(ast *apply_ast, Vector *env, int tail) {    // AST_APPLY
                                                                     //            <0>           <0,0>,<0,1e>,...
     int i,dotted;
     int n=((ast*)vector_ref(apply_ast->table,0))->table->_sp;//printf("%d\n",n);
-    Vector *code = vector_init(3), *arg_type;
+    Vector *code = vector_init(3), *arg_type, *f_code, *v_code;
     code_type * r_type;
+    //for(i = 0; i < n; i ++ ) {
     for(i = 0; i < n; i ++ ) {
         code_ret *code_s = codegen((ast*)vector_ref(((ast*)vector_ref(apply_ast->table, 0))->table, i),env,FALSE);//disassy(code,0);
         Vector *code_i = code_s->code;
@@ -894,13 +895,19 @@ code_ret *codegen_apply(ast *apply_ast, Vector *env, int tail) {    // AST_APPLY
         if (i==0) {                         // 最初の引数は関数でなければならない
             if (type_i != OBJ_UFUNC && type_i != OBJ_PFUNC) {printf("SyntaxError:Must be Function!\n");Throw(0);}
                 r_type = ct_i->functon_ret_type;    // 関数を返す関数の場合どうする？
+                f_code = code_i;
         } else if (i == n-1) {              //最後の引数はtypeがvectorであることを確認しそのままcodeにする
             if ( type_i != OBJ_VECT) {printf("SyntaxError:Must be Vector!\n");Throw(0);}
-        } else if (type_i != OBJ_GEN) {     //最初でも最後でもなければtypeを汎用型に変換 ※applyの因数は関数と汎用型とvector
-            push(code_i,(void*)conv_op[type_i][OBJ_GEN]);
+            v_code = code_i;
+        } else {
+            if (type_i != OBJ_GEN) {     //最初でも最後でもなければtypeを汎用型に変換 ※applyの因数は関数と汎用型とvector
+                push(code_i,(void*)conv_op[type_i][OBJ_GEN]);
+            }
+            code = vector_append(code, code_i);
         }
-        code = vector_append(code, code_i);
     }
+    code = vector_append(code, v_code);code =vector_append(code, f_code);
+
     if (tail)  {push(code, (void*)TAPL);push(code, (void*)(long)n);}
     else       {push(code, (void*)APL); push(code, (void*)(long)n);}
     
@@ -2261,9 +2268,10 @@ int main(int argc, char*argv[]) {
             }
             printf("\x1b[49m\n");
             if (fp != stdin) exit(0);
-            S = new_tokenbuff(stdin);
+ ;           S = new_tokenbuff(stdin);
             //S->buff=vector_init(100);
             //S->buff->_cp = tokencp;S->buff->_sp=tokensp;
+            Stack->_sp = 0;
             continue;
         }
         if (debug) {

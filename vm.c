@@ -820,15 +820,20 @@ _TCALL:
     goto * dequeue(C);*/
 _APL:
     n = (long)dequeue(C);//printf("%ld\n",n);
-    fn = (Vector * )vector_ref(S, S->_sp-n);
-    ll=(Vector*)vector_ref(S,S->_sp-1);
+    //fn = (Vector * )vector_ref(S, S->_sp-n);
+    fn = (Vector * )vector_ref(S, S->_sp-1);
+    ll=(Vector*)vector_ref(S,S->_sp-2);
     if ((long)vector_ref(fn,0)==FUNC_PRIM) {
-        vector_upsize(S, (n += ll->_sp -2));//printf("apl size=%ld",n);
-        memcpy(S->_table + S->_sp-1, ll->_table, (ll->_sp)*sizeof(void *)); S->_sp+=ll->_sp -1;
+        //vector_upsize(S, (n += ll->_sp -2));//printf("apl size=%ld",n);
+        vector_upsize(S, ll->_sp -2);//printf("apl size=%ld",n);
+        //memcpy(S->_table + S->_sp-1, ll->_table, (ll->_sp)*sizeof(void *)); S->_sp+=ll->_sp -1;
+        memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
+        n+=ll->_sp-2; S->_sp+=ll->_sp -2;
         goto __PCALL_S;
     }
     l = vector_init(n+ll->_sp-1);
-    memcpy(l ->_table, (S ->_table) +(S ->_sp - n+1) , (n-2) * (sizeof(void * )) );
+    //memcpy(l ->_table, (S ->_table) +(S ->_sp - n+1) , (n-2) * (sizeof(void * )) );
+    memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , (n-2) * (sizeof(void * )) );
     memcpy(l->_table+n-2,ll->_table,(ll->_sp)*(sizeof(void*)));
     //l ->_sp = n+(ll->_sp)-1; S ->_sp = S ->_sp - n; //vector_print(l);
     l ->_sp = n+(ll->_sp)-2; S ->_sp = S ->_sp - n; //vector_print(l);
@@ -866,16 +871,16 @@ _APL:
     goto * dequeue(C);*/
 _TAPL:
     n = (long)dequeue(C);//printf("%ld\n",n);
-    fn = (Vector * )vector_ref(S, S->_sp-n);
-    ll=(Vector*)vector_ref(S,S->_sp-1);
+    fn = (Vector * )vector_ref(S, S->_sp-1);
+    ll=(Vector*)vector_ref(S,S->_sp-2);
     if ((long)vector_ref(fn,0)==FUNC_PRIM) {
-        vector_upsize(S, n += ll->_sp-2);
-        memcpy(S->_table + S->_sp-1, ll->_table, (ll->_sp)*sizeof(void *)); S->_sp+=ll->_sp -1;
-        n+=ll->_sp-1;
+        vector_upsize(S, ll->_sp-2);
+        memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
+        n+=ll->_sp-2; S->_sp+=ll->_sp -2;
         goto __PCALL_S;
     }
     l = vector_init(n+ll->_sp-1);
-    memcpy(l ->_table, (S ->_table) +(S ->_sp - n+1) , (n-2) * (sizeof(void * )) );
+    memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , (n-2) * (sizeof(void * )) );
     memcpy(l->_table+n-2,ll->_table,(ll->_sp)*(sizeof(void*)));
     l ->_sp = n+(ll->_sp)-1; S ->_sp = S ->_sp - n; //vector_print(l);
     //push(R, (void * )C);
@@ -1029,10 +1034,10 @@ _SPUSH:
     goto * dequeue(C);
 _OPUSH:
     //v=vector_ref(S,S->_sp-1);
-    v=pop(S);
+    v=pop(S);//printf("%d\n", ((object*)v)->type);
     //objpush((object*)vector_ref(S, S->_sp-2),v);
     //w=pop(S);
-    w=vector_ref(S,S->_sp-1);
+    w=vector_ref(S,S->_sp-1);//printf("%d\n", ((object*)w)->type);
     objpush((object*)w,v);
     //push(S,w);
     goto*dequeue(C);

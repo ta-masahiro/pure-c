@@ -1860,7 +1860,7 @@ char * objtype2str(obj_type type, void* value) {
 
 Symbol NONE = {0, 0, ""};
 Symbol * objtype2symbol(obj_type type, void* value) {
-    int new_size,buf_size=1024;
+   int new_size,buf_size=1024;
     char *str, buf[1024];
     mp_exp_t e;
     int i,n;
@@ -2244,7 +2244,9 @@ object* objpop(object*t) {
 void objpush(object *o,object* value) {
     if (o==NULL) none_error();
     if (o->type == OBJ_VECT) push((Vector*)o->data.ptr,(void*)value);
-    else {printf("RntimeError:Illegal push Method!\n");Throw(3);}
+    else if (o->type == OBJ_SYM) symbol_push((Symbol*)o->data.ptr,(void*)value);
+    else if (o->type == OBJ_GEN) objpush((object*)o->data.ptr, (void*)value);
+    else {printf("RntimeError:Illegal push Method!:%d\n",o->type);Throw(3);}
 }
 
 object * objslice(object* o,long start,long end) {
@@ -2267,6 +2269,8 @@ object * objslice(object* o,long start,long end) {
     } else if (o->type == OBJ_SYM) {
         sym=symbol_cpy_n((Symbol*)o->data.ptr,start,end-start);
         return newSTR(sym);
+    } else if (o->type == OBJ_GEN) {
+        return objslice((object*)o->data.ptr, start, end);
     }else {
         printf("RntimeError:Illegal push Method!\n");
         Throw(3);
