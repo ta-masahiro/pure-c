@@ -20,7 +20,7 @@ typedef struct code_type{
     obj_type type;
     struct code_type * functon_ret_type;  
     Vector  *arg_type;
-    int dotted;
+    int dotted;                             // 1: 任意個数引数の関数の場合 0:そうでない場合
 } code_type;
 //code_type * new_ct(obj_type type,obj_type frt, Vector*at,int dot ) ;
 typedef struct {
@@ -30,12 +30,12 @@ typedef struct {
     //obj_type    function_r_type;    // if type is function, function return type
     //int         dotted;             // 0: normal function 1: dotted fctunction
     code_type * ct;
-    //int     * small_flg;
+    int         sc;                              // 1: small code(大域変数以外のスコープ外の変数にアクセスしない)
 } code_ret;
 
-code_type * new_ct(obj_type type, code_type * frt, Vector*at,int dot );
+code_type * new_ct(obj_type type, code_type * frt, Vector*at,int dot);
 
-code_ret* new_code(Vector*code, code_type * ct);
+code_ret* new_code(Vector*code, code_type * ct, int small) ;
 code_ret* codegen(ast*a,Vector*v,int tail);
 code_ret* codegen_ml(ast*a,Vector*v,int tail);
 code_ret* codegen_if(ast*a,Vector*v,int tail);
