@@ -672,8 +672,8 @@ char*dcl_string[]=     {"none",     "int",      "long",     "rational", "float",
     //                  OBJ_SYSFUNC,    OBJ_PFUNC,      OBJ_UFUNC,  OBJ_CNT
                         "vector",   "dict",   "pair",   "string",   "array",    \
     //                   OBJ_VECT,  OBJ_DICT,  OBJ_PAIR,OBJ_SYM,    OBJ_ARRAY
-                        "file", "key",  "class",    "ast", (void*)0};
-    //                  OBJ_IO, OBJ_KEY,OBJ_CLS_DEF,OBJ_AST
+                        "file", "key",  "class",    "ast", "s_function",(void*)0};
+    //                  OBJ_IO, OBJ_KEY,OBJ_CLS_DEF,OBJ_AST,OBJ_UFUNC_S
 
 int string_isin(char* s,char* table[]) {
     // if is s in table,return table position else -1

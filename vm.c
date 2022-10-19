@@ -26,7 +26,7 @@ char * code_name[] =
      "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","VSLS_","V_SLS","SSLS_","S_SLS",
      "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD", "SPUSH","OTOA", "ATOO",
      "ATOS",  "ALEN", "LTOK", "RTOK", "LFTOK","CTOK", "OTOK", "DTOK", "ATOK", "STL",  "STL0", "STL1", "STL2", "stl3",
-     "STL4",  "LDMF", "$$$" };
+     "STL4",  "LDMF", "PAPL", "APLS", "TAPLS","$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -50,7 +50,7 @@ int op_size[] = \
         1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   1,   0,    0,    0,    0,    \
-        0,    1  };
+        0,    1,     1,    1,    1  };
 
 Vector *tosqs(Vector*code, const void** table, Hash *G) {
     enum CODE op;
@@ -122,7 +122,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR,&&_VSLS_,&&_V_SLS,&&_SSLS_,&&_S_SLS,\
             &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH,&&_OTOA, &&_ATOO, \
             &&_ATOS,  &&_ALEN, &&_LTOK, &&_RTOK, &&_LFTOK,&&_CTOK, &&_OTOK, &&_DTOK, &&_ATOK, &&_STL,  &&_STL0, &&_STL1 ,&&_STL2, &&_STL3, \
-            &&_STL4,  &&_LDMF   };
+            &&_STL4,  &&_LDMF, &&_PAPL, &&_APLS, &&_TAPLS  };
  
     C = tosqs(Code,table, G);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -757,7 +757,8 @@ _OBNOT:
 _CALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
-    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
+    if ((long)vector_ref(fn, 0)==FUNC_PRIM) goto __PCALL_S;
+    if ((long)vector_ref(fn, 0) == FUNC_SMALL) goto __CALLS_S;
     l = vector_init(n);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , n * (sizeof(void * )) );
     l ->_sp = n; S ->_sp = S ->_sp - n;  // vector_print(l);
@@ -791,7 +792,8 @@ _CALL:
 _TCALL:
     n = (long)dequeue(C);
     fn = (Vector * )pop(S);
-    if ((long)vector_ref(fn,0)==FUNC_PRIM) goto __PCALL_S;
+    if ((long)vector_ref(fn, 0)==FUNC_PRIM) goto __PCALL_S;
+    if ((long)vector_ref(fn, 0) == FUNC_SMALL) goto __TCALLS_S;
     l = vector_init(n);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , n * (sizeof(void * )) );
     l ->_sp = n; S ->_sp = S ->_sp - n;  // vector_print(l);
@@ -914,6 +916,14 @@ _TAPL:
     E = vector_copy0((Vector * )vector_ref(fn, 2));push(E,l);
     C = vector_copy1((Vector * )vector_ref(fn, 1));
     goto * dequeue(C);*/
+_PAPL:
+    n = (long)dequeue(C);
+    fn = (Vector * )vector_ref(S, S->_sp-1);
+    ll=(Vector*)vector_ref(S,S->_sp-2);
+    vector_upsize(S, ll->_sp -2);
+    memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
+    n+=ll->_sp-2; S->_sp+=ll->_sp -2;
+    goto __PCALL_S;
 _PCALL: // primitive function call
     n = (long)dequeue(C);
     fn = (Vector*)pop(S);
@@ -1089,8 +1099,10 @@ _2ROT:
     goto * dequeue(C);
 _CALLS: // small call : Eレジスタを使用せず、スタックのみをローカル変数として用いる
     n = (long)dequeue(C);
+    fn = (Vector*)pop(S);
+__CALLS_S:
     push(R, (void * )C);
-    C = (Vector * )pop(S); C -> _cp = 0;
+    C = (Vector * )vector_ref(fn,1); C -> _cp = 0;
     push(ssp,(void*)SSP);
     SSP = S->_sp-n;
     push(ssp,(void*)SSP);
@@ -1099,9 +1111,38 @@ _CALLS: // small call : Eレジスタを使用せず、スタックのみをロ�
     goto * dequeue(C);
 _TCALLS:// tail small call
     n=(long)dequeue(C);
-    C = (Vector * )pop(S); C -> _cp = 0;
+    fn = (Vector*)pop(S);
+__TCALLS_S:
+    C = (Vector * )vector_ref(fn,1); C -> _cp = 0;
     //SSP=S->_sp;
     //memcpy((S->_table)+(SSP-n),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
+    memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
+    S->_sp -= n;                                                              //　スタックを増やさないので結局早い
+    goto * dequeue(C);
+_APLS:
+    n = (long)dequeue(C);
+    fn = (Vector * )vector_ref(S, S->_sp-1);
+    ll=(Vector*)vector_ref(S,S->_sp-2);
+    vector_upsize(S, ll->_sp -2);
+    memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
+    n+=ll->_sp-2; S->_sp+=ll->_sp -2;
+    push(R, (void * )C);
+    fn = (Vector*)pop(S);
+    C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
+    push(ssp,(void*)SSP);
+    SSP = S->_sp-n;
+    push(ssp,(void*)SSP);
+    goto * dequeue(C);
+_TAPLS:
+    n = (long)dequeue(C);
+    fn = (Vector * )vector_ref(S, S->_sp-1);
+    ll=(Vector*)vector_ref(S,S->_sp-2);
+    vector_upsize(S, ll->_sp -2);
+    memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
+    n+=ll->_sp-2; S->_sp+=ll->_sp -2;
+    push(R, (void * )C);
+    fn = (Vector*)pop(S);
+    C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
     S->_sp -= n;                                                              //　スタックを増やさないので結局早い
     goto * dequeue(C);
@@ -1112,8 +1153,11 @@ _RTNS: //small call用のRTN
     SSP=(long)pop(ssp);
     push(S,v);
     goto * dequeue(C);
-_LDP://small call用の関数をロードする
-    push(S, dequeue(C));
+_LDP://small call用の関数をロードする...LDCと同じ!!
+    code = (Vector * )dequeue(C);
+    cl = vector_init(4);
+    push(cl, (void * )FUNC_SMALL); push(cl, (void * )code); push(cl, (void * )E);
+    push(S, (void * )cl);//printf("ldf ok...");
     goto * dequeue(C);
 _LDL://small call 内のローカル変数ロード
 

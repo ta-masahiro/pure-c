@@ -764,7 +764,7 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     Vector *code_right = code_r_right->code;                    // 右辺式のコード
     code_type *ct_right = code_r_right->ct;                     // 右辺式のコードタイプ
     obj_type type_right = ct_right->type;                       // 右辺式の型
-    int flg_sc = code_r_right->sc;
+    flg_sc &= code_r_right->sc;
     //
     if (code_left->_sp ==2 && (long)code_left->_table[0] == LDC && code_right->_sp ==2 && (long)code_right->_table[0] == LDC) const_conv_flg = TRUE;
     //
@@ -1071,7 +1071,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
     Vector *code_function = code_s_function->code;//PR(0);
     int flg_sc = code_s_function->sc;
     //if (code_s_function->ct->type == OBJ_AST) return codegen_macro_fcall(fcall_ast, env, tail); // マクロ関数処理は別ルーチンで            
-    if (code_s_function->ct->type != OBJ_UFUNC && code_s_function->ct->type != OBJ_PFUNC) { printf("SyntaxError:Must be Function!\n");Throw(0);}
+    if (code_s_function->ct->type != OBJ_UFUNC && code_s_function->ct->type != OBJ_PFUNC &&code_s_function->ct->type != OBJ_UFUNC_S) { printf("SyntaxError:Must be Function!\n");Throw(0);}
     code_type * r_type = code_s_function->ct->functon_ret_type;//PR(1);                    // 関数の戻り型
     Vector *v = code_s_function->ct->arg_type;//vector_print(v);PR(2);                  // 引数の型のリスト
     //printf("fcall...\n");
@@ -1129,7 +1129,7 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
                 push(code, (void*)STOP);object *o = code_eval(new_code(code,r_type,TRUE));//printf("%s\n", objtostr(o));
                 code = vector_init(2);push(code,(void*)LDC);push(code,o->data.ptr);r_type=new_ct(o->type, NULL, NULL, FALSE);
             }
-        } else if (code_s_function->sc) {                   // 現状のコードがsmallかどうかにかかわらず、呼ぶべき関数がsmallならsmall_call
+        } else if (code_s_function->ct->type == OBJ_UFUNC_S) {                   // 現状のコードがsmallかどうかにかかわらず、呼ぶべき関数がsmallならsmall_call
             push(code, tail ? (void*)TCALLS : (void*)CALLS);
             push(code, (void*)(long)n);
 
@@ -1325,8 +1325,52 @@ code_ret *codegen_dcl(ast *dcl_ast, Vector *env, int tail) {                    
 void convert_flg_sc(Vector *code){
     // codeをsmall codeに変換する
     // 具体的には LD0n->LDSn
-    //            
-
+    //
+    printf("<BEFOR>\n");disassy(code,0,stdout);
+    Vector *v;
+    int i = 0;
+    enum CODE op;
+    while (i < code->_sp) {
+        op = (int)(long)code->_table[i];
+        switch(op) {
+            case LD:
+                code->_table[i] = (void*)LDL;
+                v = (Vector*)code->_table[i+1];
+                code->_table[i+1] = vector_ref(v,1);
+                i+=2;
+                break;
+            case SET:
+                code->_table[i] = (void*)STL;
+                v = (Vector*)code->_table[i+1];
+                code->_table[i+1] = vector_ref(v,1);
+                i+=2;
+                break;
+            case LD00: case LD01: case LD02: case LD03:
+                code->_table[i] += (LDL0 -LD00);
+                i ++;
+                break;
+            case SET00: case SET01: case SET02: case SET03:
+                code->_table[i] += (STL0 -SET00);
+                i ++;
+                break;
+            case RTN :
+                code->_table[i] = (void*)RTNS;
+                i++;
+                break;
+            case WHILE:
+                convert_flg_sc((Vector*)code->_table[i+2]);
+                i+=3;
+                break;
+            case SEL: case TSEL:
+                convert_flg_sc((Vector*)code->_table[i+1]);
+                convert_flg_sc((Vector*)code->_table[i+2]);
+                i+=3;
+                break;
+            default:
+                i += op_size[op] + 1;
+        }            
+    }
+    printf("AFTER\n");disassy(code,0,stdout);
 }
 
 code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]
@@ -1344,7 +1388,7 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
     push(env,(void*)args);//PR(1);
     //env_print(env);
     //
-    Vector *code = vector_init(3);push(code,(void*)LDF);
+    Vector *code = vector_init(3);//push(code,(void*)LDF);
     code_ret *code_s=codegen((ast*)vector_ref(lambda_ast->table,1),env,TRUE);//PR(2);
     Vector * code1 = code_s -> code; push(code1,(void*)RTN);
     // code=vector_append(code,code_s->code);
@@ -1352,13 +1396,16 @@ code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBD
     //
     if (flg_sc = code_s->sc) {
         convert_flg_sc(code1);                                              // code1をsmall codeに変換する
+        push(code, (void*)LDP);                                             // small code時はLDPでよい
+        push(code,(void*)code1);
+    } else {
+        push(code, (void*)LDF);
+        push(code,(void*)code1);
     }
-
-    push(code,(void*)code1);
     //
     pop(env);// !!don't forget!!!
     //code_s= new_code(code,new_ct(OBJ_UFUNC,new_ct(ct->type, NULL, NULL, FALSE), v,0));                      // codeの型はUFUNC、返す値の型はbody_exprが返す型
-    code_s= new_code(code,new_ct(OBJ_UFUNC, ct, v, 0), flg_sc);                      // codeの型はUFUNC、返す値の型はbody_exprが返す型
+    code_s= new_code(code,new_ct(flg_sc ? OBJ_UFUNC_S : OBJ_UFUNC, ct, v, 0), flg_sc);                      // codeの型はUFUNC、返す値の型はbody_exprが返す型
     if (arg_list_ast->type==AST_ARG_LIST_DOTS) code_s->ct->dotted=1;
 //#ifdef DEBUG
     //printf("lambdaが返すct:");code_type_print(code_s->ct);printf("\n");
@@ -1505,10 +1552,10 @@ void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2) {
         } else {
 
         } 
-    } else */ if (ct1->type != ct2->type) {
+    } else */ if ((ct1->type != OBJ_UFUNC || ct2->type != OBJ_UFUNC_S ) && ct1->type != ct2->type) {
         if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:宣言された変数に割り当てるための型変換不能です!%d %d\n",ct1->type,ct2->type);Throw(0);}
         push(code,(void*)conv_op[ct2->type][ct1->type]);
-    } else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC) {
+    } else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC || ct1->type == OBJ_UFUNC_S) {
         //if (ct_eq(ct1, ct2) == FALSE) {printf("SyntaxError:関数の戻り値/パラメータの型が代入先と異なります!\n左辺:");code_type_print(ct1);printf("\n右辺");code_type_print(ct2);printf("\n");Throw(0);}
         ct1_f_ret = ct1->functon_ret_type->type; 
         ct2_f_ret = ct2->functon_ret_type->type; 
@@ -1666,7 +1713,7 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
                 if ((ct1 = get_gv(s)) == NULL) {            // 変数テーブルに名前がないなら(グローバル変数に登録されていない)
                     //printf("SyntaxError:variable not defined!");return NULL;
                     put_gv(s,ct2);ct1=ct2;                  //新たにct2=右辺値のコードタイプで変数を作り左辺値のコードタイプは右辺値と同一
-                } else if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
+                } else if (ct1->type==OBJ_NONE || (ct1->type == OBJ_UFUNC && ct2->type == OBJ_UFUNC_S) ||(ct1->type == OBJ_UFUNC && ct1->functon_ret_type ==0 )) {
                     ct1 = ct2; put_gv(s, ct1);
                     //if (ct2->type==OBJ_UFUNC) {gvt->type=OBJ_UFUNC;gvt->arg_type=v;gvt->functon_ret_type=r_type;put_gv(s,gvt);}
                 } else {

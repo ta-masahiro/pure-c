@@ -1906,6 +1906,7 @@ Symbol * objtype2symbol(obj_type type, void* value) {
                         symbol_push_c(sym, ']');
                         return sym;
         case OBJ_UFUNC: sprintf(buf,"<UserFunction: %lx>",(long)value);return new_symbol(buf, strlen(buf));
+        case OBJ_UFUNC_S: sprintf(buf,"<SmallFunction: %lx>",(long)value);return new_symbol(buf, strlen(buf));
         case OBJ_PFUNC: sprintf(buf,"<PrimitiveFunction: %lx>",(long)value);return new_symbol(buf, strlen(buf));
         case OBJ_CNT:   sprintf(buf,"<UserCode: %lx>",(long)value);return new_symbol(buf, strlen(buf));
         case OBJ_IO   : sprintf(buf,"<I/O_file: %lx>",(long)value);return new_symbol(buf, strlen(buf));
@@ -2009,6 +2010,7 @@ Symbol * objtype2key(obj_type type, void* value) {
                         symbol_push_c(sym, ']');
                         return sym;
         case OBJ_UFUNC: sprintf(buf,"<UserFunction: %lx>",(long)value);return new_symbol(buf, strlen(buf));
+        case OBJ_UFUNC_S: sprintf(buf,"<SmallFunction: %lx>",(long)value);return new_symbol(buf, strlen(buf));
         case OBJ_PFUNC: sprintf(buf,"<PrimitiveFunction: %lx>",(long)value);return new_symbol(buf, strlen(buf));
         case OBJ_CNT:   sprintf(buf,"<UserCode: %lx>",(long)value);return new_symbol(buf, strlen(buf));
         case OBJ_IO   : sprintf(buf,"<I/O_file: %lx>",(long)value);return new_symbol(buf, strlen(buf));
@@ -2504,7 +2506,7 @@ Symbol * objtype2hashkeySymbol(obj_type t, void *o) {
             for (int i =0; i < ((array *)o)->dim ;i++) n*= ((array*)o)->sizes[i];
             return new_symbol((char *)(((array*)o)->table._ptr), n*sizeof(void*));
             return r;
-        case OBJ_UFUNC: case OBJ_PFUNC: case OBJ_CNT: case OBJ_IO: 
+        case OBJ_UFUNC:case OBJ_UFUNC_S: case OBJ_PFUNC: case OBJ_CNT: case OBJ_IO: 
             return new_symbol((char*)o, sizeof(void*));
         case OBJ_DICT: return objtype2symbol(t, o);
         default:printf("RntimeError:Illegal argument!\n");Throw(3);
