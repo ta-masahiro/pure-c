@@ -329,9 +329,9 @@ _GSET:
     v = vector_ref(S, S ->_sp - 1);
     sym = (Symbol *)dequeue(C);
     Hash_put(G, sym, v);
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("%s defined!\n",sym->_table);
-#endif
+//#endif
     goto * dequeue(C);
 _OADD:
     push(S, (void * )objadd((object*)pop(S),(object*)pop(S)));
@@ -1127,7 +1127,6 @@ _APLS:
     memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
     n+=ll->_sp-2; S->_sp+=ll->_sp -2;
     push(R, (void * )C);
-    fn = (Vector*)pop(S);
     C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     push(ssp,(void*)SSP);
     SSP = S->_sp-n;
@@ -1141,7 +1140,6 @@ _TAPLS:
     memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
     n+=ll->_sp-2; S->_sp+=ll->_sp -2;
     push(R, (void * )C);
-    fn = (Vector*)pop(S);
     C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
     S->_sp -= n;                                                              //　スタックを増やさないので結局早い

@@ -1097,8 +1097,8 @@ code_ret *codegen_fcall(ast *fcall_ast, Vector * env, int tail) {  // AST_FCALL 
             if (doted && i >= m-1) type_dummy=OBJ_GEN ; 
             else {ct_dummy=(code_type *)vector_ref(v,i); type_dummy =ct_dummy->type;}// ct2/type2:dummy parameter type
 
-            if ((type_param != type_dummy ) && (type_param != OBJ_NONE)) {
-                if ((t_op=conv_op[type_param][type_dummy])==0) {printf("SyntaxError:IllegalArgmentType!\n");Throw(0);}
+            if ((type_param != OBJ_UFUNC_S || type_dummy != OBJ_UFUNC) && (type_param != type_dummy ) && (type_param != OBJ_NONE)) {
+                if ((t_op=conv_op[type_param][type_dummy])==0) {printf("SyntaxError:IllegalArgmentType!%d %d\n",type_param,type_dummy);Throw(0);}
                 if (t_op != -1) {push(code_param,(void*)conv_op[type_param][type_dummy]);}
             } else if (type_param == OBJ_UFUNC || type_param == OBJ_PFUNC ) {
             // type_param,type_dummyがfunctionの場合はそのret_typeが同じかどうか確かめたいが、現状引数である関数のパラメータ詳細を保持していない
@@ -1326,7 +1326,7 @@ void convert_flg_sc(Vector *code){
     // codeをsmall codeに変換する
     // 具体的には LD0n->LDSn
     //
-    printf("<BEFOR>\n");disassy(code,0,stdout);
+    //printf("<BEFOR>\n");disassy(code,0,stdout);
     Vector *v;
     int i = 0;
     enum CODE op;
@@ -1370,7 +1370,7 @@ void convert_flg_sc(Vector *code){
                 i += op_size[op] + 1;
         }            
     }
-    printf("AFTER\n");disassy(code,0,stdout);
+    //printf("AFTER\n");disassy(code,0,stdout);
 }
 
 code_ret *codegen_lambda(ast * lambda_ast,Vector *env, int tail) {  // AST_LAMBDA [AST_EXP_LIST [expr,   exp,   ...]], body_expr]

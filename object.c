@@ -1023,10 +1023,10 @@ object * objadd(object * x, object * y) {
             }
             break;
         case OBJ_GEN: return objadd((object *)x->data.ptr, y);
-        default:printf("runtime error illegal add op\n");Throw(3);
+        default:printf("runtime error illegal add op %d\n",type_x);Throw(3);
     }
     if (type_y == OBJ_GEN)      return objadd(x, (object *)y->data.ptr);
-    printf("runtime error illegal add op\n");Throw(3);
+    printf("runtime error illegal add op %d %d\n", type_x, type_y);Throw(3);
 }
 
 object * objsub(object * x, object * y) {
