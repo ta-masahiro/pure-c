@@ -1106,7 +1106,7 @@ __CALLS_S:
     push(R, (void * )C);
     C = (Vector * )vector_ref(fn,1); C -> _cp = 0;
     push(ssp,(void*)SSP);
-    SSP = S->_sp-n;
+    SSP = S->_sp-n;Essp=S->_sp;
     push(ssp,(void*)SSP);
     //push(ssp,(void*)(long)S->_sp);
     //SSP = S->_sp;
@@ -1119,7 +1119,7 @@ __TCALLS_S:
     //SSP=S->_sp;
     //memcpy((S->_table)+(SSP-n),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
     memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
-    S->_sp -= n;                                                              //　スタックを増やさないので結局早い
+    S->_sp -= n;Essp=S->_sp;                                                              //　スタックを増やさないので結局早い
     goto * dequeue(C);
 _APLS:
     n = (long)dequeue(C);
@@ -1133,7 +1133,7 @@ __APLS_S:
     push(R, (void * )C);
     C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     push(ssp,(void*)SSP);
-    SSP = S->_sp-n;
+    SSP = S->_sp-n;Essp=S->_sp;
     push(ssp,(void*)SSP);
     goto * dequeue(C);
 _TAPLS:
@@ -1148,12 +1148,12 @@ __TAPLS_S:
     push(R, (void * )C);
     C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
-    S->_sp -= n;                                                              //　スタックを増やさないので結局早い
+    S->_sp -= n;Essp=S->_sp;                                                              //　スタックを増やさないので結局早い
     goto * dequeue(C);
 _RTNS: //small call用のRTN
     C = (Vector * )pop(R);
     v = S->_table[S->_sp-1];
-    S->_sp=(long)pop(ssp);
+    S->_sp=(long)pop(ssp);Essp=S->_sp;
     SSP=(long)pop(ssp);
     push(S,v);
     goto * dequeue(C);
@@ -1172,7 +1172,8 @@ _LDL://small call 内のローカル変数ロード
         goto * dequeue(C);
     } else {
         //push(S, (void*)vector_copy_n(S, -(SSP-n-1)+(long)(ssp->_table[ssp->_sp - 1])+1));   //copyでなくスライスのが良い？
-        push(S, (void*)vector_slice_nm(S, 0, -(SSP-n-1)+(long)(ssp->_table[ssp->_sp - 1])+1));   //copyでなくスライスのが良い？
+        //push(S, (void*)vector_slice_nm(S, SSP-n-1, Essp));   //copyでなくスライスのが良い？
+        push(S, (void*)vector_copy_nm(S, SSP-n-1, Essp));   //copyでなくスライスのが良い？
         goto * dequeue(C);
     }
 _LDL0:
