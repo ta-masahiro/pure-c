@@ -66,6 +66,7 @@ Vector *vector_copy_nm(Vector *v, int n, int m) {
 
 Vector *vector_slice_nm(Vector *v, int n, int m) {
     // v[n]からv[m-1]までm-n個のスライスを作る
+    //printf("n:%d m:%d\n",n,m);
     Vector *r = (Vector *)malloc(sizeof(Vector));
     r->_table = v->_table + n;
     r->_size  = (r->_sp = m - n );

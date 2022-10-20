@@ -1552,7 +1552,7 @@ void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2) {
         } else {
 
         } 
-    } else */ if ((ct1->type != OBJ_UFUNC || ct2->type != OBJ_UFUNC_S ) && ct1->type != ct2->type) {
+    } else */ if ((ct1->type != OBJ_UFUNC || ct2->type != OBJ_UFUNC_S ) && (ct2->type != OBJ_UFUNC || ct1->type != OBJ_UFUNC_S ) && ct1->type != ct2->type) {
         if (conv_op[ct2->type][ct1->type]==0) {printf("SyntaxError:宣言された変数に割り当てるための型変換不能です!%d %d\n",ct1->type,ct2->type);Throw(0);}
         push(code,(void*)conv_op[ct2->type][ct1->type]);
     } else if (ct1->type == OBJ_UFUNC || ct1->type == OBJ_PFUNC || ct1->type == OBJ_UFUNC_S) {
@@ -1590,6 +1590,7 @@ void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2) {
                 if (ct_eq(ct1->arg_type->_table[i], ct2->arg_type->_table[i]) == FALSE) {printf("関数のパラメータの型が代入先と異なります!\n");Throw(0);}
             }
         }
+        if (ct2->type != OBJ_UFUNC || ct1->type != OBJ_UFUNC_S) ct2->type=OBJ_UFUNC;
     }
 
 }
