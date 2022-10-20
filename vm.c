@@ -329,9 +329,9 @@ _GSET:
     v = vector_ref(S, S ->_sp - 1);
     sym = (Symbol *)dequeue(C);
     Hash_put(G, sym, v);
-//#ifdef DEBUG
+#ifdef DEBUG
     printf("%s defined!\n",sym->_table);
-//#endif
+#endif
     goto * dequeue(C);
 _OADD:
     push(S, (void * )objadd((object*)pop(S),(object*)pop(S)));
@@ -833,6 +833,7 @@ _APL:
         n+=ll->_sp-2; S->_sp+=ll->_sp -2;
         goto __PCALL_S;
     }
+    if ((long)vector_ref(fn, 0) == FUNC_SMALL) goto __APLS_S;
     l = vector_init(n+ll->_sp-1);
     //memcpy(l ->_table, (S ->_table) +(S ->_sp - n+1) , (n-2) * (sizeof(void * )) );
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , (n-2) * (sizeof(void * )) );
@@ -881,6 +882,7 @@ _TAPL:
         n+=ll->_sp-2; S->_sp+=ll->_sp -2;
         goto __PCALL_S;
     }
+    if ((long)vector_ref(fn, 0) == FUNC_SMALL) goto __TAPLS_S;
     l = vector_init(n+ll->_sp-1);
     memcpy(l ->_table, (S ->_table) +(S ->_sp - n) , (n-2) * (sizeof(void * )) );
     memcpy(l->_table+n-2,ll->_table,(ll->_sp)*(sizeof(void*)));
@@ -1123,9 +1125,11 @@ _APLS:
     n = (long)dequeue(C);
     fn = (Vector * )vector_ref(S, S->_sp-1);
     ll=(Vector*)vector_ref(S,S->_sp-2);
+__APLS_S:
     vector_upsize(S, ll->_sp -2);
     memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
     n+=ll->_sp-2; S->_sp+=ll->_sp -2;
+    //n+=ll->_sp-2; S->_sp+=ll->_sp -1;
     push(R, (void * )C);
     C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     push(ssp,(void*)SSP);
@@ -1136,9 +1140,11 @@ _TAPLS:
     n = (long)dequeue(C);
     fn = (Vector * )vector_ref(S, S->_sp-1);
     ll=(Vector*)vector_ref(S,S->_sp-2);
+__TAPLS_S:
     vector_upsize(S, ll->_sp -2);
     memcpy(S->_table + S->_sp-2, ll->_table, (ll->_sp)*sizeof(void *));
     n+=ll->_sp-2; S->_sp+=ll->_sp -2;
+    //n+=ll->_sp-2; S->_sp+=ll->_sp -1;
     push(R, (void * )C);
     C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     memcpy((S->_table)+(SSP),(S->_table)+(S->_sp-n),n*(sizeof(void*)));     //　上記１行の変わり copyする時間はかかるが
