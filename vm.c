@@ -322,15 +322,23 @@ _SET12:
     Es->_table[2] = S->_table[S->_sp -1];
     goto *dequeue(C);
 _SET13:
-    Es = (Vector *)vector_ref(E, E ->_sp - 2 );
+    Es = (Vector *)vector_ref(E, E ->_sp - 2  );
     Es->_table[3] = S->_table[S->_sp -1];
     goto *dequeue(C);*/
+_MEMSET:
+    // パラメータをアドレスとみなして、そこにSレジTOPをPOPの値を入れる
+    *(void**)(v=dequeue(C)) = S->_table[S->_sp - 1];
+    //printf("memory %lx wited !\n",(unsigned long)(void**)v);
+    goto *dequeue(C);
 _GSET:
     v = vector_ref(S, S ->_sp - 1);
     sym = (Symbol *)dequeue(C);
-    Hash_put(G, sym, v);
+    i = Hash_put(G, sym, v);
+    //Hash_put(G, sym, v);
+    C->_table[C->_cp - 2] = &&_MEMSET ;
+    C->_table[C->_cp - 1] = &(G->hashTable[i].val) ;
 #ifdef DEBUG
-    printf("%s defined!\n",sym->_table);
+    printf("%s defined! at %lx\n",sym->_table,(unsigned long)&(G->hashTable[i].val));
 #endif
     goto * dequeue(C);
 _OADD:
