@@ -83,7 +83,7 @@ Vector *tosqs(Vector*code, const void** table, Hash *G) {
 void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash * G) {
     Symbol * sym,*sym1;
     //long inst, ff, i, j, n, p, *ip, SSP=S->_sp;
-    long inst, ff, i, j, n, p, *ip, SSP=0, Essp, Sssp;
+    long inst, ff, i, j, n, p, *ip, SSP=0, Essp = 0;
     Vector * fn, * keys, * t_exp, * f_exp, * code, * args, * cl, * ref, * Es, * l, *ll, *lll;
     void ** g, * v;
     Funcpointer func; Pfuncpointer pfunc;
@@ -1107,7 +1107,8 @@ _2ROT:
     S->_table[S->_sp - 3] = S->_table[S->_sp - 4];
     S->_table[S->_sp - 4] = v;
     goto * dequeue(C);
-_CALLS: // small call : Eレジスタを使用せず、スタックのみをローカル変数として用いる
+_CALLS:
+    // small call : Eレジスタを使用せず、スタックのみをローカル変数として用いる
     n = (long)dequeue(C);
     fn = (Vector*)pop(S);
 __CALLS_S:
@@ -1115,9 +1116,9 @@ __CALLS_S:
     C = (Vector * )vector_ref(fn,1); C -> _cp = 0;
     push(ssp,(void*)SSP);
     SSP = S->_sp-n;Essp=S->_sp;
-    push(ssp,(void*)SSP);
+    //push(ssp,(void*)SSP);
     //push(ssp,(void*)(long)S->_sp);
-    //SSP = S->_sp;
+    push(ssp, (void*)Essp);
     goto * dequeue(C);
 _TCALLS:// tail small call
     n=(long)dequeue(C);
@@ -1141,8 +1142,9 @@ __APLS_S:
     push(R, (void * )C);
     C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     push(ssp,(void*)SSP);
-    SSP = S->_sp-n;Essp=S->_sp;
-    push(ssp,(void*)SSP);
+    //SSP = S->_sp-n;Essp=S->_sp;
+    //push(ssp,(void*)SSP);
+    push(ssp, (void*)Essp);Essp = S->_sp;
     goto * dequeue(C);
 _TAPLS:
     n = (long)dequeue(C);
@@ -1161,8 +1163,10 @@ __TAPLS_S:
 _RTNS: //small call用のRTN
     C = (Vector * )pop(R);
     v = S->_table[S->_sp-1];
-    S->_sp=(long)pop(ssp);Essp=S->_sp;
-    SSP=(long)pop(ssp);
+    //S->_sp=(long)pop(ssp);Essp=S->_sp;
+    //SSP=(long)pop(ssp);
+    S->_sp = SSP;
+    Essp = (long)pop(ssp);SSP = (long)pop(ssp);
     push(S,v);
     goto * dequeue(C);
 _LDP://small call用の関数をロードする...LDCと同じ!!
