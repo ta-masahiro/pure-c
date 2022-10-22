@@ -1142,7 +1142,7 @@ __APLS_S:
     push(R, (void * )C);
     C = (Vector *)vector_ref(fn, 1); C -> _cp = 0;
     push(ssp,(void*)SSP);
-    //SSP = S->_sp-n;Essp=S->_sp;
+    SSP = S->_sp-n;
     //push(ssp,(void*)SSP);
     push(ssp, (void*)Essp);Essp = S->_sp;
     goto * dequeue(C);
