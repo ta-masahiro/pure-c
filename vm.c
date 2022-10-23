@@ -191,7 +191,7 @@ _LD12:
     push(S,(void*)vector_ref((Vector*)vector_ref(E,E->_sp-2),2));
     goto * dequeue(C);
 _LD13:
-    push(S,(void*)vector_ref((Vector*)vector_ref(E,E->_sp-1),3));
+    push(S,(void*)vector_ref((Vector*)vector_ref(E,E->_sp-2),3));
     goto * dequeue(C);
 /*_LD00:
     push(S, S->_table[SSP]);
