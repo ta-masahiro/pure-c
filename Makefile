@@ -5,7 +5,7 @@ CC := gcc
 #FLAGS := -g -O0  -DDEBUG
 FLAGS := -O3
 #LDLIBS :=  -lgc -lgmp -lmpfr -lm  -lecm
-LDLIBS :=  -lgc -lgmp -lmpfr -lm -lblas  -llapacke
+LDLIBS :=  -lgc -lgmp -lmpfr -lm -lblas  -llapacke  -lecm
 
 $(PROGRAM): $(OBJS)
 	$(CC) -o $(PROGRAM) $(FLAGS) $^ $(LDLIBS)
