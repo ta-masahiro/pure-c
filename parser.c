@@ -887,7 +887,7 @@ ast * is_special_expr1(TokenBuff *S, char delm) {
     return NULL;
 }
 ast * is_set_expr(TokenBuff * S) {
-    // set_expr = expr_0 ('='|'+='|'-='|'*='|'/='|'%='|'|='|'&='|'^='|'>>='|'<<=') expr
+    // set_expr = expr_0 ('='|'+='|'-='|'*='|'/='|'%='|'|='|'&='|'^='|'>>='|'<<=' | '**=') expr
     //      =>
     // AST_SET,[type of set, ast of left_expr, ast of right_expr]
     ast* a1,*a2;
@@ -898,7 +898,7 @@ ast * is_set_expr(TokenBuff * S) {
     if ((a1=is_expr_0(S)) &&      ((t=get_token(S)->type)=='=' ||
             t=='+'*256+'=' || t=='-'*256+'=' || t=='*'*256+'=' || t=='/'*256+'=' || 
             t=='%'*256+'=' || t=='|'*256+'=' || t=='&'*256+'=' || t=='^'*256+'=' ||
-            t=='>'*65536+'>'*256+'=' || t== '<'*65536+'<'*256+'=') && (a2=is_expr(S))) {
+            t=='>'*65536+'>'*256+'=' || t== '<'*65536+'<'*256+'=' || t== '*'*65536+'*'*256+'=') && (a2=is_expr(S))) {
         v=vector_init(3);
         push(v,(void*)t); push(v,(void*)a1); push(v,(void*)a2);
         return new_ast(AST_SET,a1->o_type,v);

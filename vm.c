@@ -26,7 +26,7 @@ char * code_name[] =
      "LOOP",  "STOLF","STOC", "DIC",  "ITOK", "FTOK", "VTOK", "IBXOR","LBXOR","OBXOR","VSLS_","V_SLS","SSLS_","S_SLS",
      "OSLS_", "O_SLS","DLEN", "LDL0", "LDL1", "LDL2", "LDL3", "LDL4", "DTOO", "DTOS", "OTOD", "SPUSH","OTOA", "ATOO",
      "ATOS",  "ALEN", "LTOK", "RTOK", "LFTOK","CTOK", "OTOK", "DTOK", "ATOK", "STL",  "STL0", "STL1", "STL2", "stl3",
-     "STL4",  "LDMF", "PAPL", "APLS", "TAPLS","$$$" };
+     "STL4",  "LDMF", "PAPL", "APLS", "TAPLS", "sLADDL", "sLSUBL","sLMULL","sLDIVL","sLADDR","sLSUBR","sLMULR","sLDIVR", "$$$" };
 
 int op_size[] = \
     {   0,    1,     1,    0,    1,    0,   2,   0,    1,   1,   0,    1,    1,    0,    \
@@ -50,7 +50,7 @@ int op_size[] = \
         1,    0,     0,    1,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   0,   0,    0,    0,    0,    \
         0,    0,     0,    0,    0,    0,   0,   0,    0,   1,   0,    0,    0,    0,    \
-        0,    1,     1,    1,    1  };
+        0,    1,     1,    1,    1,   0,    0,   0,    0,   0,   0,    0,    0,    0  };
 
 Vector *tosqs(Vector*code, const void** table, Hash *G) {
     enum CODE op;
@@ -122,7 +122,7 @@ void * eval(Vector * S, Vector * E, Vector * Code, Vector * R, Vector * EE, Hash
             &&_LOOP,  &&_STOLF,&&_STOC, &&_DIC , &&_ITOK, &&_FTOK, &&_VTOK, &&_IBXOR,&&_LBXOR,&&_OBXOR,&&_VSLS_,&&_V_SLS,&&_SSLS_,&&_S_SLS,\
             &&_OSLS_, &&_O_SLS,&&_DLEN, &&_LDL0, &&_LDL1, &&_LDL2, &&_LDL3, &&_LDL4 ,&&_DTOO, &&_DTOS, &&_OTOD, &&_SPUSH,&&_OTOA, &&_ATOO, \
             &&_ATOS,  &&_ALEN, &&_LTOK, &&_RTOK, &&_LFTOK,&&_CTOK, &&_OTOK, &&_DTOK, &&_ATOK, &&_STL,  &&_STL0, &&_STL1 ,&&_STL2, &&_STL3, \
-            &&_STL4,  &&_LDMF, &&_PAPL, &&_APLS, &&_TAPLS  };
+            &&_STL4,  &&_LDMF, &&_PAPL, &&_APLS, &&_TAPLS, &&_sLADDL, &&_sLSUBL,&&_sLMULL,&&_sLDIVL,&&_sLADDR,&&_sLSUBR,&&_sLMULR,&&_sLDIVR };
  
     C = tosqs(Code,table, G);//vector_print(C);
     w = (mpz_ptr)malloc(sizeof(MP_INT)); mpz_init(w);
@@ -221,6 +221,14 @@ _LD13:
     Es = (Vector *)vector_ref(E, E ->_sp - 2 );
     push(S, (void * )vector_ref(Es, 3));  
     goto * dequeue(C);*/
+_LDADR:
+    // flame i,jの指すメモリアドレスをスタックtopに入れる
+    ref = (Vector * )dequeue(C);
+    i = (long)vector_ref(ref, 0); // printf("i = %d\n", i);
+    j = (long)vector_ref(ref, 1); // printf("j = %d\n", j);
+    Es = (Vector * )vector_ref(E, E ->_sp - i - 1); // printf("%d\n", E ->_sp); vector_print(Es);
+    push(S, Es->_table + j);
+    goto *dequeue(C);
 _LDMEM:
     // パラメータをアドレスとみなして、そのアドレスの内容64bitをスタックtopに入れる
     push(S, *(void**)dequeue(C));
@@ -1862,30 +1870,76 @@ _VMAP:  // S:[...,v0,v1,...,vn,fn] C:[vmap n ...]
     push(S,(void*)ll);
     goto *dequeue(C);
 
-_SET_LADD00:
-    l =vector_ref(E, E->_sp-1);
-    mpz_add((mpz_ptr)(l->_table[0]),(mpz_ptr)(l->_table[0]),(mpz_ptr)pop(S));
-    push(S,(void*)(l->_table[0]));
+_sIADD:
+    v=pop(S);
+    g=(void**)pop(S);
+    *g =(void*)((long)(*g)+(long)v);
+    goto *dequeue(C);
+/*
+_SLADDL:
+    y = (mpz_ptr)pop(S); x = (mpz_ptr)(S->_table[S->_sp-1]);    
+    mpz_add(x ,x ,y);
+    goto *dequeue(C);
+_SLADDR:
+    y = (mpz_ptr)pop(S); x = (mpz_ptr)pop(S);    
+    mpz_add(y ,x ,y);push(S, (void*)y);
+    goto *dequeue(C);
+_SLSUBL:
+    y = (mpz_ptr)pop(S); x = (mpz_ptr)(S->_table[S->_sp-1]);    
+    mpz_sub(x ,x ,y);
+    goto *dequeue(C);
+_SLSUBR:
+    y = (mpz_ptr)pop(S); x = (mpz_ptr)pop(S);    
+    mpz_sub(y ,x ,y);push(S, (void*)y);
+    goto *dequeue(C);
+_SLMULL:
+    y = (mpz_ptr)pop(S); x = (mpz_ptr)(S->_table[S->_sp-1]);    
+    mpz_mul(x ,x ,y);
+    goto *dequeue(C);
+_SLMULR:
+    y = (mpz_ptr)pop(S); x = (mpz_ptr)pop(S);    
+    mpz_mul(y ,x ,y);push(S, (void*)y);
+    goto *dequeue(C);
+_SLDIVL:
+    y = (mpz_ptr)pop(S); x = (mpz_ptr)(S->_table[S->_sp-1]);    
+    mpz_div(x ,x ,y);
+    goto *dequeue(C);
+_SLDIVR:
+    y = (mpz_ptr)pop(S); x = (mpz_ptr)pop(S);    
+    mpz_div(y ,x ,y);push(S, (void*)y);
     goto *dequeue(C);
 _SET_ISUB00:
     l=vector_ref(E, E->_sp-1);
     v = (void*)((long)(l->_table[0]) -(long)pop(S));
     l->_table[0] = v;push(S,(void*)v);
-    goto *dequeue(C);
-//_SET_IMUL:
-//_SET_IDIV:
-//_SET_IMOD:
-//_SET_IBOR:
-//_SET_IBAND:
+    goto *dequeue(C
+    
+    
+    );
+*/
 
-/*
-   Vector * vector_make(void * L[], int N) {
-   int i ;
-   Vector * V = vector_init(N);
-   for(i = 0;  i<N; i ++ ) {
-   push(V, (void * )L[i]);
-   };
-   return V;
-   }
-   */
+
+
+
+#define op_func_l(code, op) y=(op##_ptr)pop(S);x=(op##_ptr)(S->_table[S->_sp-1]);op##_##code(x,x,y);goto *dequeue(C);
+_sLADDL:op_func_l(add,mpz)
+_sLSUBL:op_func_l(sub,mpz)
+_sLMULL:op_func_l(mul,mpz)
+_sLDIVL:op_func_l(div,mpz)
+_sLMODL:op_func_l(mod,mpz)
+
+#define op_func_q(code, op) qy=(op##_ptr)pop(S);qx=(op##_ptr)(S->_table[S->_sp-1]);op##_##code(qx,qx,qy);goto *dequeue(C);
+_sRADDL:op_func_q(add,mpq)
+_sRSUBL:op_func_q(sub,mpq)
+_sRMULL:op_func_q(mul,mpq)
+_sRDIVL:op_func_q(div,mpq)
+
+
+
+
+#define op_func_r(code, op) y=(op##_ptr)pop(S);x=(op##_ptr)pop(S);op##_##code(y,x,y);push(S,(void*)y);goto *dequeue(C);
+_sLADDR:op_func_r(add,mpz)
+_sLSUBR:op_func_r(sub,mpz)
+_sLMULR:op_func_r(mul,mpz)
+_sLDIVR:op_func_r(div,mpz)
 }

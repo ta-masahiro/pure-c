@@ -494,8 +494,14 @@ token * is_DEL(Stream*S, tokenstate s, char* buff) {
                 *(buff ++ ) = c; *(buff ++ ) = cc;
                 if ((c=='>' && cc=='>') || (c=='<' && cc=='<')) {
                     ccc=get_char(S);
-                    if (ccc=='=') {
+                    if (ccc=='=') {                         // 3バイト演算子 : シフト代入 '>>=' '<<='     
                         *(buff ++) =ccc;
+                        return new_token(c*65536+cc*256+ccc,new_symbol(STR_BUFF, buff-STR_BUFF),(void*)0,S);
+                    }
+                    unget_char(S);
+                } else if (c=='*' && cc=='*') {
+                    if ((ccc = get_char(S)) == '=') {       // 3バイト演算子: 累乗代入 '**='
+                        *(buff ++) = ccc;
                         return new_token(c*65536+cc*256+ccc,new_symbol(STR_BUFF, buff-STR_BUFF),(void*)0,S);
                     }
                     unget_char(S);

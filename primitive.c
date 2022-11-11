@@ -299,21 +299,21 @@ void p_fermat(void **sp, int m) {
     fermat(n,r);
     *sp = (void*)r;
 }
-/*
+
 #include "ecm.h"
-void * p_factor(Vector *v) {
-    void* n= vector_ref(v,0);
-    //ecm_params p;
+void p_factor(void **sp, int _n) {
+    mpz_ptr n= (mpz_ptr)*sp;
+    ecm_params p;
     mpz_ptr f = (mpz_ptr)malloc(sizeof(MP_INT));mpz_init(f);
-    //ecm_init (p);
-    long B1 = (long)vector_ref(v,1);
+    ecm_init (p);
+    long B1 = (long)*(sp+1);
     int i;
     //if ((i=ecm_factor (f, (mpz_ptr)n, *(double*)&B1, p)) == 0) return n;
-    if ((i=ecm_factor (f, (mpz_ptr)n, *(double*)&B1, NULL)) == 0) return n;
-    if (i<0) {mpz_set_ui(f,0);return (void*)f;}
-    return (void*)f;
+    if ((i=ecm_factor (f, (mpz_ptr)n, *(double*)&B1, NULL)) == 0) {*sp = (void*)n;return;}
+    if (i<0) {mpz_set_ui(f,0);*sp = (void*)f;return;}
+    *sp = (void*)f;
 }
-*/
+
 int lucasLehmerTest(int p) {
     mpz_t m, s, sq; mpz_init(sq);
     // m = 2^p -1　判定すべきメルセンヌ数
@@ -443,7 +443,7 @@ Pfuncpointer primitive_func[]  = {p_exit,
                                  p_osin, p_ocos, p_otan, p_oasin, p_oacos, p_oatan, p_osinh, p_ocosh, p_otanh, p_oasinh, p_oacosh, p_oatanh, 
                                  p_olog10, p_ologE, p_olog1p, p_olog, p_oexp, p_ofloor,
                                  p_lpi, p_llog2, p_fgamma, p_flgamma,p_ogamma, p_olgamma, p_sum, p_vsum, p_irange, p_vswap, p_sort, p_cmp, p_ddel, p_vdel, p_vdeln, p_sdel, p_vins, p_vinsv, p_sins, p_fact, p_fib, p_lis_prime, p_lnext_prime,
-                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_trial_div, p_pollard_rho, p_pollard_pm1, p_fermat,//p_factor, 
+                                 p_init_irand, p_init_lrand, p_irand, p_lrand, p_trial_div, p_pollard_rho, p_pollard_pm1, p_fermat, p_factor, 
                                  p_hex_str, p_as_float, p_as_int, p_lucas, p_str, p_str_search, p_type, p_copy, p_vector_deep_copy, p_deep_copy, p_system, p_popen,
 #ifndef VMTEST
                                  p_compile, p_dis_assy, p_eval, p_load, p_str_parse, p_dis_parse, p_codegen,
@@ -465,7 +465,7 @@ char*primitive_function_name[]={"exit",
                                 "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh","tanh", "asinh", "acosh", "atanh", 
                                 "log10", "logE", "log1p", "log", "exp", "floor",
                                 "lpi", "llog2","fgamma", "flgamma", "gamma", "lgamma", "sum", "vsum", "irange", "vswap","qsort", "cmp", "ddel", "vdel", "vdeln", "sdel", "vins", "vinsv", "sins", "fact", "fib", "lis_prime", "lnext_prime", 
-                                "init_irand", "init_lrand", "irand", "lrand", "trial_div", "pollard_rho", "pollard_pm1", "fermat",//"factor", 
+                                "init_irand", "init_lrand", "irand", "lrand", "trial_div", "pollard_rho", "pollard_pm1", "fermat","factor", 
                                 "hexstr", "asfloat", "asint", "lucas", "str", "str_search", "type", "copy","vector_deep_copy","deep_copy", "system", "popen",
 #ifndef VMTEST
                                 "compile", "dis_assy", "eval", "load", "str_parse","dis_parse", "codegen",
@@ -582,7 +582,7 @@ int primitive_function_arglisti[][6] = {//{OBJ_GEN},                            
                                 {OBJ_LINT,OBJ_LINT,OBJ_LINT,OBJ_INT,OBJ_INT},   // pollard_rho
                                 {OBJ_LINT,OBJ_INT,OBJ_INT},                     // pollard_pm1
                                 {OBJ_LINT},                                     // fermat
-                                //{OBJ_LINT,OBJ_FLT},                             // factor
+                                {OBJ_LINT,OBJ_FLT},                             // factor
                                 {OBJ_INT},                                      // hexstr
                                 {OBJ_INT},                                      // asfloat
                                 {OBJ_FLT},                                      // asint
@@ -728,7 +728,7 @@ int primitive_function_ct[][3]  ={//{ return CT, # of parameters,
                                 {OBJ_LINT, 5, FALSE},   // pollard_rho
                                 {OBJ_LINT, 3, FALSE},   // pollard_pm1
                                 {OBJ_LINT, 1, FALSE},   // fermat
-                                //{OBJ_LINT, 2, FALSE},   // factor
+                                {OBJ_LINT, 2, FALSE},   // factor
                                 {OBJ_SYM,  1, FALSE},   // hex_str
                                 {OBJ_FLT,  1, FALSE},   // asfloat
                                 {OBJ_INT,  1, FALSE},   // asint

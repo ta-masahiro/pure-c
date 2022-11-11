@@ -753,14 +753,16 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     int i,op_code,const_conv_flg=FALSE;object *o;
     Pfuncpointer fp; Vector * func_vect ;                        // for array operator
 
+    ast * ast_left, *ast_right;
+
     Vector *code = vector_init(3);
-    code_ret *code_r_left = codegen((ast*)vector_ref(_2op_ast->table,1),env,FALSE);   //左辺式をコンパイルする
+    code_ret *code_r_left = codegen(ast_left = (ast*)vector_ref(_2op_ast->table,1), env, FALSE);   //左辺式をコンパイルする
     Vector *code_left = code_r_left->code;                      // 左辺式のコード
     code_type *ct_left = code_r_left->ct;                       // 左辺式のコードタイプ
     obj_type type_left = ct_left->type;                         // 左辺式の型
     int flg_sc = code_r_left->sc;
     //
-    code_ret *code_r_right = codegen((ast*)vector_ref(_2op_ast->table,2),env,FALSE);   //右辺式をコンパイルする
+    code_ret *code_r_right = codegen(ast_right = (ast*)vector_ref(_2op_ast->table,2), env, FALSE);   //右辺式をコンパイルする
     Vector *code_right = code_r_right->code;                    // 右辺式のコード
     code_type *ct_right = code_r_right->ct;                     // 右辺式のコードタイプ
     obj_type type_right = ct_right->type;                       // 右辺式の型
@@ -859,6 +861,23 @@ code_ret *codegen_2op(ast * _2op_ast, Vector *env, int tail) {  // AST_2OP [op_t
     }
     if (i>=18) {printf("illegal 2oprand\n");return NULL;}
     if ((op_code =op2_2[r_type][i])==0) {printf("SyntaxError:IllegalOpecode!002\n");Throw(0);};
+    // long演算の高速化
+    if (ast_left->type != AST_VAR) {
+        switch(op_code) {
+            case LADD: op_code = sLADDL;break;
+            case LSUB: op_code = sLSUBL;break;
+            case LMUL: op_code = sLMULL;break;
+            case LDIV: op_code = sLDIVL;break;
+        }
+    } else if (ast_right->type != AST_VAR) {
+        switch(op_code) {
+            case LADD: op_code = sLADDR;break;
+            case LSUB: op_code = sLSUBR;break;
+            case LMUL: op_code = sLMULR;break;
+            case LDIV: op_code = sLDIVR;break;
+        }
+    }
+    // 高速化ここまで
     push(code,(void*)(long)op_code);
     //
     if (op2_3[i] != 0) r_type=op2_3[i];
@@ -1594,7 +1613,31 @@ void check_ct_for_codegen_set(Vector *code, code_type *ct1, code_type *ct2) {
     }
 
 }
-
+/*
+int set_op_1[] = {'+', '-', '*', '/', '%', '*'*256+'*','|', '&', '^', '>'*256+'>', '<'*256+'<',0};
+//char*op2_alt_name[]={"add","sub","mul","div","mod","pow","push",NULL,NULL,"sr","sl","gt","lt","eq","neq","ge","le"};
+enum CODE set_op_2[18][19] = {
+                {IMUL, IMUL, IMUL, IMUL, IMUL, IMUL, IMUL, IMUL, IMUL, IMUL,IMUL,0},   // OBJ_NONEは比較命令以外はNoneを返す   
+              //{ADD,  SUB,  MUL,  DIV,  MOD,  POW,  BOR,  BAND, BXOR, SR,  SL,  0},
+                {sIADD,  sISUB,  sIMUL,  sIDIV,  sIMOD,  sIPOW,  sIBOR,  sIBAND, sIBXOR, sISR,  sISL,  0},   // OBJ_INT
+                {sLADDL, sLSUBL, sLMULL, sLDIVL, sLMODL, sLPOWL, sLBORL, sLBANDL,sLBXORL,sLSRL, sLSLL, 0},   // OBJ_LINT
+                {sRADDL, sRSUBL, sRMULL, sRDIVL, sRMODL, sRPOWL, 0,      0,      0,      0,     0,     0},   // OBJ_RAT
+                {sFADDL, sFSUBL, sFMULL, sFDIVL, sFMODL, sFPOWL, 0,      0,      0,      0,     0,     0},   // OBJ_FLT
+                {sLFADDL,sLFSUBL,sLFMULL,sLFDIVL,sLFMODL,sLFPOWL,0,      0,      0,      0,     0,     0},   // OBJ_LFLT
+                {sCADDL, sCSUBL, sCMULL, sCDIVL, 0,      sCPOW,  0,      0,      0,      0,     0,     0},   // OBJ_CMPLX
+                {sOADDL, sOSUBL, sOMULL, sODIVL, sOMODL, sOPOWL, sOBORL, sOBANDL,sOBXORL,sOSRL, sOSLL, 0},   // OBJ_GEN
+                {0,      0,      0,      0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_SYSFUNC
+                {0,      0,      0,      0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_PFUNC
+                {0,      0,      0,      0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_UFUNC
+                {0,      0,      0,      0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_CNT
+                {sVAPP,  0,      sVMUL,  0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_VECT
+                {0,      0,      0,      0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_DICT
+                {0,      0,      0,      0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_PAIR
+                {sSAPP,  0,      sSMUL,  0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_SYM
+                {0,      0,      0,      0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_ARRAY
+                {0,      0,      0,      0,    0,    0,    0,    0,    0,    0,   0,   0},   // OBJ_IO
+                };
+*/
 code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_type, AST_left_expr, AST_right_expr]
                                                                 //          <0>       <1>            <2>
     // case of '+=' '-=' '*=' '/=' '%=' '|=' '&=' '^='
@@ -1610,7 +1653,7 @@ code_ret *codegen_set(ast * set_ast, Vector *env, int tail) {   // AST_SET [set_
 
     // 演算代入の場合は2項演算命令と代入命令のastを作る
     if ((long)vector_ref(set_ast->table,0) != '=') {        // set_typeが'='以外の場合は演算代入である
-        _2op=(((long)vector_ref(set_ast->table,0)) >> 8);   // 演算子は上位8bit
+        _2op=(((long)vector_ref(set_ast->table,0)) >> 8);   // 下位8bitを捨てたものが代入を含まない演算子
         vv=vector_init(3);push(vv,(void*)(long)'=');
         v=vector_init(3);push(v,(void*)(long)_2op);push(v,(void*)vector_ref(set_ast->table,1));push(v,(void*)vector_ref(set_ast->table,2));
         push(vv,(void*)vector_ref(set_ast->table,1));push(vv,(void*)new_ast(AST_2OP,OBJ_NONE,v));
